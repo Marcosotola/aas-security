@@ -1,7 +1,7 @@
 // components/layout/Header.js
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Menu, X, Home, Briefcase, Users, MessageSquare, ChevronDown } from 'lucide-react';
 
@@ -10,6 +10,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const dropdownRef = useRef(null);
 
   // Efecto para detectar el scroll
   useEffect(() => {
@@ -24,6 +25,20 @@ const Header = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Cerrar el dropdown de servicios al hacer click fuera de él
+  useEffect(() => {
+    if (activeDropdown !== 'servicios') return;
+
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setActiveDropdown(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeDropdown]);
 
   const toggleDropdown = (id) => {
     if (activeDropdown === id) {
@@ -59,7 +74,7 @@ const Header = () => {
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </Link>
 
-            <div className="relative group">
+            <div className="relative group" ref={dropdownRef}>
               <button
                 onClick={() => toggleDropdown('servicios')}
                 className={`group relative px-3 py-2 rounded-md transition-all duration-200 flex items-center ${scrolled ? 'text-gray-700 hover:text-primary' : 'text-white hover:text-white'}`}

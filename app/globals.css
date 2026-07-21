@@ -168,6 +168,71 @@ tbody td p {
   background-color: var(--secondary-light);
 }
 
+/* Variantes hover/group-hover para los colores custom (bg-primary, text-primary, etc.)
+   Tailwind no las genera solo porque no están declaradas dentro de @theme. */
+.hover\:bg-primary:hover {
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+.hover\:bg-secondary:hover {
+  background-color: var(--secondary);
+  color: #ffffff;
+}
+
+.hover\:bg-success:hover {
+  background-color: var(--success);
+  color: #ffffff;
+}
+
+.hover\:bg-warning:hover {
+  background-color: var(--warning);
+  color: #ffffff;
+}
+
+.hover\:bg-danger:hover {
+  background-color: var(--danger);
+  color: #ffffff;
+}
+
+.hover\:text-primary:hover {
+  color: var(--primary);
+}
+
+.hover\:text-secondary:hover {
+  color: var(--secondary);
+}
+
+.hover\:text-success:hover {
+  color: var(--success);
+}
+
+.hover\:text-warning:hover {
+  color: var(--warning);
+}
+
+.hover\:text-danger:hover {
+  color: var(--danger);
+}
+
+.group:hover .group-hover\:text-primary {
+  color: var(--primary);
+}
+
+.group:hover .group-hover\:text-secondary {
+  color: var(--secondary);
+}
+
+.group:hover .group-hover\:bg-primary {
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+.group:hover .group-hover\:bg-secondary {
+  background-color: var(--secondary);
+  color: #ffffff;
+}
+
 /* ===== ESTILOS PARA INPUTS ===== */
 /* Asegurar que todos los inputs tengan texto negro y bien visible */
 input[type="text"],
