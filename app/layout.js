@@ -7,8 +7,8 @@ import InstallPrompt from './components/ui/InstallPrompt';
 import OfflineIndicator from './components/ui/OfflineIndicator';
 
 export const metadata = {
-  title: 'AAS Security - Servicios Integrales',
-  description: 'Servicios técnicos profesionales en Automatismo, Electricidad, Climatización y Seguridad',
+  title: 'AAS Security',
+  description: 'Sistemas de detección y extinción de incendios, matafuegos y seguridad para consorcios: alarmas, cámaras, control de acceso y monitoreo remoto.',
 }
 
 export default function RootLayout({ children }) {

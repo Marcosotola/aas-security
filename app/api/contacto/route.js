@@ -14,7 +14,7 @@ export async function POST(request) {
 
   const mailOptions = {
     from: `"Formulario Web" <${process.env.EMAIL_USER}>`,
-    to: 'mira.sincorp@gmail.com', // <-- CAMBIÁ ESTE MAIL por uno real
+    to: 'contacto@aassecurity.com.ar', // <-- CAMBIÁ ESTE MAIL por uno real
     subject: `Nuevo mensaje de ${nombre}`,
     text: `
 📩 Nuevo mensaje de contacto:

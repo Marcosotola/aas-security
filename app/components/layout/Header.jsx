@@ -4,7 +4,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Menu, X, Home, Briefcase, Users, MessageSquare, ChevronDown } from 'lucide-react';
-import Image from 'next/image';
 
 
 const Header = () => {
@@ -41,26 +40,10 @@ const Header = () => {
 
           {/* Logo */}
           <Link href="/" className="flex items-center group">
-            <div className="relative mr-2">
-              <div className="absolute inset-0 transition-transform transform rotate-45 rounded-full bg-primary group-hover:rotate-90"></div>
-              <div className="absolute inset-0 transition-transform transform scale-75 -rotate-45 rounded-full bg-secondary group-hover:-rotate-90"></div>
-              {/*               <span className="relative z-10 flex items-center justify-center w-10 h-10 text-3xl font-bold text-white font-montserrat">
-                S
-              </span> */}
-            </div>
-            <div className='flex'>
-              <div className='mr-1'>
-                <Image src={'/logo/logo.png'} alt="Logo" width={45} height={45}
-                className='bg-white rounded-sm'></Image>
-              </div>
-              <div>
-                <span className="text-4xl font-bold font-montserrat ">
-                  <span className={`${scrolled ? 'text-primary' : 'text-white'}`}>AAS</span>
-                  <span className={`${scrolled ? 'text-secondary' : 'text-white'}`}> Security</span>
-                </span>
-                <span className={`block text-xs ${scrolled ? 'text-gray-600' : 'text-gray-300'} font-montserrat`}>SERVICIOS INTEGRALES</span>
-              </div>
-            </div>
+            <span className="text-4xl font-bold font-montserrat">
+              <span className={`${scrolled ? 'text-primary' : 'text-white'}`}>AAS</span>
+              <span className={`${scrolled ? 'text-secondary' : 'text-white'}`}> Security</span>
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -88,18 +71,18 @@ const Header = () => {
               </button>
 
               {/* Dropdown */}
-              <div className={`absolute top-full left-0 w-56 mt-1 bg-white shadow-lg rounded-md overflow-hidden transition-all duration-300 ${activeDropdown === 'servicios' ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
-                <Link href="/servicios/automatismo" className="block px-4 py-2 text-gray-700 transition-colors hover:bg-primary hover:text-white">
-                  Automatismo
+              <div className={`absolute top-full left-0 w-64 mt-1 bg-white shadow-lg rounded-md overflow-hidden transition-all duration-300 ${activeDropdown === 'servicios' ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
+                <Link href="/servicios/incendios" className="block px-4 py-2 text-gray-700 transition-colors hover:bg-primary hover:text-white">
+                  Detección y extinción de incendios
                 </Link>
-                <Link href="/servicios/electricidad" className="block px-4 py-2 text-gray-700 transition-colors hover:bg-primary hover:text-white">
-                  Electricidad
+                <Link href="/servicios/matafuegos" className="block px-4 py-2 text-gray-700 transition-colors hover:bg-primary hover:text-white">
+                  Matafuegos
                 </Link>
-                <Link href="/servicios/climatizacion" className="block px-4 py-2 text-gray-700 transition-colors hover:bg-primary hover:text-white">
-                  Climatización
+                <Link href="/servicios/consorcios" className="block px-4 py-2 text-gray-700 transition-colors hover:bg-primary hover:text-white">
+                  Consorcios
                 </Link>
                 <Link href="/servicios/seguridad" className="block px-4 py-2 text-gray-700 transition-colors hover:bg-primary hover:text-white">
-                  Seguridad
+                  Alarmas y cámaras
                 </Link>
                 <Link href="/servicios" className="block px-4 py-2 font-medium transition-colors text-primary hover:bg-primary hover:text-white">
                   Ver todos
@@ -161,32 +144,32 @@ const Header = () => {
               {activeDropdown === 'mobileServicios' && (
                 <div className="pl-4 mt-2 ml-6 space-y-2 border-l-2 border-primary">
                   <Link
-                    href="/servicios/automatismo"
+                    href="/servicios/incendios"
                     className="block py-2 text-gray-700 hover:text-primary"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Automatismo
+                    Detección y extinción de incendios
                   </Link>
                   <Link
-                    href="/servicios/electricidad"
+                    href="/servicios/matafuegos"
                     className="block py-2 text-gray-700 hover:text-primary"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Electricidad
+                    Matafuegos
                   </Link>
                   <Link
-                    href="/servicios/climatizacion"
+                    href="/servicios/consorcios"
                     className="block py-2 text-gray-700 hover:text-primary"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Climatización
+                    Consorcios
                   </Link>
                   <Link
                     href="/servicios/seguridad"
                     className="block py-2 text-gray-700 hover:text-primary"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Seguridad
+                    Alarmas y cámaras
                   </Link>
                   <Link
                     href="/servicios"

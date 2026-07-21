@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { Settings, ArrowLeft, Check } from 'lucide-react';
+import { FireExtinguisher, ArrowLeft, Check } from 'lucide-react';
 
-export default function ServicioAutomatismo() {
+export default function ServicioMatafuegos() {
   return (
     <div>
       <div className="bg-primary text-white py-22">
@@ -12,12 +12,12 @@ export default function ServicioAutomatismo() {
             </Link>
           </div>
           <div className="flex items-center mb-4">
-            <Settings size={32} className="mr-3" />
-            <h1 className="text-3xl font-montserrat font-bold">Automatismo</h1>
+            <FireExtinguisher size={32} className="mr-3" />
+            <h1 className="text-3xl font-montserrat font-bold">Matafuegos</h1>
           </div>
           <p className="text-xl max-w-2xl">
-            Sistemas de control automático para procesos industriales y domésticos. 
-            Optimizamos la eficiencia y seguridad de sus instalaciones.
+            Venta, recarga, inspección y mantenimiento de matafuegos con certificación vigente,
+            para que su extintor esté listo cuando lo necesite.
           </p>
         </div>
       </div>
@@ -26,100 +26,92 @@ export default function ServicioAutomatismo() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2">
             <h2 className="text-2xl font-montserrat font-bold mb-6 text-primary">
-              Nuestras soluciones de automatización
+              Todo lo que necesita en materia de matafuegos
             </h2>
             <p className="text-gray-600 mb-6">
-              En SINCORP ofrecemos servicios integrales de automatización industrial y 
-              doméstica, diseñados para mejorar la eficiencia, reducir costos operativos 
-              y aumentar la seguridad de sus procesos. Nuestro equipo técnico altamente 
-              capacitado trabaja con las últimas tecnologías para implementar soluciones 
-              a medida según las necesidades específicas de cada cliente.
+              Un matafuegos vencido, mal ubicado o sin mantenimiento no cumple su función. En AAS
+              Security nos ocupamos de todo el ciclo: venta, instalación, recarga, inspección y
+              control de vencimientos, para hogares, comercios, empresas, industrias y consorcios.
             </p>
 
             <h3 className="text-xl font-montserrat font-bold mb-4 text-primary mt-8">
-              Sistemas de control industrial
+              Venta e instalación
             </h3>
             <p className="text-gray-600 mb-6">
-              Implementamos sistemas de control para procesos industriales que permiten 
-              supervisar y gestionar la producción de manera eficiente y segura. 
-              Trabajamos con las principales marcas del mercado y adaptamos cada solución 
-              a las necesidades específicas de su industria.
+              Asesoramos sobre el tipo y la cantidad de matafuegos según la actividad y la
+              superficie a proteger: polvo químico ABC, dióxido de carbono (CO2), agua, espuma y
+              agentes limpios. Instalamos soportes y señalización reglamentaria en cada punto.
             </p>
 
             <h3 className="text-xl font-montserrat font-bold mb-4 text-primary mt-8">
-              Automatización de procesos productivos
+              Recarga y mantenimiento
             </h3>
             <p className="text-gray-600 mb-6">
-              Automatizamos líneas de producción completas o procesos específicos, 
-              mejorando la productividad y reduciendo errores humanos. Nuestras soluciones 
-              incluyen sistemas de transporte, dosificación, empaque y paletizado, entre otros.
+              Realizamos la recarga y el mantenimiento periódico según la normativa IRAM 3542,
+              incluyendo prueba hidráulica cuando corresponde, para garantizar que cada equipo
+              funcione correctamente en caso de emergencia.
             </p>
 
             <h3 className="text-xl font-montserrat font-bold mb-4 text-primary mt-8">
-              Programación de PLC y sistemas SCADA
+              Inspección y control de vencimientos
             </h3>
             <p className="text-gray-600 mb-6">
-              Desarrollamos programación para controladores lógicos programables (PLC) y 
-              sistemas de supervisión, control y adquisición de datos (SCADA), que permiten 
-              monitorear y controlar sus procesos en tiempo real y desde cualquier ubicación.
+              Llevamos un registro de todos los matafuegos instalados en su propiedad y le
+              avisamos con anticipación cuando se acerca la fecha de recarga o vencimiento, para
+              que nunca quede sin protección ni en falta ante una inspección.
             </p>
 
             <h3 className="text-xl font-montserrat font-bold mb-4 text-primary mt-8">
-              Domótica y sistemas inteligentes
+              Service a domicilio para empresas y consorcios
             </h3>
             <p className="text-gray-600 mb-6">
-              Implementamos soluciones de automatización para edificios comerciales y 
-              residenciales, incluyendo control de iluminación, climatización, accesos 
-              y seguridad, todo integrado en sistemas fáciles de usar que mejoran 
-              la eficiencia energética y el confort.
+              Coordinamos visitas periódicas de mantenimiento en el lugar, minimizando la
+              interrupción de la actividad diaria y entregando la documentación y certificados
+              correspondientes tras cada intervención.
             </p>
           </div>
 
           <div className="lg:col-span-1">
             <div className="bg-gray-50 p-6 rounded-lg">
               <h3 className="text-xl font-montserrat font-bold mb-4 text-primary">
-                Beneficios de nuestros sistemas
+                Ventajas de nuestro servicio
               </h3>
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <Check size={20} className="text-success mr-2 mt-1 flex-shrink-0" />
-                  <span>Mayor eficiencia en los procesos productivos</span>
+                  <span>Matafuegos siempre operativos y en fecha</span>
                 </li>
                 <li className="flex items-start">
                   <Check size={20} className="text-success mr-2 mt-1 flex-shrink-0" />
-                  <span>Reducción de costos operativos</span>
+                  <span>Certificación según norma IRAM 3542</span>
                 </li>
                 <li className="flex items-start">
                   <Check size={20} className="text-success mr-2 mt-1 flex-shrink-0" />
-                  <span>Disminución de errores humanos</span>
+                  <span>Aviso automático de vencimientos</span>
                 </li>
                 <li className="flex items-start">
                   <Check size={20} className="text-success mr-2 mt-1 flex-shrink-0" />
-                  <span>Mayor control y trazabilidad</span>
+                  <span>Asesoramiento sobre tipo y cantidad necesaria</span>
                 </li>
                 <li className="flex items-start">
                   <Check size={20} className="text-success mr-2 mt-1 flex-shrink-0" />
-                  <span>Integración con sistemas existentes</span>
+                  <span>Service a domicilio sin interrumpir su actividad</span>
                 </li>
                 <li className="flex items-start">
                   <Check size={20} className="text-success mr-2 mt-1 flex-shrink-0" />
-                  <span>Interfaces intuitivas y fáciles de usar</span>
-                </li>
-                <li className="flex items-start">
-                  <Check size={20} className="text-success mr-2 mt-1 flex-shrink-0" />
-                  <span>Soporte técnico especializado</span>
+                  <span>Documentación lista para inspecciones y seguros</span>
                 </li>
               </ul>
 
               <div className="mt-8 bg-primary/10 p-6 rounded-lg">
                 <h3 className="text-lg font-montserrat font-bold mb-3 text-primary">
-                  ¿Interesado en nuestros servicios?
+                  ¿Sus matafuegos están vencidos o quiere instalar nuevos?
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  Solicite un presupuesto sin compromiso y un asesor se pondrá en contacto con usted.
+                  Contáctenos y coordinamos una visita para revisar su instalación actual.
                 </p>
-                <Link 
-                  href="/contacto" 
+                <Link
+                  href="/contacto"
                   className="w-full block text-center bg-primary text-white px-4 py-2 rounded-md font-medium hover:bg-primary-light transition-colors"
                 >
                   Solicitar presupuesto

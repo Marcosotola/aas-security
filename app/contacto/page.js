@@ -155,7 +155,7 @@ export default function Contacto() {
                 <Mail className="mt-1 mr-4 text-primary" />
                 <div>
                   <h3 className="font-medium">Correo electrónico</h3>
-                  <p className="text-gray-600">sincorpserviciosintegrales@gmail.com</p>
+                  <p className="text-gray-600">contacto@aassecurity.com.ar</p>
                 </div>
               </div>
 

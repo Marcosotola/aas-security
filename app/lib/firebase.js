@@ -1,7 +1,8 @@
 // lib/firebase.js
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,12 +13,26 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+const hasFirebaseConfig = Boolean(
+  firebaseConfig.apiKey &&
+  firebaseConfig.authDomain &&
+  firebaseConfig.projectId &&
+  firebaseConfig.appId
+);
 
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig);
+let app;
+let auth;
+let db;
+let storage;
 
-// Obtener servicios
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+if (hasFirebaseConfig) {
+  app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
+} else {
+  console.warn('Firebase no está configurado. Define NEXT_PUBLIC_FIREBASE_* para habilitar la conexión.');
+}
 
+export { auth, db, storage };
 export default app;

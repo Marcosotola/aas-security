@@ -29,7 +29,7 @@ export default function ServicioSeguridad() {
               Soluciones integrales de seguridad
             </h2>
             <p className="text-gray-600 mb-6">
-              En SINCORP ofrecemos sistemas de seguridad y vigilancia de alta tecnología, 
+              En AAS Security ofrecemos sistemas de seguridad y vigilancia de alta tecnología,
               diseñados para proporcionar protección efectiva a hogares, comercios e industrias. 
               Nuestras soluciones se adaptan a las necesidades específicas de cada cliente, 
               garantizando la máxima protección con las tecnologías más avanzadas del mercado.

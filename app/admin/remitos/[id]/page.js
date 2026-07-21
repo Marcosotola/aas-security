@@ -204,16 +204,16 @@ export default function VerRemito({ params }) {
               </div>
               <div>
                 <div className="text-2xl font-bold">
-                  <span className="text-blue-800">Sin</span>
-                  <span className="text-blue-500">corp</span>
+                  <span className="text-blue-800">AAS</span>
+                  <span className="text-blue-500"> Security</span>
                 </div>
-                <div className="text-xs text-gray-600">Servicios Integrales</div>
+                <div className="text-xs text-gray-600">Seguridad integral</div>
               </div>
             </div>
             <div className="text-xs text-right text-gray-700">
-              <div>Email: sincorpserviciosintegrales@gmail.com</div>
+              <div>Email: contacto@aassecurity.com.ar</div>
               <div>Teléfono: (351) 681 0777</div>
-              <div>Web: www.sincorp.vercel.app</div>
+              <div>Web: www.aassecurity.com.ar</div>
             </div>
           </div>
 
@@ -318,8 +318,8 @@ export default function VerRemito({ params }) {
 
           {/* Pie de página */}
           <div className="px-8 py-4 text-xs text-center text-gray-600 border-t border-blue-800">
-            <div>SINCORP Servicios Integrales - CUIT: 20-24471842-7</div>
-            <div>Av. Luciano Torrent 4800, 5000 - Córdoba - Tel: (351) 681 0777 - www.sincorp.vercel.app</div>
+            <div>AAS Security - CUIT: 20-24471842-7</div>
+            <div>Av. Luciano Torrent 4800, 5000 - Córdoba - Tel: (351) 681 0777 - www.aassecurity.com.ar</div>
           </div>
         </div>
       </div>

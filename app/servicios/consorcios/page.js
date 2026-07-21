@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { Zap, ArrowLeft, Check } from 'lucide-react';
+import { Building2, ArrowLeft, Check } from 'lucide-react';
 
-export default function ServicioElectricidad() {
+export default function ServicioConsorcios() {
   return (
     <div>
       <div className="bg-primary text-white py-22">
@@ -12,12 +12,12 @@ export default function ServicioElectricidad() {
             </Link>
           </div>
           <div className="flex items-center mb-4">
-            <Zap size={32} className="mr-3" />
-            <h1 className="text-3xl font-montserrat font-bold">Electricidad</h1>
+            <Building2 size={32} className="mr-3" />
+            <h1 className="text-3xl font-montserrat font-bold">Consorcios</h1>
           </div>
           <p className="text-xl max-w-2xl">
-            Instalaciones eléctricas profesionales, mantenimiento preventivo y correctivo
-            para todo tipo de edificaciones e industrias.
+            Soluciones de seguridad y protección contra incendios pensadas para edificios,
+            administradores y consorcios, con un solo proveedor para todo el mantenimiento.
           </p>
         </div>
       </div>
@@ -26,101 +26,93 @@ export default function ServicioElectricidad() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2">
             <h2 className="text-2xl font-montserrat font-bold mb-6 text-primary">
-              Servicios eléctricos profesionales
+              Un aliado técnico para administradores y consejos de propietarios
             </h2>
             <p className="text-gray-600 mb-6">
-              En SINCORP brindamos servicios eléctricos de alta calidad para empresas, 
-              industrias y comercios. Nuestro equipo de profesionales certificados 
-              garantiza instalaciones seguras y eficientes, cumpliendo con todas las 
-              normativas vigentes y utilizando materiales de primera calidad.
+              Los edificios de propiedad horizontal tienen obligaciones específicas en materia de
+              incendio y seguridad de las áreas comunes. En AAS Security trabajamos junto a
+              administradores y consejos de propietarios para cumplir con la normativa vigente y
+              mantener protegidos los espacios comunes durante todo el año.
             </p>
 
             <h3 className="text-xl font-montserrat font-bold mb-4 text-primary mt-8">
-              Instalaciones eléctricas industriales y comerciales
+              Matafuegos y protección contra incendios en áreas comunes
             </h3>
             <p className="text-gray-600 mb-6">
-              Diseñamos e implementamos instalaciones eléctricas completas para entornos 
-              industriales y comerciales, desde la acometida principal hasta la distribución 
-              final. Nuestros sistemas están diseñados para soportar las demandas específicas 
-              de cada sector, garantizando seguridad, eficiencia y capacidad de expansión futura.
+              Instalamos, recargamos e inspeccionamos los matafuegos de palieres, cocheras, salas
+              de máquinas y SUM, y mantenemos al día los sistemas de detección y alarma de incendio
+              del edificio, con certificados listos para presentar ante bomberos o el seguro.
             </p>
 
             <h3 className="text-xl font-montserrat font-bold mb-4 text-primary mt-8">
-              Mantenimiento preventivo y correctivo
+              Planes de evacuación y señalización
             </h3>
             <p className="text-gray-600 mb-6">
-              Ofrecemos programas de mantenimiento preventivo para detectar y solucionar 
-              posibles problemas antes de que afecten su operación. También respondemos 
-              rápidamente a emergencias eléctricas, proporcionando soluciones efectivas 
-              para minimizar tiempos de inactividad y prevenir daños mayores.
+              Elaboramos el plan de evacuación del edificio, coordinamos simulacros con los
+              vecinos y colocamos la señalización de emergencia y salidas requerida por la
+              normativa municipal.
             </p>
 
             <h3 className="text-xl font-montserrat font-bold mb-4 text-primary mt-8">
-              Tableros eléctricos y centros de control
+              Cámaras y control de accesos del edificio
             </h3>
             <p className="text-gray-600 mb-6">
-              Diseñamos, fabricamos e instalamos tableros eléctricos a medida, desde 
-              pequeños tableros de distribución hasta complejos centros de control de 
-              motores (CCM). Cada tablero cumple con los más altos estándares de calidad 
-              y seguridad, incluyendo protecciones adecuadas y sistemas de monitoreo.
+              Sumamos videovigilancia de accesos, cocheras y SUM, y sistemas de control de acceso
+              peatonal y vehicular (porteros eléctricos, tags e intercomunicadores) para reforzar
+              la seguridad de todos los propietarios.
             </p>
 
             <h3 className="text-xl font-montserrat font-bold mb-4 text-primary mt-8">
-              Sistemas de iluminación eficiente
+              Contrato de mantenimiento anual
             </h3>
             <p className="text-gray-600 mb-6">
-              Implementamos soluciones de iluminación eficientes que reducen el consumo 
-              energético sin sacrificar la calidad lumínica. Nuestros sistemas incluyen 
-              tecnología LED, controles automáticos, sensores de presencia y aprovechamiento 
-              de luz natural, adaptados a las necesidades específicas de cada espacio.
+              Ofrecemos un contrato de mantenimiento anual que incluye visitas programadas,
+              recambio de baterías y agentes extintores, y un canal directo para emergencias,
+              simplificando la gestión del administrador y evitando gastos imprevistos.
             </p>
           </div>
 
           <div className="lg:col-span-1">
             <div className="bg-gray-50 p-6 rounded-lg">
               <h3 className="text-xl font-montserrat font-bold mb-4 text-primary">
-                Ventajas de nuestros servicios eléctricos
+                Beneficios para el consorcio
               </h3>
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <Check size={20} className="text-success mr-2 mt-1 flex-shrink-0" />
-                  <span>Instalaciones seguras que cumplen normativas</span>
+                  <span>Cumplimiento normativo permanente</span>
                 </li>
                 <li className="flex items-start">
                   <Check size={20} className="text-success mr-2 mt-1 flex-shrink-0" />
-                  <span>Reducción del consumo energético</span>
+                  <span>Un solo proveedor para incendio y seguridad</span>
                 </li>
                 <li className="flex items-start">
                   <Check size={20} className="text-success mr-2 mt-1 flex-shrink-0" />
-                  <span>Prevención de fallas y cortes inesperados</span>
+                  <span>Certificados listos para bomberos y seguros</span>
                 </li>
                 <li className="flex items-start">
                   <Check size={20} className="text-success mr-2 mt-1 flex-shrink-0" />
-                  <span>Materiales y componentes de alta calidad</span>
+                  <span>Planes de mantenimiento con costo previsible</span>
                 </li>
                 <li className="flex items-start">
                   <Check size={20} className="text-success mr-2 mt-1 flex-shrink-0" />
-                  <span>Personal técnico certificado</span>
+                  <span>Atención directa al administrador</span>
                 </li>
                 <li className="flex items-start">
                   <Check size={20} className="text-success mr-2 mt-1 flex-shrink-0" />
-                  <span>Respuesta rápida en emergencias</span>
-                </li>
-                <li className="flex items-start">
-                  <Check size={20} className="text-success mr-2 mt-1 flex-shrink-0" />
-                  <span>Asesoramiento técnico especializado</span>
+                  <span>Mayor seguridad para todos los propietarios</span>
                 </li>
               </ul>
 
               <div className="mt-8 bg-primary/10 p-6 rounded-lg">
                 <h3 className="text-lg font-montserrat font-bold mb-3 text-primary">
-                  ¿Necesita un servicio eléctrico?
+                  ¿Administra un consorcio o edificio?
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  Contáctenos para obtener un presupuesto personalizado según sus necesidades.
+                  Le proponemos un plan de mantenimiento a medida para las áreas comunes.
                 </p>
-                <Link 
-                  href="/contacto" 
+                <Link
+                  href="/contacto"
                   className="w-full block text-center bg-primary text-white px-4 py-2 rounded-md font-medium hover:bg-primary-light transition-colors"
                 >
                   Solicitar presupuesto

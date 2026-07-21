@@ -6,10 +6,9 @@ export default function Nosotros() {
     <div>
       <div className="bg-primary text-white py-22">
         <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-montserrat font-bold mb-4">Sobre Nosotros</h1>
+          <h1 className="text-3xl font-montserrat font-bold mb-4">Sobre AAS Security</h1>
           <p className="text-xl max-w-2xl">
-            Somos un equipo de profesionales comprometidos con la excelencia
-            en servicios técnicos para empresas e industrias.
+            Somos especialistas en detección y extinción de incendios, matafuegos y seguridad para consorcios, ofreciendo soluciones confiables para proteger personas, instalaciones y activos.
           </p>
         </div>
       </div>
@@ -18,26 +17,20 @@ export default function Nosotros() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div>
             <h2 className="text-2xl font-montserrat font-bold mb-6 text-primary">
-              Nuestra Historia
+              Nuestra propuesta
             </h2>
             <p className="text-gray-600 mb-4">
-              SINCORP nace en 2020 con el objetivo de brindar soluciones técnicas integrales
-              a empresas de diversos sectores. Desde entonces, hemos crecido constantemente,
-              ampliando nuestra gama de servicios y mejorando nuestras capacidades técnicas.
+              AAS Security nace con un propósito claro: brindar soluciones de protección contra incendios y seguridad de alto nivel para hogares, comercios, industrias y consorcios, con tecnología confiable y atención cercana.
             </p>
             <p className="text-gray-600 mb-4">
-              Fundada por un técnico especializado con más de 15 años de experiencia en el sector,
-              nuestra empresa se ha consolidado como un referente en servicios de automatismo,
-              electricidad y climatización, ofreciendo soluciones personalizadas y de alta calidad.
+              Trabajamos con sistemas de detección y extinción de incendios, matafuegos, mantenimiento para consorcios, alarmas, cámaras, control de acceso y monitoreo remoto, garantizando una respuesta efectiva desde la instalación hasta el mantenimiento.
             </p>
             <p className="text-gray-600">
-              Hoy, SINCORP trabaja con clientes de diversos tamaños, desde pequeñas empresas hasta
-              grandes corporaciones, manteniendo siempre el mismo nivel de compromiso y profesionalismo
-              en cada proyecto que emprendemos.
+              Cada proyecto se adapta al entorno del cliente para ofrecer una solución segura, funcional y escalable.
             </p>
 
             <h2 className="text-2xl font-montserrat font-bold mb-6 text-primary mt-12">
-              Nuestros Valores
+              Nuestros valores
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-start">
@@ -46,7 +39,7 @@ export default function Nosotros() {
                 </div>
                 <div>
                   <h3 className="font-bold">Excelencia</h3>
-                  <p className="text-gray-600">Buscamos la perfección en cada trabajo</p>
+                  <p className="text-gray-600">Trabajamos con rigor técnico y calidad en cada proyecto.</p>
                 </div>
               </div>
               <div className="flex items-start">
@@ -54,18 +47,17 @@ export default function Nosotros() {
                   <Check className="text-primary" size={20} />
                 </div>
                 <div>
-                  <h3 className="font-bold">Compromiso</h3>
-                  <p className="text-gray-600">Cumplimos con lo prometido</p>
+                  <h3 className="font-bold">Confianza</h3>
+                  <p className="text-gray-600">Diseñamos soluciones que generan tranquilidad y control.</p>
                 </div>
               </div>
               <div className="flex items-start">
                 <div className="bg-primary/10 p-2 rounded-full mr-4">
                   <PenTool className="text-primary" size={20} />
-
                 </div>
                 <div>
                   <h3 className="font-bold">Profesionalismo</h3>
-                  <p className="text-gray-600">Aplicamos los más altos estándares</p>
+                  <p className="text-gray-600">Aplicamos estándares altos en cada etapa del servicio.</p>
                 </div>
               </div>
               <div className="flex items-start">
@@ -73,8 +65,8 @@ export default function Nosotros() {
                   <Clock className="text-primary" size={20} />
                 </div>
                 <div>
-                  <h3 className="font-bold">Puntualidad</h3>
-                  <p className="text-gray-600">Respetamos el tiempo de nuestros clientes</p>
+                  <h3 className="font-bold">Respuesta</h3>
+                  <p className="text-gray-600">Atendemos de forma ágil las necesidades de seguridad de nuestros clientes.</p>
                 </div>
               </div>
             </div>
@@ -82,67 +74,45 @@ export default function Nosotros() {
 
           <div>
             <h2 className="text-2xl font-montserrat font-bold mb-6 text-primary">
-              ¿Por qué elegirnos?
+              ¿Por qué elegir AAS Security?
             </h2>
             <ul className="space-y-4">
               <li className="flex items-start bg-gray-50 p-4 rounded-lg">
                 <Check size={20} className="text-success mr-3 mt-1 flex-shrink-0" />
                 <div>
-                  <h3 className="font-bold mb-1">Experiencia comprobada</h3>
-                  <p className="text-gray-600">
-                    Más de 15 años de experiencia en el sector nos respaldan, 
-                    habiendo trabajado con empresas de diversos tamaños y sectores.
-                  </p>
+                  <h3 className="font-bold mb-1">Soluciones integrales</h3>
+                  <p className="text-gray-600">Integramos incendio, matafuegos, consorcios, alarmas, cámaras, acceso y monitoreo en un enfoque completo.</p>
                 </div>
               </li>
               <li className="flex items-start bg-gray-50 p-4 rounded-lg">
                 <Check size={20} className="text-success mr-3 mt-1 flex-shrink-0" />
                 <div>
-                  <h3 className="font-bold mb-1">Soluciones personalizadas</h3>
-                  <p className="text-gray-600">
-                    Entendemos que cada cliente tiene necesidades únicas, por eso 
-                    adaptamos nuestros servicios a sus requerimientos específicos.
-                  </p>
+                  <h3 className="font-bold mb-1">Diseño a medida</h3>
+                  <p className="text-gray-600">Adaptamos cada instalación a las características del inmueble y al nivel de protección requerido.</p>
                 </div>
               </li>
               <li className="flex items-start bg-gray-50 p-4 rounded-lg">
                 <Check size={20} className="text-success mr-3 mt-1 flex-shrink-0" />
                 <div>
-                  <h3 className="font-bold mb-1">Servicio integral</h3>
-                  <p className="text-gray-600">
-                    Ofrecemos soluciones completas que abarcan desde el diseño hasta 
-                    la implementación y mantenimiento de sistemas.
-                  </p>
+                  <h3 className="font-bold mb-1">Instalación y mantenimiento</h3>
+                  <p className="text-gray-600">Brindamos soporte técnico continuo para que los sistemas funcionen de manera confiable a largo plazo.</p>
                 </div>
               </li>
               <li className="flex items-start bg-gray-50 p-4 rounded-lg">
                 <Check size={20} className="text-success mr-3 mt-1 flex-shrink-0" />
                 <div>
-                  <h3 className="font-bold mb-1">Atención al detalle</h3>
-                  <p className="text-gray-600">
-                    Cuidamos cada aspecto de nuestro trabajo, asegurando resultados 
-                    impecables y duraderos en todos nuestros proyectos.
-                  </p>
-                </div>
-              </li>
-              <li className="flex items-start bg-gray-50 p-4 rounded-lg">
-                <Check size={20} className="text-success mr-3 mt-1 flex-shrink-0" />
-                <div>
-                  <h3 className="font-bold mb-1">Soporte post-venta</h3>
-                  <p className="text-gray-600">
-                    No desaparecemos después de finalizar un proyecto. Estamos 
-                    disponibles para brindar soporte técnico cuando lo necesite.
-                  </p>
+                  <h3 className="font-bold mb-1">Atención personalizada</h3>
+                  <p className="text-gray-600">Acompañamos a cada cliente desde la evaluación inicial hasta la puesta en marcha y el seguimiento.</p>
                 </div>
               </li>
             </ul>
 
             <div className="mt-8 bg-primary/10 p-6 rounded-lg">
               <h3 className="text-lg font-montserrat font-bold mb-3 text-primary">
-                ¿Listo para trabajar con nosotros?
+                ¿Querés una solución de seguridad a medida?
               </h3>
               <p className="text-gray-600 mb-4">
-                Póngase en contacto para discutir cómo podemos ayudarle con sus necesidades técnicas.
+                Contanos tu necesidad y te ayudamos a encontrar la mejor forma de proteger tu espacio.
               </p>
               <Link 
                 href="/contacto" 

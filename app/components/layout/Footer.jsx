@@ -9,14 +9,14 @@ const Footer = () => {
           {/* Company Info */}
           <div>
             <h3 className="mb-4 text-xl font-bold font-montserrat">AAS SECURITY</h3>
-            <p className="mb-4">Servicios técnicos profesionales en Automatismo, Electricidad, Climatización y Seguridad.</p>
+            <p className="mb-4">Especialistas en detección y extinción de incendios, matafuegos y seguridad integral para consorcios, hogares, comercios e industrias.</p>
             <div className="flex items-center mb-2">
               <Phone size={16} className="mr-2" />
               <span>(351) 681 0777</span>
             </div>
             <div className="flex items-center mb-2">
               <Mail size={16} className="mr-2" />
-              <span> sincorpserviciosintegrales@gmail.com</span>
+              <span>contacto@aassecurity.com.ar</span>
             </div>
             <div className="flex items-start mb-2">
               <MapPin size={16} className="mt-1 mr-2" />
@@ -56,23 +56,23 @@ const Footer = () => {
             <h3 className="mb-4 text-xl font-bold font-montserrat">Servicios</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/servicios/automatismo" className="hover:text-gray-300">
-                  Automatismo
+                <Link href="/servicios/incendios" className="hover:text-gray-300">
+                  Detección y extinción de incendios
                 </Link>
               </li>
               <li>
-                <Link href="/servicios/electricidad" className="hover:text-gray-300">
-                  Electricidad
+                <Link href="/servicios/matafuegos" className="hover:text-gray-300">
+                  Matafuegos
                 </Link>
               </li>
               <li>
-                <Link href="/servicios/climatizacion" className="hover:text-gray-300">
-                  Climatización
+                <Link href="/servicios/consorcios" className="hover:text-gray-300">
+                  Consorcios
                 </Link>
               </li>
               <li>
                 <Link href="/servicios/seguridad" className="hover:text-gray-300">
-                  Seguridad
+                  Alarmas y cámaras
                 </Link>
               </li>
             </ul>

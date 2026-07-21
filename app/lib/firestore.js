@@ -14,16 +14,24 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 
+const getCollection = (name) => {
+  if (!db) {
+    throw new Error('Firebase no está configurado. Define NEXT_PUBLIC_FIREBASE_* para usar Firestore.');
+  }
+  return collection(db, name);
+};
+
 // Colecciones
-const presupuestosCollection = collection(db, 'presupuestos');
-const estadosCollection = collection(db, 'estados');
-const remitosCollection = collection(db, 'remitos');
+const presupuestosCollection = db ? collection(db, 'presupuestos') : null;
+const estadosCollection = db ? collection(db, 'estados') : null;
+const remitosCollection = db ? collection(db, 'remitos') : null;
 
 // ========== FUNCIONES PARA PRESUPUESTOS ==========
 
 // Crear un nuevo presupuesto
 export const crearPresupuesto = async (presupuestoData) => {
   try {
+    if (!db) throw new Error('Firebase no está configurado');
     const docRef = await addDoc(presupuestosCollection, {
       ...presupuestoData,
       fechaCreacion: serverTimestamp(),
@@ -38,6 +46,7 @@ export const crearPresupuesto = async (presupuestoData) => {
 // Obtener todos los presupuestos
 export const obtenerPresupuestos = async () => {
   try {
+    if (!db) throw new Error('Firebase no está configurado');
     const q = query(presupuestosCollection, orderBy('fechaCreacion', 'desc'));
     const querySnapshot = await getDocs(q);
     
@@ -103,6 +112,7 @@ export const eliminarPresupuesto = async (id) => {
 // Crear un nuevo estado
 export const crearEstado = async (estadoData) => {
   try {
+    if (!db) throw new Error('Firebase no está configurado');
     const docRef = await addDoc(estadosCollection, {
       ...estadoData,
       fechaCreacion: serverTimestamp(),
@@ -117,6 +127,7 @@ export const crearEstado = async (estadoData) => {
 // Obtener todos los estados
 export const obtenerEstados = async () => {
   try {
+    if (!db) throw new Error('Firebase no está configurado');
     const q = query(estadosCollection, orderBy('fechaCreacion', 'desc'));
     const querySnapshot = await getDocs(q);
     
@@ -182,6 +193,7 @@ export const eliminarEstado = async (id) => {
 // Crear un nuevo remito
 export const crearRemito = async (remitoData) => {
   try {
+    if (!db) throw new Error('Firebase no está configurado');
     const docRef = await addDoc(remitosCollection, {
       ...remitoData,
       fechaCreacion: serverTimestamp()
@@ -197,6 +209,7 @@ export const crearRemito = async (remitoData) => {
 // Obtener todos los remitos
 export const obtenerRemitos = async () => {
   try {
+    if (!db) throw new Error('Firebase no está configurado');
     const q = query(remitosCollection, orderBy('fechaCreacion', 'desc'));
     const querySnapshot = await getDocs(q);
     
@@ -258,6 +271,7 @@ export const eliminarRemito = async (id) => {
 // Función para crear un recibo
 export const crearRecibo = async (reciboData) => {
   try {
+    if (!db) throw new Error('Firebase no está configurado');
     const docRef = await addDoc(collection(db, 'recibos'), {
       ...reciboData,
       fechaCreacion: serverTimestamp()
@@ -272,6 +286,7 @@ export const crearRecibo = async (reciboData) => {
 // Función para obtener todos los recibos
 export const obtenerRecibos = async () => {
   try {
+    if (!db) throw new Error('Firebase no está configurado');
     const q = query(collection(db, 'recibos'), orderBy('fechaCreacion', 'desc'));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({
