@@ -1,0 +1,98 @@
+find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -not -path "./public/images*" | sort | sed 's/[^/]*\//|   /g; s/|   \([^|]\)/└── \1/' > estructura-completa.txt
+
+
+.
+└── .env.local
+└── app
+|   └── admin
+|   |   └── dashboard
+|   |   |   └── page.js
+|   |   └── estados
+|   |   |   └── [id]
+|   |   |   |   └── page.jsx
+|   |   |   └── editar
+|   |   |   |   └── [id]
+|   |   |   |   |   └── page.jsx
+|   |   |   └── nuevo
+|   |   |   |   └── page.js
+|   |   |   └── page.js
+|   |   └── page.js
+|   |   └── presupuestos
+|   |   |   └── [id]
+|   |   |   |   └── page.jsx
+|   |   |   └── editar
+|   |   |   |   └── [id]
+|   |   |   |   |   └── page.jsx
+|   |   |   └── nuevo
+|   |   |   |   └── page.js
+|   |   |   └── page.js
+|   |   └── recibos
+|   |   |   └── [id]
+|   |   |   |   └── page.js
+|   |   |   └── editar
+|   |   |   |   └── [id]
+|   |   |   |   |   └── page.js
+|   |   |   └── nuevo
+|   |   |   |   └── page.js
+|   |   |   └── page.js
+|   |   └── remitos
+|   |   |   └── [id]
+|   |   |   |   └── page.js
+|   |   |   └── editar
+|   |   |   |   └── [id]
+|   |   |   |   |   └── page.js
+|   |   |   └── nuevo
+|   |   |   |   └── page.js
+|   |   |   └── page.js
+|   └── api
+|   |   └── contacto
+|   |   |   └── route.js
+|   └── components
+|   |   └── layout
+|   |   |   └── Footer.jsx
+|   |   |   └── Header.jsx
+|   |   └── pdf
+|   |   |   └── EstadoPDF.jsx
+|   |   |   └── logo64.txt
+|   |   |   └── PresupuestoPDF.jsx
+|   |   |   └── ReciboPDF.jsx
+|   |   |   └── RemitoPDF.jsx
+|   |   └── ui
+|   |   |   └── WhatsAppBadge.jsx
+|   └── contacto
+|   |   └── page.js
+|   └── favicon.ico
+|   └── globals.css
+|   └── layout.js
+|   └── lib
+|   |   └── firebase.js
+|   |   └── firestore.js
+|   └── nosotros
+|   |   └── page.js
+|   └── page.js
+|   └── servicios
+|   |   └── automatismo
+|   |   |   └── page.js
+|   |   └── climatizacion
+|   |   |   └── page.js
+|   |   └── electricidad
+|   |   |   └── page.js
+|   |   └── page.js
+|   |   └── seguridad
+|   |   |   └── page.js
+|   └── tailwind.config.js
+└── estructura-completa.txt
+└── jsconfig.json
+└── next.config.mjs
+└── package.json
+└── package-lock.json
+└── postcss.config.mjs
+└── public
+|   └── file.svg
+|   └── globe.svg
+|   └── logo
+|   |   └── logo.png
+|   └── next.svg
+|   └── vercel.svg
+|   └── window.svg
+└── README.md

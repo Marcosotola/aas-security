@@ -1,0 +1,281 @@
+@import "tailwindcss";
+/* @import "tailwindcss/preflight"; */
+
+/* Importar fuentes de Google */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Open+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary: #1A5276;
+  --primary-light: #2E86C1;
+  --secondary: #2E86C1;
+  --secondary-light: #3498DB;
+  --info: #3498DB;
+  --success: #27AE60;
+  --warning: #F39C12;
+  --danger: #C0392B;
+  --background: #ffffff;
+  --foreground: #000000;
+  /* Negro puro para máximo contraste */
+}
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: 'Open Sans', ui-sans-serif, system-ui;
+  --font-montserrat: 'Montserrat', ui-sans-serif, system-ui;
+
+  /* Reforzar escala de grises para máxima visibilidad */
+  --color-gray-400: #4b5563;
+  /* Corresponde al 600 original */
+  --color-gray-500: #374151;
+  /* Corresponde al 700 original */
+  --color-gray-600: #1f2937;
+  /* Corresponde al 800 original */
+  --color-gray-700: #111827;
+  /* Corresponde al 900 original */
+  --color-gray-800: #030712;
+  --color-gray-900: #000000;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Forzar que elementos comunes hereden el color del contenedor.
+   Dentro de @layer base para que las utilidades de Tailwind (text-white, etc.) puedan sobreescribir. */
+@layer base {
+
+  p,
+  span,
+  li,
+  td,
+  th,
+  label,
+  div,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  b,
+  strong,
+  i,
+  em {
+    color: inherit;
+  }
+}
+
+/* Forzar oscuridad en contenedores con fondo blanco */
+.card,
+.bg-white {
+  color: var(--foreground);
+}
+
+/* Asegurar texto blanco en fondos oscuros */
+.bg-primary {
+  color: #ffffff;
+}
+
+.bg-secondary {
+  color: #ffffff;
+}
+
+/* Asegurar visibilidad en tablas */
+table {
+  color: var(--foreground);
+  width: 100%;
+}
+
+thead th {
+  color: var(--gray-700) !important;
+  font-weight: 700 !important;
+  background-color: #f9fafb;
+  /* Fondo ligero para contraste */
+}
+
+tbody td {
+  color: var(--foreground) !important;
+}
+
+/* Forzar que divs y spans dentro de celdas no usen grises claros */
+tbody td div,
+tbody td span,
+tbody td p {
+  color: inherit !important;
+}
+
+.font-montserrat {
+  font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+}
+
+.text-primary {
+  color: var(--primary);
+}
+
+.text-secondary {
+  color: var(--secondary);
+}
+
+.bg-primary {
+  background-color: var(--primary);
+}
+
+.bg-secondary {
+  background-color: var(--secondary);
+}
+
+.text-success {
+  color: var(--success);
+}
+
+.text-warning {
+  color: var(--warning);
+}
+
+.text-danger {
+  color: var(--danger);
+}
+
+.bg-success {
+  background-color: var(--success);
+}
+
+.bg-warning {
+  background-color: var(--warning);
+}
+
+.bg-danger {
+  background-color: var(--danger);
+}
+
+.hover\:bg-primary-light:hover {
+  background-color: var(--primary-light);
+}
+
+.hover\:bg-secondary-light:hover {
+  background-color: var(--secondary-light);
+}
+
+/* ===== ESTILOS PARA INPUTS ===== */
+/* Asegurar que todos los inputs tengan texto negro y bien visible */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"],
+textarea,
+select {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+  opacity: 1 !important;
+}
+
+/* Placeholder con color más suave pero legible */
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+/* Para navegadores WebKit (Chrome, Safari, Edge) */
+input::-webkit-input-placeholder,
+textarea::-webkit-input-placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+/* Para Firefox */
+input::-moz-placeholder,
+textarea::-moz-placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+/* Para Edge */
+input::-ms-input-placeholder,
+textarea::-ms-input-placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+/* Inputs deshabilitados */
+input:disabled,
+textarea:disabled,
+select:disabled {
+  color: #6b7280 !important;
+  -webkit-text-fill-color: #6b7280 !important;
+  background-color: #f3f4f6 !important;
+  cursor: not-allowed;
+}
+
+/* Inputs en focus */
+input:focus,
+textarea:focus,
+select:focus {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+/* Para inputs de fecha en diferentes navegadores */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.5);
+}
+
+/* Para inputs de número - flechas */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
+}
+
+/* Autocompletar de navegadores (amarillo de Chrome) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+textarea:-webkit-autofill:active,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus,
+select:-webkit-autofill:active {
+  -webkit-text-fill-color: #000000 !important;
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.signature-canvas {
+  border: none;
+  display: block;
+}
+
+/* Para mobile */
+@media (max-width: 640px) {
+  .signature-canvas {
+    touch-action: none;
+  }
+}
