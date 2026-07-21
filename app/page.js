@@ -7,8 +7,14 @@ export default function Home() {
     <div className="flex flex-col min-h-screen">
 
       <section className="relative text-white py-16 md:py-20">
+        {/* Fondo para móvil: recorte pensado para pantallas verticales */}
         <div
-          className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat md:hidden"
+          style={{ backgroundImage: "url('/images/image-mobile.png')" }}
+        ></div>
+        {/* Fondo para escritorio: foto horizontal original */}
+        <div
+          className="absolute inset-0 z-0 hidden bg-cover bg-center bg-no-repeat md:block"
           style={{ backgroundImage: "url('/images/image.png')" }}
         ></div>
 

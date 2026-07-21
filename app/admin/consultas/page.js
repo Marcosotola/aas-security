@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Home, LogOut, Search, Trash, MessageCircle, MailOpen, Mail } from 'lucide-react';
+import { Home, LogOut, Search, Trash, MessageCircle, MailOpen, Mail, Eye, X } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 import { obtenerConsultas, marcarConsultaLeida, eliminarConsulta } from '../../lib/firestore';
@@ -29,11 +29,17 @@ const construirLinkWhatsApp = (telefono) => {
   return `https://wa.me/${numero}`;
 };
 
+const formatearFecha = (fechaCreacion) => {
+  if (!fechaCreacion) return 'No disponible';
+  return new Date(fechaCreacion.toDate()).toLocaleString('es-AR');
+};
+
 export default function Consultas() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [consultas, setConsultas] = useState([]);
   const [filtro, setFiltro] = useState('');
+  const [consultaSeleccionada, setConsultaSeleccionada] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -75,6 +81,9 @@ export default function Consultas() {
       setConsultas(prev =>
         prev.map(c => c.id === consulta.id ? { ...c, leida: !consulta.leida } : c)
       );
+      setConsultaSeleccionada(prev =>
+        prev && prev.id === consulta.id ? { ...prev, leida: !consulta.leida } : prev
+      );
     } catch (error) {
       console.error('Error al actualizar consulta:', error);
       alert('Error al actualizar la consulta. Inténtelo de nuevo más tarde.');
@@ -86,10 +95,18 @@ export default function Consultas() {
       try {
         await eliminarConsulta(id);
         setConsultas(prev => prev.filter(c => c.id !== id));
+        setConsultaSeleccionada(prev => (prev && prev.id === id ? null : prev));
       } catch (error) {
         console.error('Error al eliminar consulta:', error);
         alert('Error al eliminar la consulta. Inténtelo de nuevo más tarde.');
       }
+    }
+  };
+
+  const abrirConsulta = (consulta) => {
+    setConsultaSeleccionada(consulta);
+    if (!consulta.leida) {
+      handleToggleLeida(consulta);
     }
   };
 
@@ -164,7 +181,7 @@ export default function Consultas() {
           )}
         </div>
 
-        <div className="p-6 mb-8 bg-white rounded-lg shadow-md">
+        <div className="p-4 mb-8 bg-white rounded-lg shadow-md md:p-6">
           <div className="relative flex items-center mb-6">
             <Search size={18} className="absolute text-gray-400 left-3" />
             <input
@@ -176,104 +193,173 @@ export default function Consultas() {
             />
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                    Estado
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                    Nombre
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                    Teléfono
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                    Consulta
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                    Fecha
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {consultasFiltradas.length > 0 ? (
-                  consultasFiltradas.map((consulta) => {
-                    const linkWhatsApp = construirLinkWhatsApp(consulta.telefono);
-                    return (
-                      <tr key={consulta.id} className={!consulta.leida ? 'bg-blue-50' : ''}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            title={consulta.leida ? 'Leída' : 'No leída'}
-                            className={`inline-block w-2.5 h-2.5 rounded-full ${consulta.leida ? 'bg-gray-300' : 'bg-red-500'}`}
-                          ></span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className={`text-sm ${!consulta.leida ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>
-                            {consulta.nombre || 'N/A'}
+          {consultasFiltradas.length > 0 ? (
+            <>
+              {/* Lista tipo tarjeta: solo en mobile, con acciones grandes y separadas */}
+              <div className="space-y-4 md:hidden">
+                {consultasFiltradas.map((consulta) => {
+                  const linkWhatsApp = construirLinkWhatsApp(consulta.telefono);
+                  return (
+                    <div
+                      key={consulta.id}
+                      className={`rounded-lg border p-4 ${!consulta.leida ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'}`}
+                    >
+                      <button
+                        onClick={() => abrirConsulta(consulta)}
+                        className="w-full text-left"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span
+                              title={consulta.leida ? 'Leída' : 'No leída'}
+                              className={`inline-block w-2.5 h-2.5 rounded-full flex-shrink-0 ${consulta.leida ? 'bg-gray-300' : 'bg-red-500'}`}
+                            ></span>
+                            <span className={`text-base ${!consulta.leida ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>
+                              {consulta.nombre || 'N/A'}
+                            </span>
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{consulta.telefono || 'N/A'}</div>
-                        </td>
-                        <td className="px-6 py-4 max-w-xs">
-                          <div className="text-sm text-gray-700 line-clamp-2" title={consulta.mensaje}>
-                            {consulta.mensaje || ''}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">
-                            {consulta.fechaCreacion
-                              ? new Date(consulta.fechaCreacion.toDate()).toLocaleString('es-AR')
-                              : 'No disponible'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
-                          <div className="flex justify-end space-x-4">
-                            {linkWhatsApp && (
-                              <a
-                                href={linkWhatsApp}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                title="Abrir WhatsApp"
-                                className="text-green-600 hover:text-green-700"
+                          <span className="flex-shrink-0 text-xs text-gray-400">
+                            {formatearFecha(consulta.fechaCreacion)}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-sm text-gray-500">{consulta.telefono || 'N/A'}</div>
+                        <p className="mt-2 text-sm text-gray-700 line-clamp-2">{consulta.mensaje || ''}</p>
+                      </button>
+
+                      <div className="flex flex-wrap items-center gap-3 pt-3 mt-3 border-t border-gray-100">
+                        {linkWhatsApp && (
+                          <a
+                            href={linkWhatsApp}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-green-700 rounded-lg bg-green-50 active:bg-green-100"
+                          >
+                            <MessageCircle size={20} />
+                            WhatsApp
+                          </a>
+                        )}
+                        <button
+                          onClick={() => handleToggleLeida(consulta)}
+                          className="flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-lg text-secondary bg-secondary/10 active:bg-secondary/20"
+                        >
+                          {consulta.leida ? <Mail size={20} /> : <MailOpen size={20} />}
+                          {consulta.leida ? 'No leída' : 'Leída'}
+                        </button>
+                        <button
+                          onClick={() => handleEliminar(consulta.id)}
+                          className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-red-600 rounded-lg bg-red-50 active:bg-red-100"
+                        >
+                          <Trash size={20} />
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Tabla: solo en escritorio */}
+              <div className="hidden overflow-x-auto md:block">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                        Estado
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                        Nombre
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                        Teléfono
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                        Consulta
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                        Fecha
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">
+                        Acciones
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {consultasFiltradas.map((consulta) => {
+                      const linkWhatsApp = construirLinkWhatsApp(consulta.telefono);
+                      return (
+                        <tr key={consulta.id} className={!consulta.leida ? 'bg-blue-50' : ''}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              title={consulta.leida ? 'Leída' : 'No leída'}
+                              className={`inline-block w-2.5 h-2.5 rounded-full ${consulta.leida ? 'bg-gray-300' : 'bg-red-500'}`}
+                            ></span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className={`text-sm ${!consulta.leida ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>
+                              {consulta.nombre || 'N/A'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">{consulta.telefono || 'N/A'}</div>
+                          </td>
+                          <td className="px-6 py-4 max-w-xs">
+                            <div className="text-sm text-gray-700 line-clamp-2">
+                              {consulta.mensaje || ''}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">
+                              {formatearFecha(consulta.fechaCreacion)}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
+                            <div className="flex justify-end space-x-4">
+                              <button
+                                onClick={() => abrirConsulta(consulta)}
+                                title="Ver consulta completa"
+                                className="text-gray-600 hover:text-primary"
                               >
-                                <MessageCircle size={18} />
-                              </a>
-                            )}
-                            <button
-                              onClick={() => handleToggleLeida(consulta)}
-                              title={consulta.leida ? 'Marcar como no leída' : 'Marcar como leída'}
-                              className="text-secondary hover:text-secondary-light"
-                            >
-                              {consulta.leida ? <Mail size={18} /> : <MailOpen size={18} />}
-                            </button>
-                            <button
-                              onClick={() => handleEliminar(consulta.id)}
-                              title="Eliminar"
-                              className="text-red-500 cursor-pointer hover:text-red-700"
-                            >
-                              <Trash size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                      No hay consultas que coincidan con su búsqueda
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                                <Eye size={18} />
+                              </button>
+                              {linkWhatsApp && (
+                                <a
+                                  href={linkWhatsApp}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title="Abrir WhatsApp"
+                                  className="text-green-600 hover:text-green-700"
+                                >
+                                  <MessageCircle size={18} />
+                                </a>
+                              )}
+                              <button
+                                onClick={() => handleToggleLeida(consulta)}
+                                title={consulta.leida ? 'Marcar como no leída' : 'Marcar como leída'}
+                                className="text-secondary hover:text-secondary-light"
+                              >
+                                {consulta.leida ? <Mail size={18} /> : <MailOpen size={18} />}
+                              </button>
+                              <button
+                                onClick={() => handleEliminar(consulta.id)}
+                                title="Eliminar"
+                                className="text-red-500 cursor-pointer hover:text-red-700"
+                              >
+                                <Trash size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : (
+            <div className="py-10 text-center text-gray-500">
+              No hay consultas que coincidan con su búsqueda
+            </div>
+          )}
 
           {consultas.length === 0 && (
             <div className="py-10 text-center">
@@ -284,6 +370,73 @@ export default function Consultas() {
           )}
         </div>
       </div>
+
+      {/* Modal con el detalle completo de la consulta */}
+      {consultaSeleccionada && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center p-0 bg-black/50 sm:items-center sm:p-4"
+          onClick={() => setConsultaSeleccionada(null)}
+        >
+          <div
+            className="w-full max-w-lg p-6 bg-white shadow-xl rounded-t-2xl sm:rounded-2xl max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-bold font-montserrat text-primary">
+                  {consultaSeleccionada.nombre || 'N/A'}
+                </h3>
+                <p className="text-sm text-gray-500">{formatearFecha(consultaSeleccionada.fechaCreacion)}</p>
+              </div>
+              <button
+                onClick={() => setConsultaSeleccionada(null)}
+                className="p-2 text-gray-400 rounded-full hover:bg-gray-100 hover:text-gray-600"
+                aria-label="Cerrar"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="mb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase">Teléfono</p>
+              <p className="text-gray-800">{consultaSeleccionada.telefono || 'N/A'}</p>
+            </div>
+
+            <div className="mb-6">
+              <p className="mb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase">Consulta</p>
+              <p className="text-gray-800 whitespace-pre-wrap">{consultaSeleccionada.mensaje || ''}</p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              {construirLinkWhatsApp(consultaSeleccionada.telefono) && (
+                <a
+                  href={construirLinkWhatsApp(consultaSeleccionada.telefono)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-green-700 rounded-lg bg-green-50 active:bg-green-100"
+                >
+                  <MessageCircle size={20} />
+                  WhatsApp
+                </a>
+              )}
+              <button
+                onClick={() => handleToggleLeida(consultaSeleccionada)}
+                className="flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-lg text-secondary bg-secondary/10 active:bg-secondary/20"
+              >
+                {consultaSeleccionada.leida ? <Mail size={20} /> : <MailOpen size={20} />}
+                {consultaSeleccionada.leida ? 'Marcar como no leída' : 'Marcar como leída'}
+              </button>
+              <button
+                onClick={() => handleEliminar(consultaSeleccionada.id)}
+                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-red-600 rounded-lg bg-red-50 active:bg-red-100"
+              >
+                <Trash size={20} />
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
