@@ -49,7 +49,7 @@ const Header = () => {
   };
 
   return (
-    <header className={` fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-md py-1' : 'bg-transparent py-1'}`}>
+    <header className={` fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-md py-1' : 'bg-black/30 backdrop-blur-md py-1'}`}>
       <div className="container px-4 mx-auto">
         <div className="flex items-center justify-between">
 

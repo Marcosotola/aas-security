@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { Mail, Phone, MapPin, Send, Clock } from 'lucide-react';
+import { crearConsulta } from '../lib/firestore';
 
 export default function Contacto() {
   const [formData, setFormData] = useState({
     nombre: '',
-    email: '',
     telefono: '',
     mensaje: ''
   });
@@ -25,30 +25,25 @@ export default function Contacto() {
     setIsSubmitting(true);
     setSubmitMessage('');
     setSubmitError(false);
-  
+
     try {
-      const response = await fetch('/api/contacto', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+      await crearConsulta({
+        nombre: formData.nombre,
+        telefono: formData.telefono,
+        mensaje: formData.mensaje,
+        origen: 'contacto'
       });
-  
-      const result = await response.json();
-  
-      if (result.success) {
-        setSubmitMessage('¡Mensaje enviado correctamente! Nos pondremos en contacto pronto.');
-        setFormData({ nombre: '', email: '', telefono: '', mensaje: '' });
-      } else {
-        throw new Error(result.error || 'Error desconocido');
-      }
+
+      setSubmitMessage('¡Consulta enviada correctamente! Nos pondremos en contacto pronto.');
+      setFormData({ nombre: '', telefono: '', mensaje: '' });
     } catch (error) {
       setSubmitError(true);
-      setSubmitMessage('Ocurrió un error al enviar el mensaje. Por favor, intente nuevamente.');
+      setSubmitMessage('Ocurrió un error al enviar la consulta. Por favor, intente nuevamente.');
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
 
   return (
     <div>
@@ -74,25 +69,12 @@ export default function Contacto() {
 
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
-                <label htmlFor="nombre" className="block mb-2 font-medium">Nombre completo</label>
+                <label htmlFor="nombre" className="block mb-2 font-medium">Nombre y apellido</label>
                 <input
                   type="text"
                   id="nombre"
                   name="nombre"
                   value={formData.nombre}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label htmlFor="email" className="block mb-2 font-medium">Correo electrónico</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
                   onChange={handleChange}
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
                   required
@@ -108,11 +90,12 @@ export default function Contacto() {
                   value={formData.telefono}
                   onChange={handleChange}
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  required
                 />
               </div>
 
               <div className="mb-6">
-                <label htmlFor="mensaje" className="block mb-2 font-medium">Mensaje</label>
+                <label htmlFor="mensaje" className="block mb-2 font-medium">Descripción de la consulta</label>
                 <textarea
                   id="mensaje"
                   name="mensaje"
@@ -131,7 +114,7 @@ export default function Contacto() {
               >
                 {isSubmitting ? 'Enviando...' : (
                   <>
-                    Enviar mensaje
+                    Enviar consulta
                     <Send size={18} className="ml-2" />
                   </>
                 )}
@@ -147,7 +130,7 @@ export default function Contacto() {
                 <Phone className="mt-1 mr-4 text-primary" />
                 <div>
                   <h3 className="font-medium">Teléfono</h3>
-                  <p className="text-gray-600">(351) 681 0777</p>
+                  <p className="text-gray-600">(351) 311 2962</p>
                 </div>
               </div>
 
@@ -163,7 +146,7 @@ export default function Contacto() {
                 <MapPin className="mt-1 mr-4 text-primary" />
                 <div>
                   <h3 className="font-medium">Dirección</h3>
-                  <p className="text-gray-600">Av. Luciano Torrent 4800</p>
+                  <p className="text-gray-600">Ceferino Namuncura 5400</p>
                   <p className="text-gray-600">5000 Córdoba, Argentina</p>
                 </div>
               </div>

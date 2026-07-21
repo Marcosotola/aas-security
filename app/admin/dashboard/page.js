@@ -22,7 +22,8 @@ import {
   X,
   Clock,
   AlertCircle,
-  File
+  File,
+  MessageCircle
 } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
@@ -37,7 +38,9 @@ export default function Dashboard() {
     estados: 0,
     remitos: 0,
     recibos: 0,
-    documentos: 0
+    documentos: 0,
+    consultas: 0,
+    consultasNoLeidas: 0
   });
   const router = useRouter();
 
@@ -77,12 +80,21 @@ export default function Dashboard() {
       const documentosRef = collection(db, 'documentos');
       const documentosSnapshot = await getDocs(documentosRef);
 
+      // Total de consultas y consultas sin leer
+      const consultasRef = collection(db, 'consultas');
+      const consultasSnapshot = await getDocs(consultasRef);
+      const consultasNoLeidasSnapshot = await getDocs(
+        query(consultasRef, where('leida', '==', false))
+      );
+
       setTotales({
         presupuestos: presupuestosSnapshot.size,
         estados: estadosSnapshot.size,
         remitos: remitosSnapshot.size,
         recibos: recibosSnapshot.size,
-        documentos: documentosSnapshot.size
+        documentos: documentosSnapshot.size,
+        consultas: consultasSnapshot.size,
+        consultasNoLeidas: consultasNoLeidasSnapshot.size
       });
     } catch (error) {
       console.error('Error al cargar totales:', error);
@@ -188,6 +200,22 @@ export default function Dashboard() {
       },
       activo: true,
       proximamente: false
+    },
+    {
+      id: 'consultas',
+      titulo: 'Consultas',
+      icono: MessageCircle,
+      color: 'bg-emerald-600', // Distinto al resto para destacarlo
+      colorClaro: 'bg-emerald-100',
+      colorTexto: 'text-emerald-600',
+      descripcion: 'Consultas recibidas desde la web',
+      total: totales.consultas,
+      badge: totales.consultasNoLeidas,
+      rutas: {
+        historial: '/admin/consultas'
+      },
+      activo: true,
+      sinNuevo: true
     }
   ];
 
@@ -232,10 +260,19 @@ export default function Dashboard() {
               </Link>
               {modulos.filter(m => m.activo).map(modulo => (
                 <div key={modulo.id} className="py-2">
-                  <p className="font-semibold text-gray-800">{modulo.titulo}</p>
-                  <Link href={modulo.rutas.nuevo} className="block py-1 pl-4 text-gray-600 hover:text-primary">
-                    Nuevo
-                  </Link>
+                  <p className="flex items-center font-semibold text-gray-800">
+                    {modulo.titulo}
+                    {modulo.badge > 0 && (
+                      <span className="ml-2 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                        {modulo.badge}
+                      </span>
+                    )}
+                  </p>
+                  {modulo.rutas.nuevo && (
+                    <Link href={modulo.rutas.nuevo} className="block py-1 pl-4 text-gray-600 hover:text-primary">
+                      Nuevo
+                    </Link>
+                  )}
                   <Link href={modulo.rutas.historial} className="block py-1 pl-4 text-gray-600 hover:text-primary">
                     Historial
                   </Link>
@@ -280,8 +317,13 @@ export default function Dashboard() {
 
                 <div className={`p-4 md:p-6 ${modulo.activo ? modulo.color : 'bg-gray-300'} text-white h-full flex flex-col`}>
                   <div className="flex items-start justify-between mb-2 md:mb-4">
-                    <div className={`p-2.5 rounded-xl bg-white/20 shadow-inner`}>
+                    <div className="relative p-2.5 rounded-xl bg-white/20 shadow-inner">
                       <Icono size={32} className="md:w-10 md:h-10" />
+                      {modulo.badge > 0 && (
+                        <span className="absolute flex items-center justify-center min-w-[20px] h-5 px-1 text-[11px] font-bold text-white bg-red-500 border-2 border-white rounded-full -top-2 -right-2">
+                          {modulo.badge}
+                        </span>
+                      )}
                     </div>
                     <div className="text-right">
                       <p className="text-xl font-bold leading-none md:text-2xl">{modulo.total}</p>
@@ -292,7 +334,7 @@ export default function Dashboard() {
                   <h4 className="text-base font-bold leading-tight md:text-lg">{modulo.titulo}</h4>
                   <p className="hidden mt-1 text-sm md:block opacity-90 line-clamp-2">{modulo.descripcion}</p>
 
-                  {modulo.activo && (
+                  {modulo.activo && !modulo.sinNuevo && (
                     <div className="flex items-center justify-center mt-auto pt-3 md:pt-4 border-t border-white/10">
                       <span
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = modulo.rutas.nuevo; }}
@@ -300,6 +342,14 @@ export default function Dashboard() {
                       >
                         <FilePlus size={24} className="mr-2 md:w-7 md:h-7" />
                         <span>Nuevo</span>
+                      </span>
+                    </div>
+                  )}
+                  {modulo.activo && modulo.sinNuevo && (
+                    <div className="flex items-center justify-center mt-auto pt-3 md:pt-4 border-t border-white/10">
+                      <span className="flex items-center text-sm md:text-lg font-bold bg-white/20 px-4 py-2 rounded-xl">
+                        <MessageCircle size={24} className="mr-2 md:w-7 md:h-7" />
+                        <span>Ver consultas</span>
                       </span>
                     </div>
                   )}

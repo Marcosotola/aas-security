@@ -115,7 +115,7 @@ const DocumentoPDF = ({ documento }) => {
           </View>
           <View style={styles.headerInfo}>
             <Text>CUIT: 20-24471842-7</Text>
-            <Text>Tel: (351) 681 0777</Text>
+            <Text>Tel: (351) 311 2962</Text>
             <Text>contacto@aassecurity.com.ar</Text>
           </View>
         </View>
@@ -134,7 +134,7 @@ const DocumentoPDF = ({ documento }) => {
 
         {/* Pie de página con numeración */}
         <View style={styles.footer} fixed>
-          <Text>AAS Security - Av. Luciano Torrent 4800, 5000 - Córdoba</Text>
+          <Text>AAS Security - Ceferino Namuncura 5400, 5000 - Córdoba</Text>
           <Text style={{ marginTop: 5 }} render={({ pageNumber, totalPages }) => (
             `Hoja ${pageNumber} de ${totalPages}`
           )} />

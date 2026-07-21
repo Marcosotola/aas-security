@@ -180,7 +180,7 @@ const RemitoPDF = ({ remito }) => {
           </View>
           <View style={styles.headerInfo}>
             <Text>Email: contacto@aassecurity.com.ar</Text>
-            <Text>Teléfono: (351) 681 0777</Text>
+            <Text>Teléfono: (351) 311 2962</Text>
             <Text>Web: www.aassecurity.com.ar</Text>
           </View>
         </View>
@@ -286,7 +286,7 @@ const RemitoPDF = ({ remito }) => {
         {/* Pie de página con numeración */}
         <View style={styles.footer} fixed>
           <Text>AAS Security - CUIT: 20-24471842-7</Text>
-          <Text>Av. Luciano Torrent 4800, 5000 - Córdoba - Tel: (351) 681 0777 - www.aassecurity.com.ar</Text>
+          <Text>Ceferino Namuncura 5400, 5000 - Córdoba - Tel: (351) 311 2962 - www.aassecurity.com.ar</Text>
           <Text style={{ marginTop: 5 }} render={({ pageNumber, totalPages }) => (
             `Hoja ${pageNumber} de ${totalPages}`
           )} />

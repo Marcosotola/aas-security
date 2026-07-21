@@ -212,7 +212,7 @@ export default function VerRemito({ params }) {
             </div>
             <div className="text-xs text-right text-gray-700">
               <div>Email: contacto@aassecurity.com.ar</div>
-              <div>Teléfono: (351) 681 0777</div>
+              <div>Teléfono: (351) 311 2962</div>
               <div>Web: www.aassecurity.com.ar</div>
             </div>
           </div>
@@ -319,7 +319,7 @@ export default function VerRemito({ params }) {
           {/* Pie de página */}
           <div className="px-8 py-4 text-xs text-center text-gray-600 border-t border-blue-800">
             <div>AAS Security - CUIT: 20-24471842-7</div>
-            <div>Av. Luciano Torrent 4800, 5000 - Córdoba - Tel: (351) 681 0777 - www.aassecurity.com.ar</div>
+            <div>Ceferino Namuncura 5400, 5000 - Córdoba - Tel: (351) 311 2962 - www.aassecurity.com.ar</div>
           </div>
         </div>
       </div>

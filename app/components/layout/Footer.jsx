@@ -12,7 +12,7 @@ const Footer = () => {
             <p className="mb-4">Especialistas en detección y extinción de incendios, matafuegos y seguridad integral para consorcios, hogares, comercios e industrias.</p>
             <div className="flex items-center mb-2">
               <Phone size={16} className="mr-2" />
-              <span>(351) 681 0777</span>
+              <span>(351) 311 2962</span>
             </div>
             <div className="flex items-center mb-2">
               <Mail size={16} className="mr-2" />
@@ -20,7 +20,7 @@ const Footer = () => {
             </div>
             <div className="flex items-start mb-2">
               <MapPin size={16} className="mt-1 mr-2" />
-              <span>Av. Luciano Torrent 4800, 5000 - Cordoba, Argentina</span>
+              <span>Ceferino Namuncura 5400, 5000 - Cordoba, Argentina</span>
             </div>
           </div>
 
@@ -83,7 +83,7 @@ const Footer = () => {
           <p>&copy; {new Date().getFullYear()} AAS Security. Todos los derechos reservados.</p>
           <Link 
           href='/admin'
-          className='px-6 py-6 font-bold '>De: Martin Sotola</Link>
+          className='px-6 py-6 font-bold '>De: Alex Alan Spitel</Link>
         </div>
       </div>
     </footer>

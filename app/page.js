@@ -175,7 +175,7 @@ export default function Home() {
               Solicitar presupuesto
             </Link>
             <a
-              href="tel:+5493516810777"
+              href="tel:+5493513112962"
               className="border border-white text-white px-6 py-3 rounded-md font-medium hover:bg-white/10 transition-colors"
             >
               Llamar ahora

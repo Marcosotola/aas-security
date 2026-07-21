@@ -25,6 +25,7 @@ const getCollection = (name) => {
 const presupuestosCollection = db ? collection(db, 'presupuestos') : null;
 const estadosCollection = db ? collection(db, 'estados') : null;
 const remitosCollection = db ? collection(db, 'remitos') : null;
+const consultasCollection = db ? collection(db, 'consultas') : null;
 
 // ========== FUNCIONES PARA PRESUPUESTOS ==========
 
@@ -330,12 +331,83 @@ export const actualizarRecibo = async (id, reciboData) => {
   }
 };
 
-// Función para eliminar un recibo  
+// Función para eliminar un recibo
 export const eliminarRecibo = async (id) => {
   try {
     await deleteDoc(doc(db, 'recibos', id));
   } catch (error) {
     console.error('Error al eliminar recibo:', error);
     throw error;
+  }
+};
+
+// ========== FUNCIONES PARA CONSULTAS (formulario público de contacto) ==========
+
+// Crear una nueva consulta (usado por el formulario público, sin autenticación)
+export const crearConsulta = async (consultaData) => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const docRef = await addDoc(consultasCollection, {
+      ...consultaData,
+      leida: false,
+      fechaCreacion: serverTimestamp(),
+    });
+    return { id: docRef.id };
+  } catch (error) {
+    console.error('Error al crear consulta:', error);
+    throw error;
+  }
+};
+
+// Obtener todas las consultas
+export const obtenerConsultas = async () => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const q = query(consultasCollection, orderBy('fechaCreacion', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error al obtener consultas:', error);
+    throw error;
+  }
+};
+
+// Marcar una consulta como leída o no leída
+export const marcarConsultaLeida = async (id, leida = true) => {
+  try {
+    const docRef = doc(db, 'consultas', id);
+    await updateDoc(docRef, { leida });
+    return { id };
+  } catch (error) {
+    console.error('Error al actualizar consulta:', error);
+    throw error;
+  }
+};
+
+// Eliminar una consulta
+export const eliminarConsulta = async (id) => {
+  try {
+    const docRef = doc(db, 'consultas', id);
+    await deleteDoc(docRef);
+    return { id };
+  } catch (error) {
+    console.error('Error al eliminar consulta:', error);
+    throw error;
+  }
+};
+
+// Contar las consultas no leídas (para el badge del panel admin)
+export const contarConsultasNoLeidas = async () => {
+  try {
+    if (!db) return 0;
+    const q = query(consultasCollection, where('leida', '==', false));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.size;
+  } catch (error) {
+    console.error('Error al contar consultas no leídas:', error);
+    return 0;
   }
 };
