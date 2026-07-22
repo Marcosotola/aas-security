@@ -306,8 +306,8 @@ export default function EditarRemito({ params }) {
                 <input
                   type="text"
                   value={remito.numero}
-                  disabled
-                  className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md"
+                  onChange={(e) => setRemito({ ...remito, numero: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
               <div>

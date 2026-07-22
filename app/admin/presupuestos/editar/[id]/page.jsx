@@ -352,9 +352,9 @@ export default function EditarPresupuesto({ params }) {
                 <label className="block mb-1 text-sm font-medium text-gray-700">Número</label>
                 <input 
                   type="text" 
-                  value={presupuesto.numero} 
-                  disabled 
-                  className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md"
+                  value={presupuesto.numero}
+                  onChange={(e) => setPresupuesto({ ...presupuesto, numero: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
               <div>

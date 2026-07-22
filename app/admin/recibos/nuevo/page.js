@@ -70,6 +70,7 @@ export default function NuevoRecibo() {
   const [loading, setLoading] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [showCanvas, setShowCanvas] = useState(true);
+  const [canvasSize, setCanvasSize] = useState({ width: 500, height: 200 });
   const sigCanvas = useRef({});
 
   // Estado para el modal de concepto
@@ -102,6 +103,27 @@ export default function NuevoRecibo() {
 
     return () => unsubscribe();
   }, [router]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const container = document.querySelector('.signature-container');
+      if (container) {
+        setCanvasSize({
+          width: container.offsetWidth - 4,
+          height: 200
+        });
+      }
+    };
+
+    if (showCanvas) {
+      handleResize();
+      window.addEventListener('resize', handleResize);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [showCanvas]);
 
   // Función para abrir el modal de concepto
   const abrirModalConcepto = () => {
@@ -281,8 +303,8 @@ export default function NuevoRecibo() {
                 <input
                   type="text"
                   value={recibo.numero}
-                  disabled
-                  className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md"
+                  onChange={(e) => setRecibo({ ...recibo, numero: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
               <div>
@@ -394,14 +416,14 @@ export default function NuevoRecibo() {
               </div>
             ) : (
               <div>
-                <div className="mb-4 overflow-hidden border-2 border-gray-300 rounded-md" style={{ width: '100%', maxWidth: '500px', margin: '0 auto' }}>
+                <div className="mb-4 overflow-hidden border-2 border-gray-300 rounded-md signature-container" style={{ width: '100%', maxWidth: '500px', margin: '0 auto' }}>
                   <SignatureCanvas
                     ref={sigCanvas}
                     canvasProps={{
-                      width: 500,
-                      height: 200,
+                      width: canvasSize.width,
+                      height: canvasSize.height,
                       className: 'signature-canvas',
-                      style: { width: '100%', height: 'auto' }
+                      style: { width: '100%', height: 'auto', display: 'block' }
                     }}
                     backgroundColor="#f9f9f9"
                   />
