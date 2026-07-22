@@ -37,11 +37,12 @@
   --color-gray-900: #000000;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* El sitio no tiene un tema oscuro implementado (no se usan variantes dark: de Tailwind).
+   Se fuerza color-scheme: light para que los controles nativos del navegador (select, inputs
+   de fecha, checkboxes) no adopten la paleta oscura del sistema operativo del usuario, lo que
+   antes producía textos y placeholders casi invisibles en navegadores/SO con modo oscuro. */
+:root {
+  color-scheme: light;
 }
 
 body {
