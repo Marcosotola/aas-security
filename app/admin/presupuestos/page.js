@@ -1,21 +1,29 @@
 // app/admin/presupuestos/page.jsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FilePlus, FileText, Home, LogOut, Search, Download, Edit, Trash, Eye } from 'lucide-react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { FilePlus, FileText, Home, LogOut, Search, Download, Edit, Trash, Eye, ChevronDown } from 'lucide-react';
+import { signOut } from 'firebase/auth';
 import { collection, getDocs, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
+import { actualizarPresupuesto } from '../../lib/firestore';
+import { useStaffAuth } from '../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import PresupuestoPDF from '../../components/pdf/PresupuestoPDF';
+import PortalDropdown from '../../components/PortalDropdown';
+
+const ESTADOS_PRESUPUESTO = ['Pendiente', 'Aprobado', 'Rechazado'];
 
 export default function HistorialPresupuestos() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const [loadingData, setLoadingData] = useState(true);
   const [presupuestos, setPresupuestos] = useState([]);
   const [filtro, setFiltro] = useState('');
+  const [estadoMenuAbierto, setEstadoMenuAbierto] = useState(null);
+  const [actualizandoEstado, setActualizandoEstado] = useState(null);
+  const estadoBtnRefs = useRef({});
   const router = useRouter();
 
 
@@ -40,21 +48,13 @@ export default function HistorialPresupuestos() {
     total: 0
   });
 
-  useEffect(() => {
-    // Verificar autenticación con Firebase
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        await cargarPresupuestos();
-        setLoading(false);
-      } else {
-        router.push('/admin');
-      }
-    });
+  const loading = loadingAuth || loadingData;
 
-    // Limpiar la suscripción al desmontar
-    return () => unsubscribe();
-  }, [router]);
+  useEffect(() => {
+    if (!user) return;
+    cargarPresupuestos().then(() => setLoadingData(false));
+  }, [user]);
+
 
   const cargarPresupuestos = async () => {
     try {
@@ -97,6 +97,26 @@ export default function HistorialPresupuestos() {
         console.error('Error al eliminar presupuesto:', error);
         alert('Error al eliminar el presupuesto. Inténtelo de nuevo más tarde.');
       }
+    }
+  };
+
+  const handleCambiarEstado = async (id, nuevoEstado) => {
+    const actual = presupuestos.find(p => p.id === id);
+    if (!actual || (actual.estado || 'Pendiente') === nuevoEstado) {
+      setEstadoMenuAbierto(null);
+      return;
+    }
+
+    setActualizandoEstado(id);
+    try {
+      await actualizarPresupuesto(id, { estado: nuevoEstado });
+      setPresupuestos(presupuestos.map(p => p.id === id ? { ...p, estado: nuevoEstado } : p));
+    } catch (error) {
+      console.error('Error al cambiar el estado:', error);
+      alert('Error al cambiar el estado del presupuesto.');
+    } finally {
+      setActualizandoEstado(null);
+      setEstadoMenuAbierto(null);
     }
   };
 
@@ -154,7 +174,7 @@ export default function HistorialPresupuestos() {
               href="/admin/dashboard"
               className="flex items-center mr-4 text-primary hover:underline"
             >
-              <Home size={16} className="mr-1" /> Dashboard
+              <Home size={16} className="mr-1" /> Panel
             </Link>
             <span className="mx-2 text-gray-500">/</span>
             <span className="text-gray-700">Historial de Presupuestos</span>
@@ -233,12 +253,38 @@ export default function HistorialPresupuestos() {
                         ${presupuesto.total ? presupuesto.total.toLocaleString() : '0.00'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                          ${presupuesto.estado === 'Aprobado' ? 'bg-green-100 text-green-800' :
-                            presupuesto.estado === 'Rechazado' ? 'bg-red-100 text-red-800' :
-                              'bg-yellow-100 text-yellow-800'}`}>
+                        <button
+                          type="button"
+                          ref={(el) => { estadoBtnRefs.current[presupuesto.id] = el; }}
+                          onClick={() => setEstadoMenuAbierto(estadoMenuAbierto === presupuesto.id ? null : presupuesto.id)}
+                          disabled={actualizandoEstado === presupuesto.id}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs leading-5 font-semibold rounded-full transition-opacity hover:opacity-80 disabled:opacity-50
+                            ${presupuesto.estado === 'Aprobado' ? 'bg-green-100 text-green-800' :
+                              presupuesto.estado === 'Rechazado' ? 'bg-red-100 text-red-800' :
+                                'bg-yellow-100 text-yellow-800'}`}
+                        >
                           {presupuesto.estado || 'Pendiente'}
-                        </span>
+                          <ChevronDown size={12} />
+                        </button>
+
+                        <PortalDropdown
+                          open={estadoMenuAbierto === presupuesto.id}
+                          anchorRef={{ current: estadoBtnRefs.current[presupuesto.id] }}
+                          onClose={() => setEstadoMenuAbierto(null)}
+                          width={144}
+                        >
+                          {ESTADOS_PRESUPUESTO.map((opcion) => (
+                            <button
+                              key={opcion}
+                              type="button"
+                              onClick={() => handleCambiarEstado(presupuesto.id, opcion)}
+                              className={`flex items-center w-full gap-2 px-3 py-2 text-xs text-left hover:bg-gray-50 ${(presupuesto.estado || 'Pendiente') === opcion ? 'font-semibold text-primary' : 'text-gray-700'}`}
+                            >
+                              <span className={`w-2 h-2 rounded-full ${opcion === 'Aprobado' ? 'bg-green-500' : opcion === 'Rechazado' ? 'bg-red-500' : 'bg-yellow-500'}`}></span>
+                              {opcion}
+                            </button>
+                          ))}
+                        </PortalDropdown>
                       </td>
                       <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                         <div className="flex justify-end space-x-4">
@@ -260,20 +306,16 @@ export default function HistorialPresupuestos() {
                             <Download size={18} />
                           </button> */}
 
-                          <button
+                          <PDFDownloadLink
+                            document={<PresupuestoPDF presupuesto={presupuesto} />}
+                            fileName={`${presupuesto.numero}.pdf`}
                             title="Descargar PDF"
                             className="text-primary hover:text-primary-light"
                           >
-                            <PDFDownloadLink
-                              document={<PresupuestoPDF presupuesto={presupuesto} />}
-                              fileName={`${presupuesto.numero}.pdf`}
-                              className="text-primary hover:text-primary-light"
-                            >
-                              {({ blob, url, loading, error }) =>
-                                <Download size={18} className={loading ? "animate-pulse" : ""} />
-                              }
-                            </PDFDownloadLink>
-                          </button>
+                            {({ loading }) =>
+                              <Download size={18} className={loading ? "animate-pulse" : ""} />
+                            }
+                          </PDFDownloadLink>
 
                           <Link
                             href={`/admin/presupuestos/editar/${presupuesto.id}`}

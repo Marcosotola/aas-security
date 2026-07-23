@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, LogOut, Edit, ArrowLeft, Download } from 'lucide-react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth, db } from '../../../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { use } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import DocumentoPDF from '../../../components/pdf/DocumentoPDF';
@@ -16,39 +17,33 @@ export default function VerDocumento({ params }) {
   const id = resolvedParams.id;
 
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const [loadingData, setLoadingData] = useState(true);
   const [documento, setDocumento] = useState(null);
+  const loading = loadingAuth || loadingData;
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !user) return;
 
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        try {
-          const docRef = doc(db, 'documentos', id);
-          const docSnap = await getDoc(docRef);
+    (async () => {
+      try {
+        const docRef = doc(db, 'documentos', id);
+        const docSnap = await getDoc(docRef);
 
-          if (docSnap.exists()) {
-            setDocumento({ id: docSnap.id, ...docSnap.data() });
-          } else {
-            alert('Documento no encontrado');
-            router.push('/admin/documentos');
-          }
-          setLoading(false);
-        } catch (error) {
-          console.error('Error al cargar documento:', error);
-          alert('Error al cargar los datos del documento.');
+        if (docSnap.exists()) {
+          setDocumento({ id: docSnap.id, ...docSnap.data() });
+        } else {
+          alert('Documento no encontrado');
           router.push('/admin/documentos');
         }
-      } else {
-        router.push('/admin');
+        setLoadingData(false);
+      } catch (error) {
+        console.error('Error al cargar documento:', error);
+        alert('Error al cargar los datos del documento.');
+        router.push('/admin/documentos');
       }
-    });
-
-    return () => unsubscribe();
-  }, [id, router]);
+    })();
+  }, [id, user, router]);
 
   const handleLogout = async () => {
     try {
@@ -101,7 +96,7 @@ export default function VerDocumento({ params }) {
               href="/admin/dashboard"
               className="flex items-center mr-4 text-primary hover:underline"
             >
-              <Home size={16} className="mr-1" /> Dashboard
+              <Home size={16} className="mr-1" /> Panel
             </Link>
             <span className="mx-2 text-gray-500">/</span>
             <Link

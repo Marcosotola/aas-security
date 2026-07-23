@@ -1,16 +1,17 @@
 // lib/firestore.js
-import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  doc, 
-  getDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  orderBy, 
+import {
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  orderBy,
   where,
-  serverTimestamp 
+  serverTimestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -26,6 +27,8 @@ const presupuestosCollection = db ? collection(db, 'presupuestos') : null;
 const estadosCollection = db ? collection(db, 'estados') : null;
 const remitosCollection = db ? collection(db, 'remitos') : null;
 const consultasCollection = db ? collection(db, 'consultas') : null;
+const listaPreciosCollection = db ? collection(db, 'listaPrecios') : null;
+const usuariosCollection = db ? collection(db, 'usuarios') : null;
 
 // ========== FUNCIONES PARA PRESUPUESTOS ==========
 
@@ -399,6 +402,67 @@ export const eliminarConsulta = async (id) => {
   }
 };
 
+// ========== FUNCIONES PARA LISTA DE PRECIOS (catálogo de items) ==========
+
+// Crear un item del catálogo
+export const crearItemPrecio = async (itemData) => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const docRef = await addDoc(listaPreciosCollection, {
+      ...itemData,
+      fechaCreacion: serverTimestamp(),
+    });
+    return { id: docRef.id };
+  } catch (error) {
+    console.error('Error al crear item de la lista de precios:', error);
+    throw error;
+  }
+};
+
+// Obtener todos los items del catálogo, ordenados alfabéticamente
+export const obtenerListaPrecios = async () => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const q = query(listaPreciosCollection, orderBy('descripcion', 'asc'));
+    const querySnapshot = await getDocs(q);
+
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error al obtener la lista de precios:', error);
+    throw error;
+  }
+};
+
+// Actualizar un item del catálogo
+export const actualizarItemPrecio = async (id, datosActualizados) => {
+  try {
+    const docRef = doc(db, 'listaPrecios', id);
+    await updateDoc(docRef, {
+      ...datosActualizados,
+      fechaActualizacion: serverTimestamp()
+    });
+    return { id };
+  } catch (error) {
+    console.error('Error al actualizar item de la lista de precios:', error);
+    throw error;
+  }
+};
+
+// Eliminar un item del catálogo
+export const eliminarItemPrecio = async (id) => {
+  try {
+    const docRef = doc(db, 'listaPrecios', id);
+    await deleteDoc(docRef);
+    return { id };
+  } catch (error) {
+    console.error('Error al eliminar item de la lista de precios:', error);
+    throw error;
+  }
+};
+
 // Contar las consultas no leídas (para el badge del panel admin)
 export const contarConsultasNoLeidas = async () => {
   try {
@@ -411,3 +475,118 @@ export const contarConsultasNoLeidas = async () => {
     return 0;
   }
 };
+
+// ========== FUNCIONES PARA USUARIOS (clientes, técnicos y admins) ==========
+// El id del documento es siempre el UID de Firebase Auth del usuario.
+
+// Crea el documento de usuario al registrarse. Rol fijo en 'Cliente':
+// el auto-registro público nunca puede asignarse Admin ni Tecnico (eso lo
+// hace un Admin después, desde /admin/usuarios).
+export const crearUsuario = async (uid, datos) => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const docRef = doc(db, 'usuarios', uid);
+    await setDoc(docRef, {
+      ...datos,
+      role: 'Cliente',
+      sedes: datos.sedes || [],
+      fechaCreacion: serverTimestamp()
+    });
+    return { id: uid };
+  } catch (error) {
+    console.error('Error al crear usuario:', error);
+    throw error;
+  }
+};
+
+// Auto-provisiona como Admin una cuenta de Firebase Auth creada manualmente
+// antes de que existiera esta colección de roles (ver useStaffAuth.js).
+// A diferencia de crearUsuario, acá el rol SÍ se pasa explícito: solo se usa
+// para las cuentas históricas permitidas por firestore.rules.
+export const crearUsuarioStaffHistorico = async (uid, email) => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const docRef = doc(db, 'usuarios', uid);
+    await setDoc(docRef, {
+      email,
+      role: 'Admin',
+      sedes: [],
+      fechaCreacion: serverTimestamp()
+    });
+    return { id: uid };
+  } catch (error) {
+    console.error('Error al auto-provisionar cuenta histórica:', error);
+    throw error;
+  }
+};
+
+// Obtener el perfil de un usuario por su UID
+export const obtenerUsuarioPorId = async (uid) => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const docRef = doc(db, 'usuarios', uid);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error al obtener usuario:', error);
+    throw error;
+  }
+};
+
+// Obtener todos los usuarios (uso interno del panel admin)
+export const obtenerUsuarios = async () => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const q = query(usuariosCollection, orderBy('fechaCreacion', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error al obtener usuarios:', error);
+    throw error;
+  }
+};
+
+// Obtener solo los usuarios con rol Cliente (para el selector de cliente + sede en documentos)
+export const obtenerClientes = async () => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const q = query(usuariosCollection, where('role', '==', 'Cliente'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error al obtener clientes:', error);
+    throw error;
+  }
+};
+
+// Actualizar datos de un usuario (perfil, sedes, o rol desde /admin/usuarios)
+export const actualizarUsuario = async (uid, datosActualizados) => {
+  try {
+    const docRef = doc(db, 'usuarios', uid);
+    await updateDoc(docRef, {
+      ...datosActualizados,
+      fechaActualizacion: serverTimestamp()
+    });
+    return { id: uid };
+  } catch (error) {
+    console.error('Error al actualizar usuario:', error);
+    throw error;
+  }
+};
+
+// ========== DOCUMENTOS DE UN CLIENTE (portal /cuenta) ==========
+
+const obtenerColeccionPorCliente = async (nombreColeccion, clienteId) => {
+  if (!db) throw new Error('Firebase no está configurado');
+  const q = query(collection(db, nombreColeccion), where('clienteId', '==', clienteId));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};
+
+export const obtenerPresupuestosPorCliente = (clienteId) => obtenerColeccionPorCliente('presupuestos', clienteId);
+export const obtenerRemitosPorCliente = (clienteId) => obtenerColeccionPorCliente('remitos', clienteId);
+export const obtenerRecibosPorCliente = (clienteId) => obtenerColeccionPorCliente('recibos', clienteId);

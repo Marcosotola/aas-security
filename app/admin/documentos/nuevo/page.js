@@ -4,16 +4,16 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, LogOut, Save, Download } from 'lucide-react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth, db } from '../../../lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import DocumentoPDF from '../../../components/pdf/DocumentoPDF';
 
 export default function NuevoDocumento() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useStaffAuth(['Admin']);
   const [guardando, setGuardando] = useState(false);
 
   // Estado para el modal de contenido
@@ -28,19 +28,6 @@ export default function NuevoDocumento() {
     fecha: new Date().toISOString().split('T')[0],
     contenido: ''
   });
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        setLoading(false);
-      } else {
-        router.push('/admin');
-      }
-    });
-
-    return () => unsubscribe();
-  }, [router]);
 
   // Función para abrir el modal de contenido
   const abrirModalContenido = () => {
@@ -140,7 +127,7 @@ export default function NuevoDocumento() {
               href="/admin/dashboard"
               className="flex items-center mr-4 text-primary hover:underline"
             >
-              <Home size={16} className="mr-1" /> Dashboard
+              <Home size={16} className="mr-1" /> Panel
             </Link>
             <span className="mx-2 text-gray-500">/</span>
             <Link

@@ -4,18 +4,20 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, LogOut, Save, Download, Eye, PlusCircle, Trash2, RefreshCw } from 'lucide-react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
-import { crearRemito } from '../../../lib/firestore';
+import { crearRemito, obtenerClientes } from '../../../lib/firestore';
+import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import RemitoPDF from '../../../components/pdf/RemitoPDF';
+import ClienteSelector from '../../../components/ClienteSelector';
 import SignatureCanvas from 'react-signature-canvas';
 
 export default function NuevoRemito() {
     const router = useRouter();
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { user, loading } = useStaffAuth(['Admin']);
     const [guardando, setGuardando] = useState(false);
+    const [clientes, setClientes] = useState([]);
     const [showCanvas, setShowCanvas] = useState(true);
     const [canvasSize, setCanvasSize] = useState({ width: 500, height: 200 });
     const sigCanvas = useRef({});
@@ -39,6 +41,7 @@ export default function NuevoRemito() {
     const [remito, setRemito] = useState({
         numero: `R-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
         fecha: new Date().toISOString().split('T')[0],
+        clienteId: null,
         items: [
             { id: 1, descripcion: '', cantidad: '', unidad: 'UN' }
         ],
@@ -48,18 +51,11 @@ export default function NuevoRemito() {
     });
 
     useEffect(() => {
-        // Verificar autenticación con Firebase
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            if (currentUser) {
-                setUser(currentUser);
-                setLoading(false);
-            } else {
-                router.push('/admin');
-            }
-        });
-
-        return () => unsubscribe();
-    }, [router]);
+        if (!user) return;
+        obtenerClientes()
+            .then(setClientes)
+            .catch((error) => console.error('Error al cargar los clientes:', error));
+    }, [user]);
 
     useEffect(() => {
         const handleResize = () => {
@@ -185,6 +181,7 @@ export default function NuevoRemito() {
             const remitoData = {
                 numero: remito.numero,
                 fecha: remito.fecha,
+                clienteId: remito.clienteId || null,
                 cliente: cliente,
                 items: remito.items,
                 observaciones: remito.observaciones,
@@ -246,7 +243,7 @@ export default function NuevoRemito() {
                             href="/admin/dashboard"
                             className="flex items-center mr-4 text-primary hover:underline"
                         >
-                            <Home size={16} className="mr-1" /> Dashboard
+                            <Home size={16} className="mr-1" /> Panel
                         </Link>
                         <span className="mx-2 text-gray-500">/</span>
                         <Link
@@ -318,6 +315,14 @@ export default function NuevoRemito() {
                     {/* Información del cliente */}
                     <div className="p-6 bg-white rounded-lg shadow-md">
                         <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
+                        <ClienteSelector
+                            clientes={clientes}
+                            onSelect={({ clienteId, nombre, empresa, email, telefono, direccion }) => {
+                                setRemito({ ...remito, clienteId });
+                                setCliente({ nombre, empresa, email, telefono, direccion });
+                            }}
+                            placeholder="Buscar cliente registrado (opcional)..."
+                        />
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
                                 <label className="block mb-1 text-sm font-medium text-gray-700">Nombre</label>

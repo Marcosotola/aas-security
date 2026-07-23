@@ -3,14 +3,23 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Menu, X, Home, Briefcase, Users, MessageSquare, ChevronDown } from 'lucide-react';
+import { Menu, X, Home, Briefcase, Users, MessageSquare, ChevronDown, User } from 'lucide-react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../../lib/firebase';
 
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const dropdownRef = useRef(null);
+
+  // Sesión del cliente (portal /cuenta), independiente del login del panel admin
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => setCurrentUser(user));
+    return () => unsubscribe();
+  }, []);
 
   // Efecto para detectar el scroll
   useEffect(() => {
@@ -123,6 +132,18 @@ const Header = () => {
               <MessageSquare size={16} className="mr-1" />
               <span>Contacto</span>
             </Link>
+
+            <Link
+              href={currentUser ? '/cuenta' : '/login'}
+              className={`group relative px-3 py-2 rounded-md transition-all duration-200 ${scrolled ? 'text-gray-700 hover:text-primary' : 'text-white hover:text-white'}`}
+              title={currentUser ? 'Mi Cuenta' : 'Ingresar / Registrarme'}
+            >
+              <span className="flex items-center">
+                <User size={16} className="mr-1 transition-transform group-hover:scale-110" />
+                <span>{currentUser ? 'Mi Cuenta' : 'Ingresar'}</span>
+              </span>
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+            </Link>
           </nav>
 
           {/* Mobile menu button */}
@@ -213,6 +234,15 @@ const Header = () => {
             >
               <MessageSquare size={18} className="mr-2" />
               <span>Contacto</span>
+            </Link>
+
+            <Link
+              href={currentUser ? '/cuenta' : '/login'}
+              className="flex items-center px-4 py-3 text-gray-700 transition-colors rounded-md hover:bg-primary hover:text-white"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <User size={18} className="mr-2" />
+              <span>{currentUser ? 'Mi Cuenta' : 'Ingresar / Registrarme'}</span>
             </Link>
           </nav>
         )}

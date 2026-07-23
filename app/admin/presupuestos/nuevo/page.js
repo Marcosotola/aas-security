@@ -6,11 +6,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, LogOut, Save, Download, Eye, PlusCircle, Trash2, Percent, DollarSign } from 'lucide-react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
-import { crearPresupuesto } from '../../../lib/firestore';
+import { crearPresupuesto, obtenerListaPrecios, obtenerClientes } from '../../../lib/firestore';
+import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import PresupuestoPDF from '../../../components/pdf/PresupuestoPDF';
+import BuscadorPrecio from '../../../components/BuscadorPrecio';
+import ClienteSelector from '../../../components/ClienteSelector';
 
 // Función para formatear montos con separador de miles (punto) y decimal (coma)
 const formatMoney = (amount) => {
@@ -31,10 +34,11 @@ const formatMoney = (amount) => {
 
 export default function NuevoPresupuesto() {
     const router = useRouter();
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { user, loading } = useStaffAuth(['Admin']);
     const [guardando, setGuardando] = useState(false);
-    
+    const [listaPrecios, setListaPrecios] = useState([]);
+    const [clientes, setClientes] = useState([]);
+
     // Estado para el modal de descripción
     const [modalDescripcion, setModalDescripcion] = useState({
         isOpen: false,
@@ -55,6 +59,8 @@ export default function NuevoPresupuesto() {
         numero: `P-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
         fecha: new Date().toISOString().split('T')[0],
         validez: '30 días',
+        clienteId: null, // uid del cliente registrado seleccionado (null = cliente manual, sin cuenta)
+        modo: 'items', // 'items' (detalle por ítem) o 'global' (una sola descripción y un precio)
         items: [
             { id: 1, descripcion: '', cantidad: '', precioUnitario: '', subtotal: 0 }
         ],
@@ -68,19 +74,16 @@ export default function NuevoPresupuesto() {
     });
 
     useEffect(() => {
-        // Verificar autenticación con Firebase
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            if (currentUser) {
-                setUser(currentUser);
-                setLoading(false);
-            } else {
-                router.push('/admin');
-            }
-        });
+        if (!user) return;
 
-        // Limpiar la suscripción al desmontar
-        return () => unsubscribe();
-    }, [router]);
+        obtenerListaPrecios()
+            .then(setListaPrecios)
+            .catch((error) => console.error('Error al cargar la lista de precios:', error));
+
+        obtenerClientes()
+            .then(setClientes)
+            .catch((error) => console.error('Error al cargar los clientes:', error));
+    }, [user]);
 
     // Función para calcular totales incluyendo descuentos
     const calcularTotales = (items, tipoDescuento, valorDescuento) => {
@@ -157,6 +160,30 @@ export default function NuevoPresupuesto() {
         });
     };
 
+    // Aplica un item elegido de la lista de precios: completa descripción y precio,
+    // recalcula el subtotal con la cantidad que ya tenga cargada el item.
+    const seleccionarItemCatalogo = (id, producto) => {
+        const updatedItems = presupuesto.items.map(item => {
+            if (item.id !== id) return item;
+            const cantidad = parseFloat(item.cantidad) || 0;
+            const precio = parseFloat(producto.precioUnitario) || 0;
+            return {
+                ...item,
+                descripcion: producto.descripcion,
+                precioUnitario: producto.precioUnitario,
+                subtotal: cantidad * precio
+            };
+        });
+
+        const totales = calcularTotales(updatedItems, presupuesto.tipoDescuento, presupuesto.valorDescuento);
+
+        setPresupuesto({
+            ...presupuesto,
+            items: updatedItems,
+            ...totales
+        });
+    };
+
     // Función para manejar cambios en descuentos
     const handleDescuentoChange = (tipo, valor) => {
         const valorNumerico = parseFloat(valor) || 0;
@@ -206,6 +233,36 @@ export default function NuevoPresupuesto() {
         });
     };
 
+    // Cambia entre "por ítems" (varias filas con cantidad/precio) y "global"
+    // (una sola descripción y un precio). Al pasar a global, colapsa todos
+    // los ítems cargados en uno solo para no perder lo ya escrito.
+    const handleModoChange = (nuevoModo) => {
+        if (nuevoModo === presupuesto.modo) return;
+
+        let nuevosItems = presupuesto.items;
+
+        if (nuevoModo === 'global') {
+            const descripcionCombinada = presupuesto.items.map(i => i.descripcion).filter(Boolean).join('\n\n');
+            const precioCombinado = presupuesto.items.reduce((sum, i) => sum + (parseFloat(i.subtotal) || 0), 0);
+            nuevosItems = [{
+                id: presupuesto.items[0]?.id || 1,
+                descripcion: descripcionCombinada,
+                cantidad: 1,
+                precioUnitario: precioCombinado,
+                subtotal: precioCombinado
+            }];
+        }
+
+        const totales = calcularTotales(nuevosItems, presupuesto.tipoDescuento, presupuesto.valorDescuento);
+
+        setPresupuesto({
+            ...presupuesto,
+            modo: nuevoModo,
+            items: nuevosItems,
+            ...totales
+        });
+    };
+
     const handleGuardarPresupuesto = async () => {
         setGuardando(true);
         try {
@@ -214,6 +271,8 @@ export default function NuevoPresupuesto() {
                 numero: presupuesto.numero,
                 fecha: presupuesto.fecha,
                 validez: presupuesto.validez,
+                modo: presupuesto.modo,
+                clienteId: presupuesto.clienteId || null,
                 cliente: cliente,
                 items: presupuesto.items,
                 notas: presupuesto.notas,
@@ -280,7 +339,7 @@ export default function NuevoPresupuesto() {
                             href="/admin/dashboard"
                             className="flex items-center mr-4 text-primary hover:underline"
                         >
-                            <Home size={16} className="mr-1" /> Dashboard
+                            <Home size={16} className="mr-1" /> Panel
                         </Link>
                         <span className="mx-2 text-gray-500">/</span>
                         <Link
@@ -302,22 +361,28 @@ export default function NuevoPresupuesto() {
                             <Save size={18} className="mr-2" />
                             {guardando ? 'Guardando...' : 'Guardar'}
                         </button>
-                        <button
-                            className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
-                        >
+                        {presupuesto.items.some(item => item.descripcion && item.descripcion.trim()) ? (
                             <PDFDownloadLink
                                 document={<PresupuestoPDF presupuesto={{ ...presupuesto, cliente }} />}
                                 fileName={`${presupuesto.numero}.pdf`}
-                                className={`bg-secondary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors flex items-center ${!presupuesto.items[0].descripcion ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                disabled={!presupuesto.items[0].descripcion}
+                                className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
                             >
-                                {({ blob, url, loading, error }) =>
+                                {({ loading }) =>
                                     loading ?
-                                        <span><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
-                                        <span><Download size={18} className="mr-2" /> Descargar PDF</span>
+                                        <span className="flex items-center"><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
+                                        <span className="flex items-center"><Download size={18} className="mr-2" /> Descargar PDF</span>
                                 }
                             </PDFDownloadLink>
-                        </button>
+                        ) : (
+                            <button
+                                type="button"
+                                disabled
+                                title="Agregá al menos una descripción antes de descargar el PDF"
+                                className="flex items-center px-4 py-2 text-white rounded-md opacity-50 cursor-not-allowed bg-secondary"
+                            >
+                                <Download size={18} className="mr-2" /> Descargar PDF
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -364,6 +429,14 @@ export default function NuevoPresupuesto() {
                     {/* Información del cliente */}
                     <div className="p-6 bg-white rounded-lg shadow-md">
                         <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
+                        <ClienteSelector
+                            clientes={clientes}
+                            onSelect={({ clienteId, nombre, empresa, email, telefono, direccion }) => {
+                                setPresupuesto({ ...presupuesto, clienteId });
+                                setCliente({ nombre, empresa, email, telefono, direccion });
+                            }}
+                            placeholder="Buscar cliente registrado (opcional)..."
+                        />
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
                                 <label className="block mb-1 text-sm font-medium text-gray-700">Nombre</label>
@@ -420,105 +493,156 @@ export default function NuevoPresupuesto() {
 
                     {/* Items del presupuesto */}
                     <div className="p-6 bg-white rounded-lg shadow-md">
-                        <h3 className="mb-4 text-lg font-semibold text-gray-700">Detalle del Presupuesto</h3>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full">
-                                <thead>
-                                    <tr className="bg-gray-100">
-                                        <th className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Descripción</th>
-                                        <th className="w-24 px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Cantidad</th>
-                                        <th className="w-32 px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Precio Unit.</th>
-                                        <th className="w-32 px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Subtotal</th>
-                                        <th className="w-16 px-4 py-2"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {presupuesto.items.map((item) => (
-                                        <tr key={item.id}>
-                                            <td className="px-4 py-2">
-                                                {/* Vista móvil - Botón que abre modal */}
-                                                <div className="md:hidden">
-                                                    <div 
-                                                        onClick={() => abrirModalDescripcion(item.id, item.descripcion)}
-                                                        className="min-h-[60px] p-3 border border-gray-300 rounded-md bg-gray-50 cursor-pointer flex items-center justify-between transition-colors hover:bg-gray-100"
-                                                    >
-                                                        <span className={`text-sm flex-1 ${item.descripcion ? 'text-gray-800' : 'text-gray-400'}`}>
-                                                            {item.descripcion || 'Toca para agregar descripción'}
-                                                        </span>
-                                                        <svg className="w-5 h-5 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                                        </svg>
-                                                    </div>
-                                                    {/* Preview del texto si existe */}
-                                                    {item.descripcion && (
-                                                        <div className="mt-2 text-xs text-gray-500">
-                                                            {item.descripcion.length > 50 
-                                                                ? `${item.descripcion.substring(0, 50)}...` 
-                                                                : item.descripcion
-                                                            }
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                
-                                                {/* Vista desktop - Textarea normal */}
-                                                <div className="hidden md:block">
-                                                    <textarea
-                                                        value={item.descripcion}
-                                                        onChange={(e) => handleItemChange(item.id, 'descripcion', e.target.value)}
-                                                        className="w-full px-2 py-1 border border-gray-300 rounded-md min-h-[100px] resize-y"
-                                                        placeholder="Descripción del servicio"
-                                                        rows={5}
-                                                    />
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-2">
-                                                <input
-                                                    type="number"
-                                                    value={item.cantidad}
-                                                    onChange={(e) =>
-                                                        handleItemChange(item.id, 'cantidad', e.target.value)
-                                                    }
-                                                    className="w-full px-2 py-1 border border-gray-300 rounded-md [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                    placeholder="0"
-                                                />
-                                            </td>
-                                            <td className="px-4 py-2">
-                                                <input
-                                                    type="number"
-                                                    value={item.precioUnitario}
-                                                    onChange={(e) =>
-                                                        handleItemChange(item.id, 'precioUnitario', e.target.value)
-                                                    }
-                                                    className="w-full px-2 py-1 border border-gray-300 rounded-md [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                    placeholder="0"
-                                                />
-                                            </td>
-                                            <td className="px-4 py-2 font-medium text-gray-700">
-                                                {formatMoney(item.subtotal)}
-                                            </td>
-                                            <td className="px-4 py-2">
-                                                <button
-                                                    onClick={() => removeItem(item.id)}
-                                                    className="text-red-500 hover:text-red-700"
-                                                    disabled={presupuesto.items.length === 1}
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        <div className="flex flex-wrap items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-gray-700">Detalle del Presupuesto</h3>
+                            <div className="inline-flex p-1 bg-gray-100 rounded-md">
+                                <button
+                                    type="button"
+                                    onClick={() => handleModoChange('items')}
+                                    className={`px-3 py-1 text-sm rounded-md transition-colors ${presupuesto.modo !== 'global' ? 'bg-white shadow-sm text-primary font-semibold' : 'text-gray-600'}`}
+                                >
+                                    Por Ítems
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleModoChange('global')}
+                                    className={`px-3 py-1 text-sm rounded-md transition-colors ${presupuesto.modo === 'global' ? 'bg-white shadow-sm text-primary font-semibold' : 'text-gray-600'}`}
+                                >
+                                    Global
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="mt-4">
-                            <button
-                                onClick={addItem}
-                                className="flex items-center text-blue-500 hover:text-blue-700"
-                            >
-                                <PlusCircle size={18} className="mr-1" /> Agregar ítem
-                            </button>
-                        </div>
+                        {presupuesto.modo === 'global' ? (
+                            <div>
+                                <BuscadorPrecio
+                                    listaPrecios={listaPrecios}
+                                    onSelect={(producto) => seleccionarItemCatalogo(presupuesto.items[0].id, producto)}
+                                />
+                                <textarea
+                                    value={presupuesto.items[0]?.descripcion || ''}
+                                    onChange={(e) => handleItemChange(presupuesto.items[0].id, 'descripcion', e.target.value)}
+                                    className="w-full px-3 py-3 text-base border border-gray-300 rounded-md min-h-[260px] resize-y"
+                                    placeholder="Descripción completa del presupuesto..."
+                                />
+                                <div className="max-w-xs mt-4">
+                                    <label className="block mb-1 text-sm font-medium text-gray-700">Precio</label>
+                                    <input
+                                        type="number"
+                                        value={presupuesto.items[0]?.precioUnitario ?? ''}
+                                        onChange={(e) => handleItemChange(presupuesto.items[0].id, 'precioUnitario', e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                        placeholder="0"
+                                    />
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full">
+                                        <thead>
+                                            <tr className="bg-gray-100">
+                                                <th className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Descripción</th>
+                                                <th className="w-24 px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Cantidad</th>
+                                                <th className="w-32 px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Precio Unit.</th>
+                                                <th className="w-32 px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Subtotal</th>
+                                                <th className="w-16 px-4 py-2"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {presupuesto.items.map((item) => (
+                                                <tr key={item.id}>
+                                                    <td className="px-4 py-2">
+                                                        {/* Vista móvil - Botón que abre modal */}
+                                                        <div className="md:hidden">
+                                                            <div
+                                                                onClick={() => abrirModalDescripcion(item.id, item.descripcion)}
+                                                                className="min-h-[60px] p-3 border border-gray-300 rounded-md bg-gray-50 cursor-pointer flex items-center justify-between transition-colors hover:bg-gray-100"
+                                                            >
+                                                                <span className={`text-sm flex-1 ${item.descripcion ? 'text-gray-800' : 'text-gray-400'}`}>
+                                                                    {item.descripcion || 'Toca para agregar descripción'}
+                                                                </span>
+                                                                <svg className="w-5 h-5 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                                </svg>
+                                                            </div>
+                                                            {/* Preview del texto si existe */}
+                                                            {item.descripcion && (
+                                                                <div className="mt-2 text-xs text-gray-500">
+                                                                    {item.descripcion.length > 50
+                                                                        ? `${item.descripcion.substring(0, 50)}...`
+                                                                        : item.descripcion
+                                                                    }
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Vista desktop - Textarea normal */}
+                                                        <div className="hidden md:block">
+                                                            <BuscadorPrecio
+                                                                listaPrecios={listaPrecios}
+                                                                onSelect={(producto) => seleccionarItemCatalogo(item.id, producto)}
+                                                            />
+                                                            <textarea
+                                                                value={item.descripcion}
+                                                                onChange={(e) => handleItemChange(item.id, 'descripcion', e.target.value)}
+                                                                className="w-full px-2 py-1 border border-gray-300 rounded-md min-h-[100px] resize-y"
+                                                                placeholder="Descripción del servicio"
+                                                                rows={5}
+                                                            />
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-2">
+                                                        <input
+                                                            type="number"
+                                                            value={item.cantidad}
+                                                            onChange={(e) =>
+                                                                handleItemChange(item.id, 'cantidad', e.target.value)
+                                                            }
+                                                            className="w-full px-2 py-1 border border-gray-300 rounded-md [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            placeholder="0"
+                                                        />
+                                                    </td>
+                                                    <td className="px-4 py-2">
+                                                        <input
+                                                            type="number"
+                                                            value={item.precioUnitario}
+                                                            onChange={(e) =>
+                                                                handleItemChange(item.id, 'precioUnitario', e.target.value)
+                                                            }
+                                                            className="w-full px-2 py-1 border border-gray-300 rounded-md [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            placeholder="0"
+                                                        />
+                                                    </td>
+                                                    <td className="px-4 py-2 font-medium text-gray-700">
+                                                        {formatMoney(item.subtotal)}
+                                                    </td>
+                                                    <td className="px-4 py-2">
+                                                        <button
+                                                            onClick={() => removeItem(item.id)}
+                                                            className="text-red-500 hover:text-red-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-red-500"
+                                                            disabled={presupuesto.items.length === 1}
+                                                            title={presupuesto.items.length === 1 ? 'Debe quedar al menos un ítem' : 'Eliminar ítem'}
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div className="mt-4">
+                                    <button
+                                        onClick={addItem}
+                                        className="flex items-center text-blue-500 hover:text-blue-700"
+                                    >
+                                        <PlusCircle size={18} className="mr-1" /> Agregar ítem
+                                    </button>
+                                </div>
+                            </>
+                        )}
 
                         {/* Sección de Descuentos */}
                         <div className="p-4 mt-6 border rounded-lg bg-gray-50">
@@ -659,6 +783,13 @@ export default function NuevoPresupuesto() {
                         
                         {/* Contenido del modal */}
                         <div className="flex flex-col flex-1 p-4 bg-white md:rounded-b-lg">
+                            <BuscadorPrecio
+                                listaPrecios={listaPrecios}
+                                onSelect={(producto) => {
+                                    seleccionarItemCatalogo(modalDescripcion.itemId, producto);
+                                    setModalDescripcion(prev => ({ ...prev, value: producto.descripcion }));
+                                }}
+                            />
                             <textarea
                                 value={modalDescripcion.value}
                                 onChange={(e) => setModalDescripcion({ ...modalDescripcion, value: e.target.value })}

@@ -5,34 +5,25 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FilePlus, FileText, Home, LogOut, Search, Download, Edit, Trash, Eye } from 'lucide-react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { collection, getDocs, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
+import { useStaffAuth } from '../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import EstadoPDF from '../../components/pdf/EstadoPDF';
 
 export default function HistorialEstados() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const [loadingData, setLoadingData] = useState(true);
   const [estados, setEstados] = useState([]);
   const [filtro, setFiltro] = useState('');
   const router = useRouter();
+  const loading = loadingAuth || loadingData;
 
   useEffect(() => {
-    // Verificar autenticación con Firebase
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        await cargarEstados();
-        setLoading(false);
-      } else {
-        router.push('/admin');
-      }
-    });
-
-    // Limpiar la suscripción al desmontar
-    return () => unsubscribe();
-  }, [router]);
+    if (!user) return;
+    cargarEstados().then(() => setLoadingData(false));
+  }, [user]);
 
   const cargarEstados = async () => {
     try {
@@ -141,7 +132,7 @@ export default function HistorialEstados() {
               href="/admin/dashboard"
               className="flex items-center mr-4 text-primary hover:underline"
             >
-              <Home size={16} className="mr-1" /> Dashboard
+              <Home size={16} className="mr-1" /> Panel
             </Link>
             <span className="mx-2 text-gray-500">/</span>
             <span className="text-gray-700">Historial de Estados</span>

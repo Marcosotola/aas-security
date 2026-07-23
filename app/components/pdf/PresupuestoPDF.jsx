@@ -331,26 +331,36 @@ const PresupuestoPDF = ({ presupuesto }) => {
           </View>
         </View>
 
-        {/* Tabla de items */}
+        {/* Detalle: tabla de items o descripción global según el modo */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Detalle de Items</Text>
+          <Text style={styles.sectionTitle}>{presupuesto.modo === 'global' ? 'Descripción' : 'Detalle de Items'}</Text>
 
-          <View style={styles.tableHeader}>
-            <Text style={[styles.col4, styles.colHeader]}>Descripción</Text>
-            <Text style={[styles.col1, styles.colHeader]}>Cant.</Text>
-            <Text style={[styles.col2, styles.colHeader]}>Precio Unit.</Text>
-            <Text style={[styles.col2, styles.colHeader]}>Subtotal</Text>
-          </View>
-
-          {(presupuesto.items || []).map((item, index) => (
-            <View key={item.id} style={[styles.tableRow, index % 2 === 1 ? styles.oddRow : {}]} wrap={false}>
-              {/* Aplicamos el nuevo estilo con padding derecho solo a la descripción */}
-              <Text style={[styles.col4, styles.colContentDescription]}>{item.descripcion || ''}</Text>
-              <Text style={[styles.col1, styles.colContent]}>{parseFloat(item.cantidad || 0)}</Text>
-              <Text style={[styles.col2, styles.colContent]}>$ {formatearMonto(parseFloat(item.precioUnitario || 0))}</Text>
-              <Text style={[styles.col2, styles.colContent]}>$ {formatearMonto(parseFloat(item.subtotal || 0))}</Text>
+          {presupuesto.modo === 'global' ? (
+            <View style={{ padding: 8, backgroundColor: '#f9f9f9', borderRadius: 5 }}>
+              <Text style={[styles.colContent, { lineHeight: 1.5 }]}>
+                {presupuesto.items?.[0]?.descripcion || ''}
+              </Text>
             </View>
-          ))}
+          ) : (
+            <>
+              <View style={styles.tableHeader}>
+                <Text style={[styles.col4, styles.colHeader]}>Descripción</Text>
+                <Text style={[styles.col1, styles.colHeader]}>Cant.</Text>
+                <Text style={[styles.col2, styles.colHeader]}>Precio Unit.</Text>
+                <Text style={[styles.col2, styles.colHeader]}>Subtotal</Text>
+              </View>
+
+              {(presupuesto.items || []).map((item, index) => (
+                <View key={item.id} style={[styles.tableRow, index % 2 === 1 ? styles.oddRow : {}]} wrap={false}>
+                  {/* Aplicamos el nuevo estilo con padding derecho solo a la descripción */}
+                  <Text style={[styles.col4, styles.colContentDescription]}>{item.descripcion || ''}</Text>
+                  <Text style={[styles.col1, styles.colContent]}>{parseFloat(item.cantidad || 0)}</Text>
+                  <Text style={[styles.col2, styles.colContent]}>$ {formatearMonto(parseFloat(item.precioUnitario || 0))}</Text>
+                  <Text style={[styles.col2, styles.colContent]}>$ {formatearMonto(parseFloat(item.subtotal || 0))}</Text>
+                </View>
+              ))}
+            </>
+          )}
 
           {/* Totales con descuentos */}
           <View style={styles.totals}>

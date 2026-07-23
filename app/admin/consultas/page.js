@@ -5,9 +5,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, LogOut, Search, Trash, MessageCircle, MailOpen, Mail, Eye, X } from 'lucide-react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 import { obtenerConsultas, marcarConsultaLeida, eliminarConsulta } from '../../lib/firestore';
+import { useStaffAuth } from '../../lib/useStaffAuth';
 
 // Arma un link de WhatsApp a partir de un teléfono en cualquier formato común en Argentina
 const construirLinkWhatsApp = (telefono) => {
@@ -35,26 +36,18 @@ const formatearFecha = (fechaCreacion) => {
 };
 
 export default function Consultas() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const [loadingData, setLoadingData] = useState(true);
   const [consultas, setConsultas] = useState([]);
   const [filtro, setFiltro] = useState('');
   const [consultaSeleccionada, setConsultaSeleccionada] = useState(null);
   const router = useRouter();
+  const loading = loadingAuth || loadingData;
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        await cargarConsultas();
-        setLoading(false);
-      } else {
-        router.push('/admin');
-      }
-    });
-
-    return () => unsubscribe();
-  }, [router]);
+    if (!user) return;
+    cargarConsultas().then(() => setLoadingData(false));
+  }, [user]);
 
   const cargarConsultas = async () => {
     try {
@@ -163,7 +156,7 @@ export default function Consultas() {
               href="/admin/dashboard"
               className="flex items-center mr-4 text-primary hover:underline"
             >
-              <Home size={16} className="mr-1" /> Dashboard
+              <Home size={16} className="mr-1" /> Panel
             </Link>
             <span className="mx-2 text-gray-500">/</span>
             <span className="text-gray-700">Consultas</span>

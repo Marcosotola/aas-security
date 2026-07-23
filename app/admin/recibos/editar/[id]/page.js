@@ -4,10 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, LogOut, Save, Download, RefreshCw } from 'lucide-react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth } from '../../../../lib/firebase';
-import { obtenerReciboPorId, actualizarRecibo } from '../../../../lib/firestore';
+import { obtenerReciboPorId, actualizarRecibo, obtenerClientes } from '../../../../lib/firestore';
+import { useStaffAuth } from '../../../../lib/useStaffAuth';
 import { use } from 'react';
+import ClienteSelector from '../../../../components/ClienteSelector';
 import SignatureCanvas from 'react-signature-canvas';
 
 // Función para convertir números a letras
@@ -68,12 +70,14 @@ export default function EditarRecibo({ params }) {
   const id = resolvedParams.id;
 
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [mostrarCanvas, setMostrarCanvas] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 500, height: 200 });
+  const [clientes, setClientes] = useState([]);
   const sigCanvas = useRef({});
+  const loading = loadingAuth || loadingData;
 
   // Estado para el modal de concepto
   const [modalConcepto, setModalConcepto] = useState({
@@ -85,6 +89,7 @@ export default function EditarRecibo({ params }) {
   const [recibo, setRecibo] = useState({
     numero: '',
     fecha: '',
+    clienteId: null,
     recibiDe: '',
     monto: '',
     cantidadLetras: '',
@@ -115,37 +120,37 @@ export default function EditarRecibo({ params }) {
   }, [mostrarCanvas]);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !user) return;
 
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
+    (async () => {
+      try {
+        const reciboData = await obtenerReciboPorId(id);
+        setRecibo({
+          numero: reciboData.numero || '',
+          fecha: reciboData.fecha || '',
+          clienteId: reciboData.clienteId || null,
+          recibiDe: reciboData.recibiDe || '',
+          monto: reciboData.monto || '',
+          cantidadLetras: reciboData.cantidadLetras || '',
+          concepto: reciboData.concepto || '',
+          firma: reciboData.firma || null,
+          aclaracion: reciboData.aclaracion || ''
+        });
 
         try {
-          const reciboData = await obtenerReciboPorId(id);
-          setRecibo({
-            numero: reciboData.numero || '',
-            fecha: reciboData.fecha || '',
-            recibiDe: reciboData.recibiDe || '',
-            monto: reciboData.monto || '',
-            cantidadLetras: reciboData.cantidadLetras || '',
-            concepto: reciboData.concepto || '',
-            firma: reciboData.firma || null,
-            aclaracion: reciboData.aclaracion || ''
-          });
-          setLoading(false);
+          setClientes(await obtenerClientes());
         } catch (error) {
-          console.error('Error al cargar recibo:', error);
-          alert('Error al cargar los datos del recibo.');
-          router.push('/admin/recibos');
+          console.error('Error al cargar los clientes:', error);
         }
-      } else {
-        router.push('/admin');
-      }
-    });
 
-    return () => unsubscribe();
-  }, [id, router]);
+        setLoadingData(false);
+      } catch (error) {
+        console.error('Error al cargar recibo:', error);
+        alert('Error al cargar los datos del recibo.');
+        router.push('/admin/recibos');
+      }
+    })();
+  }, [id, user, router]);
 
   // Función para abrir el modal de concepto
   const abrirModalConcepto = () => {
@@ -270,7 +275,7 @@ export default function EditarRecibo({ params }) {
               href="/admin/dashboard"
               className="flex items-center mr-4 text-primary hover:underline"
             >
-              <Home size={16} className="mr-1" /> Dashboard
+              <Home size={16} className="mr-1" /> Panel
             </Link>
             <span className="mx-2 text-gray-500">/</span>
             <Link
@@ -331,6 +336,13 @@ export default function EditarRecibo({ params }) {
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Recibí de</label>
+                <ClienteSelector
+                  clientes={clientes}
+                  onSelect={({ clienteId, nombre, empresa }) => {
+                    setRecibo({ ...recibo, clienteId, recibiDe: empresa ? `${nombre} - ${empresa}` : nombre });
+                  }}
+                  placeholder="Buscar cliente registrado (opcional)..."
+                />
                 <input
                   type="text"
                   value={recibo.recibiDe}

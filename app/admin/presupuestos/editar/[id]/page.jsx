@@ -5,10 +5,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, LogOut, Save, Download, Eye, PlusCircle, Trash2, Percent, DollarSign } from 'lucide-react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth } from '../../../../lib/firebase';
-import { obtenerPresupuestoPorId, actualizarPresupuesto } from '../../../../lib/firestore';
+import { obtenerPresupuestoPorId, actualizarPresupuesto, obtenerListaPrecios, obtenerClientes } from '../../../../lib/firestore';
+import { useStaffAuth } from '../../../../lib/useStaffAuth';
 import { use } from 'react';
+import BuscadorPrecio from '../../../../components/BuscadorPrecio';
+import ClienteSelector from '../../../../components/ClienteSelector';
 
 // Función para formatear montos con separador de miles (punto) y decimal (coma)
 const formatMoney = (amount) => {
@@ -33,10 +36,13 @@ export default function EditarPresupuesto({ params }) {
   const id = resolvedParams.id;
   
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [presupuestoOriginal, setPresupuestoOriginal] = useState(null);
+  const [listaPrecios, setListaPrecios] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const loading = loadingAuth || loadingData;
 
   // Estado para el modal de descripción
   const [modalDescripcion, setModalDescripcion] = useState({
@@ -71,46 +77,48 @@ export default function EditarPresupuesto({ params }) {
   });
 
   useEffect(() => {
-    if (!id) return;
-    
-    // Verificar autenticación y cargar presupuesto
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        
-        try {
-          // Cargar datos del presupuesto
-          const presupuestoData = await obtenerPresupuestoPorId(id);
-          setPresupuestoOriginal(presupuestoData);
-          
-          // Actualizar estado con los datos cargados, incluyendo valores por defecto para descuentos si no existen
-          setPresupuesto({
-            numero: presupuestoData.numero,
-            fecha: presupuestoData.fecha,
-            validez: presupuestoData.validez,
-            items: presupuestoData.items || [],
-            notas: presupuestoData.notas,
-            subtotal: presupuestoData.subtotal,
-            tipoDescuento: presupuestoData.tipoDescuento || 'ninguno',
-            valorDescuento: presupuestoData.valorDescuento || 0,
-            montoDescuento: presupuestoData.montoDescuento || 0,
-            total: presupuestoData.total
-          });
-          
-          setCliente(presupuestoData.cliente);
-          setLoading(false);
-        } catch (error) {
-          console.error('Error al cargar presupuesto:', error);
-          alert('Error al cargar los datos del presupuesto.');
-          router.push('/admin/presupuestos');
-        }
-      } else {
-        router.push('/admin');
-      }
-    });
+    if (!id || !user) return;
 
-    return () => unsubscribe();
-  }, [id, router]);
+    (async () => {
+      try {
+        // Cargar datos del presupuesto
+        const presupuestoData = await obtenerPresupuestoPorId(id);
+        setPresupuestoOriginal(presupuestoData);
+
+        // Actualizar estado con los datos cargados, incluyendo valores por defecto para descuentos si no existen
+        setPresupuesto({
+          numero: presupuestoData.numero,
+          fecha: presupuestoData.fecha,
+          validez: presupuestoData.validez,
+          clienteId: presupuestoData.clienteId || null,
+          modo: presupuestoData.modo || 'items',
+          items: presupuestoData.items || [],
+          notas: presupuestoData.notas,
+          subtotal: presupuestoData.subtotal,
+          tipoDescuento: presupuestoData.tipoDescuento || 'ninguno',
+          valorDescuento: presupuestoData.valorDescuento || 0,
+          montoDescuento: presupuestoData.montoDescuento || 0,
+          total: presupuestoData.total
+        });
+
+        setCliente(presupuestoData.cliente);
+
+        try {
+          const [lista, clientesData] = await Promise.all([obtenerListaPrecios(), obtenerClientes()]);
+          setListaPrecios(lista);
+          setClientes(clientesData);
+        } catch (error) {
+          console.error('Error al cargar catálogos:', error);
+        }
+
+        setLoadingData(false);
+      } catch (error) {
+        console.error('Error al cargar presupuesto:', error);
+        alert('Error al cargar los datos del presupuesto.');
+        router.push('/admin/presupuestos');
+      }
+    })();
+  }, [id, user, router]);
 
   // Función para calcular totales incluyendo descuentos
   const calcularTotales = (items, tipoDescuento, valorDescuento) => {
@@ -187,6 +195,30 @@ export default function EditarPresupuesto({ params }) {
     });
   };
 
+  // Aplica un item elegido de la lista de precios: completa descripción y precio,
+  // recalcula el subtotal con la cantidad que ya tenga cargada el item.
+  const seleccionarItemCatalogo = (id, producto) => {
+    const updatedItems = presupuesto.items.map(item => {
+      if (item.id !== id) return item;
+      const cantidad = parseFloat(item.cantidad) || 0;
+      const precio = parseFloat(producto.precioUnitario) || 0;
+      return {
+        ...item,
+        descripcion: producto.descripcion,
+        precioUnitario: precio,
+        subtotal: cantidad * precio
+      };
+    });
+
+    const totales = calcularTotales(updatedItems, presupuesto.tipoDescuento, presupuesto.valorDescuento);
+
+    setPresupuesto({
+      ...presupuesto,
+      items: updatedItems,
+      ...totales
+    });
+  };
+
   // Función para manejar cambios en descuentos
   const handleDescuentoChange = (tipo, valor) => {
     // Manejar valores vacíos o inválidos
@@ -230,13 +262,43 @@ export default function EditarPresupuesto({ params }) {
 
   const removeItem = (id) => {
     if (presupuesto.items.length === 1) return;
-    
+
     const updatedItems = presupuesto.items.filter(item => item.id !== id);
     const totales = calcularTotales(updatedItems, presupuesto.tipoDescuento, presupuesto.valorDescuento);
-    
+
     setPresupuesto({
       ...presupuesto,
       items: updatedItems,
+      ...totales
+    });
+  };
+
+  // Cambia entre "por ítems" (varias filas con cantidad/precio) y "global"
+  // (una sola descripción y un precio). Al pasar a global, colapsa todos
+  // los ítems cargados en uno solo para no perder lo ya escrito.
+  const handleModoChange = (nuevoModo) => {
+    if (nuevoModo === presupuesto.modo) return;
+
+    let nuevosItems = presupuesto.items;
+
+    if (nuevoModo === 'global') {
+      const descripcionCombinada = presupuesto.items.map(i => i.descripcion).filter(Boolean).join('\n\n');
+      const precioCombinado = presupuesto.items.reduce((sum, i) => sum + (parseFloat(i.subtotal) || 0), 0);
+      nuevosItems = [{
+        id: presupuesto.items[0]?.id || 1,
+        descripcion: descripcionCombinada,
+        cantidad: 1,
+        precioUnitario: precioCombinado,
+        subtotal: precioCombinado
+      }];
+    }
+
+    const totales = calcularTotales(nuevosItems, presupuesto.tipoDescuento, presupuesto.valorDescuento);
+
+    setPresupuesto({
+      ...presupuesto,
+      modo: nuevoModo,
+      items: nuevosItems,
       ...totales
     });
   };
@@ -249,6 +311,8 @@ export default function EditarPresupuesto({ params }) {
         numero: presupuesto.numero,
         fecha: presupuesto.fecha,
         validez: presupuesto.validez,
+        modo: presupuesto.modo,
+        clienteId: presupuesto.clienteId || null,
         cliente: cliente,
         items: presupuesto.items,
         notas: presupuesto.notas,
@@ -314,7 +378,7 @@ export default function EditarPresupuesto({ params }) {
               href="/admin/dashboard"
               className="flex items-center mr-4 text-primary hover:underline"
             >
-              <Home size={16} className="mr-1" /> Dashboard
+              <Home size={16} className="mr-1" /> Panel
             </Link>
             <span className="mx-2 text-gray-500">/</span>
             <Link 
@@ -381,6 +445,14 @@ export default function EditarPresupuesto({ params }) {
           {/* Información del cliente */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
+            <ClienteSelector
+              clientes={clientes}
+              onSelect={({ clienteId, nombre, empresa, email, telefono, direccion }) => {
+                setPresupuesto({ ...presupuesto, clienteId });
+                setCliente({ nombre, empresa, email, telefono, direccion });
+              }}
+              placeholder="Buscar cliente registrado (opcional)..."
+            />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Nombre</label>
@@ -437,102 +509,153 @@ export default function EditarPresupuesto({ params }) {
           
           {/* Items del presupuesto */}
           <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="mb-4 text-lg font-semibold text-gray-700">Detalle del Presupuesto</h3>
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Descripción</th>
-                    <th className="w-24 px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Cantidad</th>
-                    <th className="w-32 px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Precio Unit.</th>
-                    <th className="w-32 px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Subtotal</th>
-                    <th className="w-16 px-4 py-2"></th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {presupuesto.items.map((item) => (
-                    <tr key={item.id}>
-                      <td className="px-4 py-2">
-                        {/* Vista móvil - Botón que abre modal */}
-                        <div className="md:hidden">
-                          <div 
-                            onClick={() => abrirModalDescripcion(item.id, item.descripcion)}
-                            className="min-h-[60px] p-3 border border-gray-300 rounded-md bg-gray-50 cursor-pointer flex items-center justify-between transition-colors hover:bg-gray-100"
-                          >
-                            <span className={`text-sm flex-1 ${item.descripcion ? 'text-gray-800' : 'text-gray-400'}`}>
-                              {item.descripcion || 'Toca para editar descripción'}
-                            </span>
-                            <svg className="w-5 h-5 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                          </div>
-                          {/* Preview del texto si existe */}
-                          {item.descripcion && (
-                            <div className="mt-2 text-xs text-gray-500">
-                              {item.descripcion.length > 50 
-                                ? `${item.descripcion.substring(0, 50)}...` 
-                                : item.descripcion
-                              }
+            <div className="flex flex-wrap items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-700">Detalle del Presupuesto</h3>
+              <div className="inline-flex p-1 bg-gray-100 rounded-md">
+                <button
+                  type="button"
+                  onClick={() => handleModoChange('items')}
+                  className={`px-3 py-1 text-sm rounded-md transition-colors ${presupuesto.modo !== 'global' ? 'bg-white shadow-sm text-primary font-semibold' : 'text-gray-600'}`}
+                >
+                  Por Ítems
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleModoChange('global')}
+                  className={`px-3 py-1 text-sm rounded-md transition-colors ${presupuesto.modo === 'global' ? 'bg-white shadow-sm text-primary font-semibold' : 'text-gray-600'}`}
+                >
+                  Global
+                </button>
+              </div>
+            </div>
+
+            {presupuesto.modo === 'global' ? (
+              <div>
+                <BuscadorPrecio
+                  listaPrecios={listaPrecios}
+                  onSelect={(producto) => seleccionarItemCatalogo(presupuesto.items[0].id, producto)}
+                />
+                <textarea
+                  value={presupuesto.items[0]?.descripcion || ''}
+                  onChange={(e) => handleItemChange(presupuesto.items[0].id, 'descripcion', e.target.value)}
+                  className="w-full px-3 py-3 text-base border border-gray-300 rounded-md min-h-[260px] resize-y"
+                  placeholder="Descripción completa del presupuesto..."
+                />
+                <div className="max-w-xs mt-4">
+                  <label className="block mb-1 text-sm font-medium text-gray-700">Precio</label>
+                  <input
+                    type="number"
+                    value={presupuesto.items[0]?.precioUnitario ?? ''}
+                    onChange={(e) => handleItemChange(presupuesto.items[0].id, 'precioUnitario', parseFloat(e.target.value) || 0)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Descripción</th>
+                        <th className="w-24 px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Cantidad</th>
+                        <th className="w-32 px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Precio Unit.</th>
+                        <th className="w-32 px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Subtotal</th>
+                        <th className="w-16 px-4 py-2"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {presupuesto.items.map((item) => (
+                        <tr key={item.id}>
+                          <td className="px-4 py-2">
+                            {/* Vista móvil - Botón que abre modal */}
+                            <div className="md:hidden">
+                              <div
+                                onClick={() => abrirModalDescripcion(item.id, item.descripcion)}
+                                className="min-h-[60px] p-3 border border-gray-300 rounded-md bg-gray-50 cursor-pointer flex items-center justify-between transition-colors hover:bg-gray-100"
+                              >
+                                <span className={`text-sm flex-1 ${item.descripcion ? 'text-gray-800' : 'text-gray-400'}`}>
+                                  {item.descripcion || 'Toca para editar descripción'}
+                                </span>
+                                <svg className="w-5 h-5 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                              </div>
+                              {/* Preview del texto si existe */}
+                              {item.descripcion && (
+                                <div className="mt-2 text-xs text-gray-500">
+                                  {item.descripcion.length > 50
+                                    ? `${item.descripcion.substring(0, 50)}...`
+                                    : item.descripcion
+                                  }
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                        
-                        {/* Vista desktop - Textarea normal */}
-                        <div className="hidden md:block">
-                          <textarea 
-                            value={item.descripcion} 
-                            onChange={(e) => handleItemChange(item.id, 'descripcion', e.target.value)}
-                            className="w-full px-2 py-1 border border-gray-300 rounded-md min-h-[100px] resize-y"
-                            placeholder="Descripción del servicio"
-                            rows={5}
-                          />
-                        </div>
-                      </td>
-                      <td className="px-4 py-2">
-                        <input 
-                          type="number" 
-                          value={item.cantidad} 
-                          onChange={(e) => handleItemChange(item.id, 'cantidad', parseInt(e.target.value) || 0)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded-md"
-                          min="1"
-                        />
-                      </td>
-                      <td className="px-4 py-2">
-                        <input 
-                          type="number" 
-                          value={item.precioUnitario} 
-                          onChange={(e) => handleItemChange(item.id, 'precioUnitario', parseFloat(e.target.value) || 0)}
-                          className="w-full px-2 py-1 border border-gray-300 rounded-md"
-                          min="0"
-                          step="0.01"
-                        />
-                      </td>
-                      <td className="px-4 py-2 font-medium text-gray-700">
-                        {formatMoney(item.subtotal)}
-                      </td>
-                      <td className="px-4 py-2">
-                        <button 
-                          onClick={() => removeItem(item.id)}
-                          className="text-red-500 hover:text-red-700"
-                          disabled={presupuesto.items.length === 1}
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            
-            <div className="mt-4">
-              <button 
-                onClick={addItem}
-                className="flex items-center text-blue-500 hover:text-blue-700"
-              >
-                <PlusCircle size={18} className="mr-1" /> Agregar ítem
-              </button>
-            </div>
+
+                            {/* Vista desktop - Textarea normal */}
+                            <div className="hidden md:block">
+                              <BuscadorPrecio
+                                listaPrecios={listaPrecios}
+                                onSelect={(producto) => seleccionarItemCatalogo(item.id, producto)}
+                              />
+                              <textarea
+                                value={item.descripcion}
+                                onChange={(e) => handleItemChange(item.id, 'descripcion', e.target.value)}
+                                className="w-full px-2 py-1 border border-gray-300 rounded-md min-h-[100px] resize-y"
+                                placeholder="Descripción del servicio"
+                                rows={5}
+                              />
+                            </div>
+                          </td>
+                          <td className="px-4 py-2">
+                            <input
+                              type="number"
+                              value={item.cantidad}
+                              onChange={(e) => handleItemChange(item.id, 'cantidad', parseInt(e.target.value) || 0)}
+                              className="w-full px-2 py-1 border border-gray-300 rounded-md"
+                              min="1"
+                            />
+                          </td>
+                          <td className="px-4 py-2">
+                            <input
+                              type="number"
+                              value={item.precioUnitario}
+                              onChange={(e) => handleItemChange(item.id, 'precioUnitario', parseFloat(e.target.value) || 0)}
+                              className="w-full px-2 py-1 border border-gray-300 rounded-md"
+                              min="0"
+                              step="0.01"
+                            />
+                          </td>
+                          <td className="px-4 py-2 font-medium text-gray-700">
+                            {formatMoney(item.subtotal)}
+                          </td>
+                          <td className="px-4 py-2">
+                            <button
+                              onClick={() => removeItem(item.id)}
+                              className="text-red-500 hover:text-red-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-red-500"
+                              disabled={presupuesto.items.length === 1}
+                              title={presupuesto.items.length === 1 ? 'Debe quedar al menos un ítem' : 'Eliminar ítem'}
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="mt-4">
+                  <button
+                    onClick={addItem}
+                    className="flex items-center text-blue-500 hover:text-blue-700"
+                  >
+                    <PlusCircle size={18} className="mr-1" /> Agregar ítem
+                  </button>
+                </div>
+              </>
+            )}
 
             {/* Sección de Descuentos */}
             <div className="p-4 mt-6 border rounded-lg bg-gray-50">
@@ -673,6 +796,13 @@ export default function EditarPresupuesto({ params }) {
             
             {/* Contenido del modal */}
             <div className="flex flex-col flex-1 p-4 bg-white md:rounded-b-lg">
+              <BuscadorPrecio
+                listaPrecios={listaPrecios}
+                onSelect={(producto) => {
+                  seleccionarItemCatalogo(modalDescripcion.itemId, producto);
+                  setModalDescripcion(prev => ({ ...prev, value: producto.descripcion }));
+                }}
+              />
               <textarea
                 value={modalDescripcion.value}
                 onChange={(e) => setModalDescripcion({ ...modalDescripcion, value: e.target.value })}

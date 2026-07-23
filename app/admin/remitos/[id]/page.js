@@ -5,9 +5,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, LogOut, Edit, ArrowLeft, Download, Trash } from 'lucide-react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../../../lib/firebase';
+import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { use } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import RemitoPDF from '../../../components/pdf/RemitoPDF';
@@ -18,9 +19,10 @@ export default function VerRemito({ params }) {
   const id = resolvedParams.id;
 
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const [loadingData, setLoadingData] = useState(true);
   const [remito, setRemito] = useState(null);
+  const loading = loadingAuth || loadingData;
 
   // Función para formatear fechas
   const formatDate = (dateString) => {
@@ -39,37 +41,28 @@ export default function VerRemito({ params }) {
   };
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !user) return;
 
-    // Verificar autenticación y cargar remito
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
+    (async () => {
+      try {
+        // Cargar datos del remito
+        const remitoDoc = doc(db, 'remitos', id);
+        const remitoSnapshot = await getDoc(remitoDoc);
 
-        try {
-          // Cargar datos del remito
-          const remitoDoc = doc(db, 'remitos', id);
-          const remitoSnapshot = await getDoc(remitoDoc);
-          
-          if (remitoSnapshot.exists()) {
-            setRemito({ id: remitoSnapshot.id, ...remitoSnapshot.data() });
-          } else {
-            alert('Remito no encontrado.');
-            router.push('/admin/remitos');
-          }
-          setLoading(false);
-        } catch (error) {
-          console.error('Error al cargar remito:', error);
-          alert('Error al cargar los datos del remito.');
+        if (remitoSnapshot.exists()) {
+          setRemito({ id: remitoSnapshot.id, ...remitoSnapshot.data() });
+        } else {
+          alert('Remito no encontrado.');
           router.push('/admin/remitos');
         }
-      } else {
-        router.push('/admin');
+        setLoadingData(false);
+      } catch (error) {
+        console.error('Error al cargar remito:', error);
+        alert('Error al cargar los datos del remito.');
+        router.push('/admin/remitos');
       }
-    });
-
-    return () => unsubscribe();
-  }, [id, router]);
+    })();
+  }, [id, user, router]);
 
   const handleLogout = async () => {
     try {
@@ -137,7 +130,7 @@ export default function VerRemito({ params }) {
                 href="/admin/dashboard"
                 className="flex items-center mr-4 text-primary hover:underline"
               >
-                <Home size={16} className="mr-1" /> Dashboard
+                <Home size={16} className="mr-1" /> Panel
               </Link>
               <span className="mx-2 text-gray-500">/</span>
               <Link

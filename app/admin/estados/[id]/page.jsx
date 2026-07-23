@@ -5,9 +5,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, LogOut, Edit, ArrowLeft, Download, Printer } from 'lucide-react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
 import { obtenerEstadoPorId } from '../../../lib/firestore';
+import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { use } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import EstadoPDF from '../../../components/pdf/EstadoPDF';
@@ -44,35 +45,27 @@ export default function VerEstado({ params }) {
   const id = resolvedParams.id;
 
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const [loadingData, setLoadingData] = useState(true);
   const [estado, setEstado] = useState(null);
+  const loading = loadingAuth || loadingData;
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !user) return;
 
-    // Verificar autenticación y cargar estado
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-
-        try {
-          // Cargar datos del estado
-          const estadoData = await obtenerEstadoPorId(id);
-          setEstado(estadoData);
-          setLoading(false);
-        } catch (error) {
-          console.error('Error al cargar estado:', error);
-          alert('Error al cargar los datos del estado.');
-          router.push('/admin/estados');
-        }
-      } else {
-        router.push('/admin');
+    (async () => {
+      try {
+        // Cargar datos del estado
+        const estadoData = await obtenerEstadoPorId(id);
+        setEstado(estadoData);
+        setLoadingData(false);
+      } catch (error) {
+        console.error('Error al cargar estado:', error);
+        alert('Error al cargar los datos del estado.');
+        router.push('/admin/estados');
       }
-    });
-
-    return () => unsubscribe();
-  }, [id, router]);
+    })();
+  }, [id, user, router]);
 
   const handleLogout = async () => {
     try {
@@ -130,7 +123,7 @@ export default function VerEstado({ params }) {
               href="/admin/dashboard"
               className="flex items-center mr-4 text-primary hover:underline"
             >
-              <Home size={16} className="mr-1" /> Dashboard
+              <Home size={16} className="mr-1" /> Panel
             </Link>
             <span className="mx-2 text-gray-500">/</span>
             <Link

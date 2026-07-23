@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, LogOut, Save, Download, Eye, PlusCircle, Trash2 } from 'lucide-react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
 import { crearEstado } from '../../../lib/firestore';
+import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import EstadoPDF from '../../../components/pdf/EstadoPDF';
 
@@ -29,8 +30,7 @@ const formatMoney = (amount) => {
 
 export default function NuevoEstado() {
     const router = useRouter();
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { user, loading } = useStaffAuth(['Admin']);
     const [guardando, setGuardando] = useState(false);
 
     // Estado para el modal de descripción
@@ -64,21 +64,6 @@ export default function NuevoEstado() {
         ],
         total: 0
     });
-
-    useEffect(() => {
-        // Verificar autenticación con Firebase
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            if (currentUser) {
-                setUser(currentUser);
-                setLoading(false);
-            } else {
-                router.push('/admin');
-            }
-        });
-
-        // Limpiar la suscripción al desmontar
-        return () => unsubscribe();
-    }, [router]);
 
     // Función para abrir el modal de descripción
     const abrirModalDescripcion = (itemId, descripcion) => {
@@ -246,7 +231,7 @@ export default function NuevoEstado() {
                             href="/admin/dashboard"
                             className="flex items-center mr-4 text-primary hover:underline"
                         >
-                            <Home size={16} className="mr-1" /> Dashboard
+                            <Home size={16} className="mr-1" /> Panel
                         </Link>
                         <span className="mx-2 text-gray-500">/</span>
                         <Link

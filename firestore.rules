@@ -3,32 +3,87 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Documentos de gestión interna: solo accesibles logueado (panel admin)
+    // Rol del usuario logueado, leído desde su propio documento en /usuarios.
+    // Nota: esto NO es un ciclo con las reglas de /usuarios de abajo, porque
+    // las reglas solo controlan escrituras vía la API; get() siempre puede
+    // leer el documento para evaluar la condición.
+    function rolDe(uid) {
+      return get(/databases/$(database)/documents/usuarios/$(uid)).data.role;
+    }
+
+    function esAdmin() {
+      return request.auth != null && rolDe(request.auth.uid) == 'Admin';
+    }
+
+    // Personal interno con acceso al panel (hoy: Admin y Tecnico).
+    function esStaff() {
+      return request.auth != null && rolDe(request.auth.uid) in ['Admin', 'Tecnico'];
+    }
+
+    function esPropietario(clienteId) {
+      return request.auth != null && request.auth.uid == clienteId;
+    }
+
+    // Cuentas staff creadas manualmente en Firebase Auth antes de que existiera
+    // esta colección de roles: se les permite auto-provisionar su propio
+    // documento como Admin la primera vez que entran (bootstrap único).
+    function esCuentaAdminHistorica() {
+      return request.auth.token.email in ['marcosotola@gmail.com', 'spitelalan@gmail.com'];
+    }
+
+    // Usuarios: cada uno gestiona su propio perfil; el rol solo lo cambia un Admin
+    // (salvo el bootstrap único de las cuentas históricas de arriba).
+    match /usuarios/{uid} {
+      allow create: if request.auth != null
+                    && request.auth.uid == uid
+                    && (
+                      request.resource.data.role == 'Cliente'
+                      || (request.resource.data.role == 'Admin' && esCuentaAdminHistorica())
+                    );
+      allow read: if request.auth != null && (request.auth.uid == uid || esStaff());
+      allow update: if request.auth != null && (
+                      (request.auth.uid == uid && request.resource.data.role == resource.data.role)
+                      || esAdmin()
+                    );
+      allow delete: if esAdmin();
+    }
+
+    // Documentos de gestión interna: el staff (Admin/Tecnico) tiene acceso
+    // completo; un Cliente solo puede leer sus propios documentos (los que
+    // tengan su UID en clienteId), nunca escribirlos.
     match /presupuestos/{id} {
-      allow read, write: if request.auth != null;
+      allow read: if esStaff() || esPropietario(resource.data.clienteId);
+      allow write: if esStaff();
     }
 
     match /estados/{id} {
-      allow read, write: if request.auth != null;
+      allow read: if esStaff() || esPropietario(resource.data.clienteId);
+      allow write: if esStaff();
     }
 
     match /remitos/{id} {
-      allow read, write: if request.auth != null;
+      allow read: if esStaff() || esPropietario(resource.data.clienteId);
+      allow write: if esStaff();
     }
 
     match /recibos/{id} {
-      allow read, write: if request.auth != null;
+      allow read: if esStaff() || esPropietario(resource.data.clienteId);
+      allow write: if esStaff();
     }
 
     match /documentos/{id} {
-      allow read, write: if request.auth != null;
+      allow read, write: if esStaff();
+    }
+
+    match /listaPrecios/{id} {
+      allow read, write: if esStaff();
     }
 
     // Consultas: cualquiera puede crear (formulario público de contacto),
-    // pero solo el admin logueado puede leerlas, marcarlas o borrarlas.
+    // pero solo el staff logueado puede leerlas, marcarlas o borrarlas.
     match /consultas/{id} {
       allow create: if true;
-      allow read, update, delete: if request.auth != null;
+      allow read, update, delete: if esStaff();
     }
 
     // Todo lo demás, denegado por defecto.

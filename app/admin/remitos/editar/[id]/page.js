@@ -4,10 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, LogOut, Save, Download, Eye, PlusCircle, Trash2, RefreshCw } from 'lucide-react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth } from '../../../../lib/firebase';
-import { obtenerRemitoPorId, actualizarRemito } from '../../../../lib/firestore';
+import { obtenerRemitoPorId, actualizarRemito, obtenerClientes } from '../../../../lib/firestore';
+import { useStaffAuth } from '../../../../lib/useStaffAuth';
 import { use } from 'react';
+import ClienteSelector from '../../../../components/ClienteSelector';
 import SignatureCanvas from 'react-signature-canvas';
 
 export default function EditarRemito({ params }) {
@@ -15,10 +17,12 @@ export default function EditarRemito({ params }) {
   const id = resolvedParams.id;
 
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [remitoOriginal, setRemitoOriginal] = useState(null);
+  const [clientes, setClientes] = useState([]);
+  const loading = loadingAuth || loadingData;
   const [mostrarCanvas, setMostrarCanvas] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 500, height: 200 });
   const sigCanvas = useRef({});
@@ -42,6 +46,7 @@ export default function EditarRemito({ params }) {
   const [remito, setRemito] = useState({
     numero: '',
     fecha: '',
+    clienteId: null,
     items: [
         { id: 1, descripcion: '', cantidad: '', unidad: 'UN' }
     ],
@@ -72,39 +77,39 @@ export default function EditarRemito({ params }) {
 }, [mostrarCanvas]);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !user) return;
 
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
+    (async () => {
+      try {
+        const remitoData = await obtenerRemitoPorId(id);
+        setRemitoOriginal(remitoData);
 
-        try {
-          const remitoData = await obtenerRemitoPorId(id);
-          setRemitoOriginal(remitoData);
-
-          setRemito({
-            numero: remitoData.numero,
-            fecha: remitoData.fecha,
-            items: remitoData.items || [],
-            observaciones: remitoData.observaciones || '',
-            firma: remitoData.firma || null,
-            aclaracionFirma: remitoData.aclaracionFirma || '' // Cargar la aclaración
+        setRemito({
+          numero: remitoData.numero,
+          fecha: remitoData.fecha,
+          clienteId: remitoData.clienteId || null,
+          items: remitoData.items || [],
+          observaciones: remitoData.observaciones || '',
+          firma: remitoData.firma || null,
+          aclaracionFirma: remitoData.aclaracionFirma || '' // Cargar la aclaración
         });
 
-          setCliente(remitoData.cliente);
-          setLoading(false);
-        } catch (error) {
-          console.error('Error al cargar remito:', error);
-          alert('Error al cargar los datos del remito.');
-          router.push('/admin/remitos');
-        }
-      } else {
-        router.push('/admin');
-      }
-    });
+        setCliente(remitoData.cliente);
 
-    return () => unsubscribe();
-  }, [id, router]);
+        try {
+          setClientes(await obtenerClientes());
+        } catch (error) {
+          console.error('Error al cargar los clientes:', error);
+        }
+
+        setLoadingData(false);
+      } catch (error) {
+        console.error('Error al cargar remito:', error);
+        alert('Error al cargar los datos del remito.');
+        router.push('/admin/remitos');
+      }
+    })();
+  }, [id, user, router]);
 
   // Función para abrir el modal de descripción
   const abrirModalDescripcion = (itemId, descripcion) => {
@@ -208,6 +213,7 @@ export default function EditarRemito({ params }) {
       const remitoData = {
         numero: remito.numero,
         fecha: remito.fecha,
+        clienteId: remito.clienteId || null,
         cliente: cliente,
         items: remito.items,
         observaciones: remito.observaciones,
@@ -267,7 +273,7 @@ export default function EditarRemito({ params }) {
               href="/admin/dashboard"
               className="flex items-center mr-4 text-primary hover:underline"
             >
-              <Home size={16} className="mr-1" /> Dashboard
+              <Home size={16} className="mr-1" /> Panel
             </Link>
             <span className="mx-2 text-gray-500">/</span>
             <Link
@@ -325,6 +331,14 @@ export default function EditarRemito({ params }) {
           {/* Información del cliente */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
+            <ClienteSelector
+              clientes={clientes}
+              onSelect={({ clienteId, nombre, empresa, email, telefono, direccion }) => {
+                setRemito({ ...remito, clienteId });
+                setCliente({ nombre, empresa, email, telefono, direccion });
+              }}
+              placeholder="Buscar cliente registrado (opcional)..."
+            />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Nombre</label>

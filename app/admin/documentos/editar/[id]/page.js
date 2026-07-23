@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, LogOut, Save } from 'lucide-react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth, db } from '../../../../lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { useStaffAuth } from '../../../../lib/useStaffAuth';
 import { use } from 'react';
 
 export default function EditarDocumento({ params }) {
@@ -14,9 +15,10 @@ export default function EditarDocumento({ params }) {
   const id = resolvedParams.id;
 
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
+  const loading = loadingAuth || loadingData;
 
   // Estado para el modal de contenido
   const [modalContenido, setModalContenido] = useState({
@@ -32,40 +34,32 @@ export default function EditarDocumento({ params }) {
   });
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !user) return;
 
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
+    (async () => {
+      try {
+        const docRef = doc(db, 'documentos', id);
+        const docSnap = await getDoc(docRef);
 
-        try {
-          const docRef = doc(db, 'documentos', id);
-          const docSnap = await getDoc(docRef);
-
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            setDocumento({
-              titulo: data.titulo || '',
-              fecha: data.fecha || '',
-              contenido: data.contenido || ''
-            });
-          } else {
-            alert('Documento no encontrado');
-            router.push('/admin/documentos');
-          }
-          setLoading(false);
-        } catch (error) {
-          console.error('Error al cargar documento:', error);
-          alert('Error al cargar los datos del documento.');
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setDocumento({
+            titulo: data.titulo || '',
+            fecha: data.fecha || '',
+            contenido: data.contenido || ''
+          });
+        } else {
+          alert('Documento no encontrado');
           router.push('/admin/documentos');
         }
-      } else {
-        router.push('/admin');
+        setLoadingData(false);
+      } catch (error) {
+        console.error('Error al cargar documento:', error);
+        alert('Error al cargar los datos del documento.');
+        router.push('/admin/documentos');
       }
-    });
-
-    return () => unsubscribe();
-  }, [id, router]);
+    })();
+  }, [id, user, router]);
 
   // Función para abrir el modal de contenido
   const abrirModalContenido = () => {
@@ -164,7 +158,7 @@ export default function EditarDocumento({ params }) {
               href="/admin/dashboard"
               className="flex items-center mr-4 text-primary hover:underline"
             >
-              <Home size={16} className="mr-1" /> Dashboard
+              <Home size={16} className="mr-1" /> Panel
             </Link>
             <span className="mx-2 text-gray-500">/</span>
             <Link

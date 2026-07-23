@@ -5,9 +5,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, LogOut, Edit, ArrowLeft, Download, Check, X } from 'lucide-react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
 import { obtenerPresupuestoPorId, actualizarPresupuesto } from '../../../lib/firestore';
+import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { use } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import PresupuestoPDF from '../../../components/pdf/PresupuestoPDF';
@@ -18,9 +19,10 @@ export default function VerPresupuesto({ params }) {
   const id = resolvedParams.id;
 
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const [loadingData, setLoadingData] = useState(true);
   const [presupuesto, setPresupuesto] = useState(null);
+  const loading = loadingAuth || loadingData;
   const [descargandoPdf, setDescargandoPdf] = useState(false);
   const [cambiandoEstado, setCambiandoEstado] = useState(false);
 
@@ -54,30 +56,20 @@ export default function VerPresupuesto({ params }) {
   };
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !user) return;
 
-    // Verificar autenticación y cargar presupuesto
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-
-        try {
-          // Cargar datos del presupuesto
-          const presupuestoData = await obtenerPresupuestoPorId(id);
-          setPresupuesto(presupuestoData);
-          setLoading(false);
-        } catch (error) {
-          console.error('Error al cargar presupuesto:', error);
-          alert('Error al cargar los datos del presupuesto.');
-          router.push('/admin/presupuestos');
-        }
-      } else {
-        router.push('/admin');
+    (async () => {
+      try {
+        const presupuestoData = await obtenerPresupuestoPorId(id);
+        setPresupuesto(presupuestoData);
+        setLoadingData(false);
+      } catch (error) {
+        console.error('Error al cargar presupuesto:', error);
+        alert('Error al cargar los datos del presupuesto.');
+        router.push('/admin/presupuestos');
       }
-    });
-
-    return () => unsubscribe();
-  }, [id, router]);
+    })();
+  }, [id, user, router]);
 
   const handleLogout = async () => {
     try {
@@ -160,7 +152,7 @@ export default function VerPresupuesto({ params }) {
                 href="/admin/dashboard"
                 className="flex items-center mr-4 text-primary hover:underline"
               >
-                <Home size={16} className="mr-1" /> Dashboard
+                <Home size={16} className="mr-1" /> Panel
               </Link>
               <span className="mx-2 text-gray-500">/</span>
               <Link
@@ -186,22 +178,18 @@ export default function VerPresupuesto({ params }) {
               >
                 <Edit size={18} className="mr-2" /> Editar
               </Link>
-              <button
+              <PDFDownloadLink
+                document={<PresupuestoPDF presupuesto={presupuesto} />}
+                fileName={`${presupuesto.numero}.pdf`}
                 title="Descargar PDF"
-                className="flex px-4 py-2 text-white rounded-md bg-primary hover:bg-primary-dark"
+                className="flex items-center px-4 py-2 text-white rounded-md bg-primary hover:bg-primary-dark"
               >
-                <PDFDownloadLink
-                  document={<PresupuestoPDF presupuesto={presupuesto} />}
-                  fileName={`${presupuesto.numero}.pdf`}
-                  className="flex text-white"
-                >     
-                  {({ blob, url, loading, error }) =>
-                    loading ?
-                      <span><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
-                      <span><Download size={18} className="mr-2" /> Descargar PDF</span>
-                  }
-                </PDFDownloadLink>
-              </button>
+                {({ loading }) =>
+                  loading ?
+                    <span className="flex items-center"><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
+                    <span className="flex items-center"><Download size={18} className="mr-2" /> Descargar PDF</span>
+                }
+              </PDFDownloadLink>
             </div>
           </div>
         </div>
@@ -322,27 +310,37 @@ export default function VerPresupuesto({ params }) {
             </div>
           </div>
 
-          {/* Tabla de items */}
+          {/* Detalle: tabla de items o descripción global según el modo */}
           <div className="px-8 py-4">
-            <h3 className="p-2 mb-3 text-sm font-bold text-blue-800 bg-gray-100 rounded">Detalle de Items</h3>
-            
-            {/* Encabezado de tabla */}
-            <div className="flex text-xs font-bold text-white bg-blue-800">
-              <div className="flex-1 p-3 pr-4">Descripción</div>
-              <div className="w-20 p-3 text-center">Cant.</div>
-              <div className="p-3 text-center w-28">Precio Unit.</div>
-              <div className="p-3 text-center w-28">Subtotal</div>
-            </div>
-            
-            {/* Filas de items */}
-            {(presupuesto.items || []).map((item, index) => (
-              <div key={item.id} className={`flex text-xs border-b border-gray-200 ${index % 2 === 1 ? 'bg-gray-50' : 'bg-white'}`}>
-                <div className="flex-1 p-3 pr-4">{item.descripcion || ''}</div>
-                <div className="w-20 p-3 text-center">{parseFloat(item.cantidad || 0)}</div>
-                <div className="p-3 text-center w-28">$ {formatearMonto(parseFloat(item.precioUnitario || 0))}</div>
-                <div className="p-3 font-medium text-center w-28">$ {formatearMonto(parseFloat(item.subtotal || 0))}</div>
+            <h3 className="p-2 mb-3 text-sm font-bold text-blue-800 bg-gray-100 rounded">
+              {presupuesto.modo === 'global' ? 'Descripción' : 'Detalle de Items'}
+            </h3>
+
+            {presupuesto.modo === 'global' ? (
+              <div className="p-4 text-xs whitespace-pre-line rounded bg-gray-50">
+                {presupuesto.items?.[0]?.descripcion || ''}
               </div>
-            ))}
+            ) : (
+              <>
+                {/* Encabezado de tabla */}
+                <div className="flex text-xs font-bold text-white bg-blue-800">
+                  <div className="flex-1 p-3 pr-4">Descripción</div>
+                  <div className="w-20 p-3 text-center">Cant.</div>
+                  <div className="p-3 text-center w-28">Precio Unit.</div>
+                  <div className="p-3 text-center w-28">Subtotal</div>
+                </div>
+
+                {/* Filas de items */}
+                {(presupuesto.items || []).map((item, index) => (
+                  <div key={item.id} className={`flex text-xs border-b border-gray-200 ${index % 2 === 1 ? 'bg-gray-50' : 'bg-white'}`}>
+                    <div className="flex-1 p-3 pr-4">{item.descripcion || ''}</div>
+                    <div className="w-20 p-3 text-center">{parseFloat(item.cantidad || 0)}</div>
+                    <div className="p-3 text-center w-28">$ {formatearMonto(parseFloat(item.precioUnitario || 0))}</div>
+                    <div className="p-3 font-medium text-center w-28">$ {formatearMonto(parseFloat(item.subtotal || 0))}</div>
+                  </div>
+                ))}
+              </>
+            )}
 
             {/* Totales con descuentos */}
             <div className="flex justify-end mt-4">

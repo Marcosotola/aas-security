@@ -4,11 +4,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, LogOut, Save, Download, RefreshCw } from 'lucide-react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
-import { crearRecibo } from '../../../lib/firestore';
+import { crearRecibo, obtenerClientes } from '../../../lib/firestore';
+import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import ReciboPDF from '../../../components/pdf/ReciboPDF';
+import ClienteSelector from '../../../components/ClienteSelector';
 import SignatureCanvas from 'react-signature-canvas';
 
 // Función para convertir números a letras
@@ -66,11 +68,11 @@ const numeroALetras = (numero) => {
 
 export default function NuevoRecibo() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useStaffAuth(['Admin']);
   const [guardando, setGuardando] = useState(false);
   const [showCanvas, setShowCanvas] = useState(true);
   const [canvasSize, setCanvasSize] = useState({ width: 500, height: 200 });
+  const [clientes, setClientes] = useState([]);
   const sigCanvas = useRef({});
 
   // Estado para el modal de concepto
@@ -83,6 +85,7 @@ export default function NuevoRecibo() {
   const [recibo, setRecibo] = useState({
     numero: `R-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
     fecha: new Date().toISOString().split('T')[0],
+    clienteId: null,
     recibiDe: '',
     monto: '',
     cantidadLetras: '',
@@ -92,17 +95,11 @@ export default function NuevoRecibo() {
   });
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        setLoading(false);
-      } else {
-        router.push('/admin');
-      }
-    });
-
-    return () => unsubscribe();
-  }, [router]);
+    if (!user) return;
+    obtenerClientes()
+      .then(setClientes)
+      .catch((error) => console.error('Error al cargar los clientes:', error));
+  }, [user]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -251,7 +248,7 @@ export default function NuevoRecibo() {
               href="/admin/dashboard"
               className="flex items-center mr-4 text-primary hover:underline"
             >
-              <Home size={16} className="mr-1" /> Dashboard
+              <Home size={16} className="mr-1" /> Panel
             </Link>
             <span className="mx-2 text-gray-500">/</span>
             <Link
@@ -326,6 +323,13 @@ export default function NuevoRecibo() {
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Recibí de</label>
+                <ClienteSelector
+                  clientes={clientes}
+                  onSelect={({ clienteId, nombre, empresa }) => {
+                    setRecibo({ ...recibo, clienteId, recibiDe: empresa ? `${nombre} - ${empresa}` : nombre });
+                  }}
+                  placeholder="Buscar cliente registrado (opcional)..."
+                />
                 <input
                   type="text"
                   value={recibo.recibiDe}

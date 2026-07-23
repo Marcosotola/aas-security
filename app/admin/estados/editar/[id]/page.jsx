@@ -5,9 +5,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, LogOut, Save, Download, Eye, PlusCircle, Trash2 } from 'lucide-react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth } from '../../../../lib/firebase';
 import { obtenerEstadoPorId, actualizarEstado } from '../../../../lib/firestore';
+import { useStaffAuth } from '../../../../lib/useStaffAuth';
 import { use } from 'react';
 
 // Función para formatear montos con separador de miles (punto) y decimal (coma)
@@ -26,10 +27,11 @@ export default function EditarEstado({ params }) {
   const id = resolvedParams.id;
   
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [estadoOriginal, setEstadoOriginal] = useState(null);
+  const loading = loadingAuth || loadingData;
 
   // Estado para el modal de descripción
   const [modalDescripcion, setModalDescripcion] = useState({
@@ -64,40 +66,31 @@ export default function EditarEstado({ params }) {
   });
 
   useEffect(() => {
-    if (!id) return;
-    
-    // Verificar autenticación y cargar estado
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        
-        try {
-          // Cargar datos del estado
-          const estadoData = await obtenerEstadoPorId(id);
-          setEstadoOriginal(estadoData);
-          
-          // Actualizar estado con los datos cargados
-          setEstado({
-            numero: estadoData.numero,
-            fecha: estadoData.fecha,
-            items: estadoData.items || [],
-            total: estadoData.total || 0
-          });
-          
-          setCliente(estadoData.cliente);
-          setLoading(false);
-        } catch (error) {
-          console.error('Error al cargar estado:', error);
-          alert('Error al cargar los datos del estado.');
-          router.push('/admin/estados');
-        }
-      } else {
-        router.push('/admin');
-      }
-    });
+    if (!id || !user) return;
 
-    return () => unsubscribe();
-  }, [id, router]);
+    (async () => {
+      try {
+        // Cargar datos del estado
+        const estadoData = await obtenerEstadoPorId(id);
+        setEstadoOriginal(estadoData);
+
+        // Actualizar estado con los datos cargados
+        setEstado({
+          numero: estadoData.numero,
+          fecha: estadoData.fecha,
+          items: estadoData.items || [],
+          total: estadoData.total || 0
+        });
+
+        setCliente(estadoData.cliente);
+        setLoadingData(false);
+      } catch (error) {
+        console.error('Error al cargar estado:', error);
+        alert('Error al cargar los datos del estado.');
+        router.push('/admin/estados');
+      }
+    })();
+  }, [id, user, router]);
 
   // Función para abrir el modal de descripción
   const abrirModalDescripcion = (itemId, descripcion) => {
@@ -264,7 +257,7 @@ export default function EditarEstado({ params }) {
               href="/admin/dashboard"
               className="flex items-center mr-4 text-primary hover:underline"
             >
-              <Home size={16} className="mr-1" /> Dashboard
+              <Home size={16} className="mr-1" /> Panel
             </Link>
             <span className="mx-2 text-gray-500">/</span>
             <Link 
