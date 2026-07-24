@@ -1,15 +1,15 @@
 // app/registro/page.js
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { auth, getAppSecundaria } from '../lib/firebase';
 import { crearUsuario } from '../lib/firestore';
 
-export default function Registro() {
+function RegistroForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmarPassword, setConfirmarPassword] = useState('');
@@ -17,6 +17,8 @@ export default function Registro() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const desdeAdmin = searchParams.get('origen') === 'admin';
 
   const handleRegistro = async (e) => {
     e.preventDefault();
@@ -33,6 +35,19 @@ export default function Registro() {
 
     setLoading(true);
     try {
+      if (desdeAdmin) {
+        // Un Admin está dando de alta a un Cliente desde el panel: usamos una
+        // instancia secundaria de Firebase para no reemplazar la sesión del
+        // Admin (createUserWithEmailAndPassword inicia sesión automáticamente
+        // con la cuenta nueva en la instancia de auth que se le pasa).
+        const { auth: authSecundaria, db: dbSecundaria } = getAppSecundaria();
+        const credencial = await createUserWithEmailAndPassword(authSecundaria, email, password);
+        await crearUsuario(credencial.user.uid, { email, perfilCompleto: false }, dbSecundaria);
+        await signOut(authSecundaria);
+        router.push('/admin/usuarios');
+        return;
+      }
+
       const credencial = await createUserWithEmailAndPassword(auth, email, password);
       await crearUsuario(credencial.user.uid, { email, perfilCompleto: false });
       router.push('/registro/datos');
@@ -63,10 +78,12 @@ export default function Registro() {
             </span>
           </Link>
           <h2 className="mt-6 text-3xl font-bold text-center font-montserrat text-primary">
-            Crear Cuenta
+            {desdeAdmin ? 'Nueva cuenta de cliente' : 'Crear Cuenta'}
           </h2>
           <p className="mt-2 text-sm text-center text-gray-600">
-            Paso 1 de 2 · Correo y contraseña
+            {desdeAdmin
+              ? 'El cliente completa sus datos la primera vez que inicie sesión'
+              : 'Paso 1 de 2 · Correo y contraseña'}
           </p>
         </div>
 
@@ -141,19 +158,32 @@ export default function Registro() {
           </div>
         </form>
 
-        <p className="text-sm text-center text-gray-600">
-          ¿Ya tenés cuenta?{' '}
-          <Link href="/login" className="font-medium text-primary hover:text-primary-light">
-            Iniciá sesión
-          </Link>
-        </p>
+        {!desdeAdmin && (
+          <p className="text-sm text-center text-gray-600">
+            ¿Ya tenés cuenta?{' '}
+            <Link href="/login" className="font-medium text-primary hover:text-primary-light">
+              Iniciá sesión
+            </Link>
+          </p>
+        )}
 
         <div className="mt-4 text-center">
-          <Link href="/" className="text-sm text-primary hover:text-primary-light">
-            Volver al sitio principal
+          <Link
+            href={desdeAdmin ? '/admin/usuarios' : '/'}
+            className="text-sm text-primary hover:text-primary-light"
+          >
+            {desdeAdmin ? 'Volver al panel' : 'Volver al sitio principal'}
           </Link>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Registro() {
+  return (
+    <Suspense fallback={null}>
+      <RegistroForm />
+    </Suspense>
   );
 }

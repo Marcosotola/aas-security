@@ -285,7 +285,7 @@ const EstadoPDF = ({ estado }) => {
         <View style={styles.horizontalInfoBlocks}>
           {/* Información del presupuesto */}
           <View style={[styles.infoBlock, { flex: 1, marginRight: 10 }]}>
-            <Text style={sectionTitleStyle}>Datos</Text>
+            <Text style={styles.sectionTitle}>Datos</Text>
             <View style={styles.infoRow}>
               <Text style={styles.label}>N.º de Estado:</Text>
               <Text style={styles.value}>{estado.numero || ''}</Text>
@@ -294,7 +294,7 @@ const EstadoPDF = ({ estado }) => {
 
           {/* Información del cliente */}
           <View style={[styles.infoBlock, { flex: 1 }]}>
-            <Text style={sectionTitleStyle}>Cliente</Text>
+            <Text style={styles.sectionTitle}>Cliente</Text>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Nombre:</Text>
               <Text style={styles.value}>{estado.cliente.nombre || ''}</Text>
@@ -316,7 +316,7 @@ const EstadoPDF = ({ estado }) => {
 
         {/* Tabla de items */}
         <View style={styles.section}>
-          <Text style={sectionTitleStyle}>Reporte de avances</Text>
+          <Text style={styles.sectionTitle}>Reporte de avances</Text>
 
           <View style={styles.tableHeader}>
             <Text style={[styles.col15, styles.colHeader]}>Fecha</Text>

@@ -2,13 +2,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   FilePlus,
   FileText,
   Home,
-  LogOut,
   BarChart3,
   DollarSign,
   FileCheck,
@@ -18,8 +16,6 @@ import {
   Users,
   Calendar,
   ChevronRight,
-  Menu,
-  X,
   Clock,
   AlertCircle,
   File,
@@ -27,15 +23,13 @@ import {
   Tag,
   UserCog
 } from 'lucide-react';
-import { signOut } from 'firebase/auth';
-import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
-import { auth, db } from '../../lib/firebase';
+import { collection, query, where, getCountFromServer } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 
 export default function Dashboard() {
   const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
   const [loadingData, setLoadingData] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [totales, setTotales] = useState({
     presupuestos: 0,
     estados: 0,
@@ -47,7 +41,6 @@ export default function Dashboard() {
     listaPrecios: 0,
     usuarios: 0
   });
-  const router = useRouter();
   const loading = loadingAuth || loadingData;
 
   useEffect(() => {
@@ -57,63 +50,48 @@ export default function Dashboard() {
 
   const cargarTotales = async () => {
     try {
-      // Total de presupuestos
-      const presupuestosRef = collection(db, 'presupuestos');
-      const presupuestosSnapshot = await getDocs(presupuestosRef);
+      // Cuenta cada colección con una agregación en el servidor (no descarga
+      // los documentos) y todas en paralelo: antes se hacían 9 lecturas
+      // completas de colección en serie, una esperando a la anterior, lo que
+      // hacía que el dashboard tardara varios segundos en mostrar solo unos
+      // números de acceso.
+      const contar = async (ref) => (await getCountFromServer(ref)).data().count;
 
-      // Total de estados
-      const estadosRef = collection(db, 'estados');
-      const estadosSnapshot = await getDocs(estadosRef);
-
-      // Total de remitos
-      const remitosRef = collection(db, 'remitos');
-      const remitosSnapshot = await getDocs(remitosRef);
-
-      // Total de recibos
-      const recibosRef = collection(db, 'recibos');
-      const recibosSnapshot = await getDocs(recibosRef);
-
-      // Total de documentos
-      const documentosRef = collection(db, 'documentos');
-      const documentosSnapshot = await getDocs(documentosRef);
-
-      // Total de consultas y consultas sin leer
-      const consultasRef = collection(db, 'consultas');
-      const consultasSnapshot = await getDocs(consultasRef);
-      const consultasNoLeidasSnapshot = await getDocs(
-        query(consultasRef, where('leida', '==', false))
-      );
-
-      // Total de items en la lista de precios
-      const listaPreciosRef = collection(db, 'listaPrecios');
-      const listaPreciosSnapshot = await getDocs(listaPreciosRef);
-
-      // Total de usuarios registrados
-      const usuariosRef = collection(db, 'usuarios');
-      const usuariosSnapshot = await getDocs(usuariosRef);
+      const [
+        presupuestos,
+        estados,
+        remitos,
+        recibos,
+        documentos,
+        consultas,
+        consultasNoLeidas,
+        listaPrecios,
+        usuarios
+      ] = await Promise.all([
+        contar(collection(db, 'presupuestos')),
+        contar(collection(db, 'estados')),
+        contar(collection(db, 'remitos')),
+        contar(collection(db, 'recibos')),
+        contar(collection(db, 'documentos')),
+        contar(collection(db, 'consultas')),
+        contar(query(collection(db, 'consultas'), where('leida', '==', false))),
+        contar(collection(db, 'listaPrecios')),
+        contar(collection(db, 'usuarios'))
+      ]);
 
       setTotales({
-        presupuestos: presupuestosSnapshot.size,
-        estados: estadosSnapshot.size,
-        remitos: remitosSnapshot.size,
-        recibos: recibosSnapshot.size,
-        documentos: documentosSnapshot.size,
-        consultas: consultasSnapshot.size,
-        consultasNoLeidas: consultasNoLeidasSnapshot.size,
-        listaPrecios: listaPreciosSnapshot.size,
-        usuarios: usuariosSnapshot.size
+        presupuestos,
+        estados,
+        remitos,
+        recibos,
+        documentos,
+        consultas,
+        consultasNoLeidas,
+        listaPrecios,
+        usuarios
       });
     } catch (error) {
       console.error('Error al cargar totales:', error);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.push('/admin');
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
     }
   };
 
@@ -261,69 +239,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header mejorado */}
-      <header className="sticky top-0 z-50 text-white shadow-lg bg-primary">
-        <div className="container flex items-center justify-between px-4 py-4 mx-auto">
-          <div className="flex items-center">
-            <button
-              className="mr-4 md:hidden"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-            <div className="flex items-center">
-              <div className="relative mr-2">
-                <div className="absolute inset-0 transform rotate-45 rounded-full bg-white/30"></div>
-                <div className="absolute inset-0 transform scale-75 -rotate-45 rounded-full bg-white/20"></div>
-              </div>
-              <h1 className="text-lg font-bold md:text-xl font-montserrat">Panel de Administración</h1>
-            </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="hidden md:inline">{user?.email}</span>
-            <button
-              onClick={handleLogout}
-              className="flex items-center p-2 text-white rounded-md hover:bg-primary-light"
-            >
-              <LogOut size={18} className="mr-2" />
-              <span className="hidden md:inline">Salir</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Menú móvil */}
-        {mobileMenuOpen && (
-          <div className="absolute w-full bg-white shadow-lg top-full md:hidden">
-            <nav className="flex flex-col p-4">
-              <Link href="/" className="py-2 text-gray-700 hover:text-primary">
-                Volver al sitio principal
-              </Link>
-              {modulos.filter(m => m.activo).map(modulo => (
-                <div key={modulo.id} className="py-2">
-                  <p className="flex items-center font-semibold text-gray-800">
-                    {modulo.titulo}
-                    {modulo.badge > 0 && (
-                      <span className="ml-2 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full">
-                        {modulo.badge}
-                      </span>
-                    )}
-                  </p>
-                  {modulo.rutas.nuevo && (
-                    <Link href={modulo.rutas.nuevo} className="block py-1 pl-4 text-gray-600 hover:text-primary">
-                      Nuevo
-                    </Link>
-                  )}
-                  <Link href={modulo.rutas.historial} className="block py-1 pl-4 text-gray-600 hover:text-primary">
-                    Historial
-                  </Link>
-                </div>
-              ))}
-            </nav>
-          </div>
-        )}
-      </header>
-
+    <div>
       <div className="container px-4 py-8 mx-auto">
         {/* Título y bienvenida */}
         <div className="mb-8">
@@ -337,7 +253,7 @@ export default function Dashboard() {
 
         {/* Módulos del sistema */}
         <h3 className="mb-4 text-xl font-bold text-gray-800">Documentos</h3>
-        <div className="grid grid-cols-3 gap-3 mb-8 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 md:gap-4">
+        <div className="grid grid-cols-2 gap-3 mb-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 md:gap-4">
           {modulos.map(modulo => {
             const Icono = modulo.icono;
             return (
@@ -355,28 +271,15 @@ export default function Dashboard() {
                   </div>
                 )}
 
-                {/* Vista mobile: acceso directo reducido, solo icono + nombre */}
-                <div className="flex flex-col items-center md:hidden">
-                  <div className={`relative flex items-center justify-center w-14 h-14 rounded-2xl shadow-sm ${modulo.activo ? modulo.color : 'bg-gray-300'} text-white`}>
-                    <Icono size={26} />
-                    {modulo.badge > 0 && (
-                      <span className="absolute flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 border-2 border-white rounded-full -top-1.5 -right-1.5">
-                        {modulo.badge}
-                      </span>
-                    )}
-                  </div>
-                  <span className="mt-1.5 text-xs font-medium text-center text-gray-700 line-clamp-1">{modulo.titulo}</span>
-                </div>
-
-                {/* Vista desktop: card completa, sin cambios */}
+                {/* Tarjeta de módulo: mismo diseño en mobile y escritorio */}
                 <div
-                  className={`hidden md:flex flex-col overflow-hidden rounded-xl shadow-sm transition-all h-full ${modulo.activo && !modulo.proximamente ? 'hover:shadow-md hover:-translate-y-0.5' : ''}`}
+                  className={`flex flex-col overflow-hidden rounded-xl shadow-sm transition-all h-full ${modulo.activo && !modulo.proximamente ? 'hover:shadow-md hover:-translate-y-0.5' : ''}`}
                   style={{ transition: 'box-shadow 0.2s, transform 0.2s' }}
                 >
                   <div className={`p-4 md:p-6 ${modulo.activo ? modulo.color : 'bg-gray-300'} text-white h-full flex flex-col`}>
                     <div className="flex items-start justify-between mb-2 md:mb-4">
                       <div className="relative p-2.5 rounded-xl bg-white/20 shadow-inner">
-                        <Icono size={32} className="md:w-10 md:h-10" />
+                        <Icono size={26} className="md:w-10 md:h-10" />
                         {modulo.badge > 0 && (
                           <span className="absolute flex items-center justify-center min-w-[20px] h-5 px-1 text-[11px] font-bold text-white bg-red-500 border-2 border-white rounded-full -top-2 -right-2">
                             {modulo.badge}
@@ -390,7 +293,7 @@ export default function Dashboard() {
                     </div>
 
                     <h4 className="text-base font-bold leading-tight md:text-lg">{modulo.titulo}</h4>
-                    <p className="hidden mt-1 text-sm md:block opacity-90 line-clamp-2">{modulo.descripcion}</p>
+                    <p className="mt-1 text-sm opacity-90 line-clamp-2">{modulo.descripcion}</p>
 
                     {modulo.activo && !modulo.sinNuevo && (
                       <div className="flex items-center justify-center mt-auto pt-3 md:pt-4 border-t border-white/10">

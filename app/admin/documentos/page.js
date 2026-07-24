@@ -1,22 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FilePlus, FileText, Home, LogOut, Search, Download, Edit, Trash, Eye } from 'lucide-react';
-import { signOut } from 'firebase/auth';
+import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye } from 'lucide-react';
 import { collection, getDocs, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
-import { auth, db } from '../../lib/firebase';
+import { db } from '../../lib/firebase';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import DocumentoPDF from '../../components/pdf/DocumentoPDF';
+import ViewToggle from '../../components/admin/ViewToggle';
 
 export default function HistorialDocumentos() {
   const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
   const [loadingData, setLoadingData] = useState(true);
   const [documentos, setDocumentos] = useState([]);
   const [filtro, setFiltro] = useState('');
-  const router = useRouter();
+  const [vista, setVista] = useState('tabla');
   const loading = loadingAuth || loadingData;
 
   useEffect(() => {
@@ -40,15 +39,6 @@ export default function HistorialDocumentos() {
     } catch (error) {
       console.error('Error al cargar documentos:', error);
       setDocumentos([]);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.push('/admin');
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
     }
   };
 
@@ -86,29 +76,7 @@ export default function HistorialDocumentos() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header del administrador */}
-      <header className="text-white shadow bg-primary">
-        <div className="container flex items-center justify-between px-4 py-4 mx-auto">
-          <div className="flex items-center">
-            <div className="relative mr-2">
-              <div className="absolute inset-0 transform rotate-45 rounded-full bg-white/30"></div>
-              <div className="absolute inset-0 transform scale-75 -rotate-45 rounded-full bg-white/20"></div>
-            </div>
-            <h1 className="text-xl font-bold font-montserrat">Panel de Administración</h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="hidden md:inline">{user?.email}</span>
-            <button
-              onClick={handleLogout}
-              className="flex items-center p-2 text-white rounded-md hover:bg-primary-light"
-            >
-              <LogOut size={18} className="mr-2" /> Salir
-            </button>
-          </div>
-        </div>
-      </header>
-
+    <div>
       <div className="container px-4 py-8 mx-auto">
         <div className="flex flex-wrap items-center justify-between mb-8">
           <div className="flex items-center mb-4">
@@ -135,17 +103,81 @@ export default function HistorialDocumentos() {
         </h2>
 
         <div className="p-6 mb-8 bg-white rounded-lg shadow-md">
-          <div className="relative flex items-center mb-6">
-            <Search size={18} className="absolute text-gray-400 left-3" />
-            <input
-              type="text"
-              placeholder="Buscar por título o contenido..."
-              value={filtro}
-              onChange={(e) => setFiltro(e.target.value)}
-              className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
+          <div className="flex items-center gap-3 mb-6">
+            <div className="relative flex items-center flex-1">
+              <Search size={18} className="absolute text-gray-400 left-3" />
+              <input
+                type="text"
+                placeholder="Buscar por título o contenido..."
+                value={filtro}
+                onChange={(e) => setFiltro(e.target.value)}
+                className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+            </div>
+            <ViewToggle vista={vista} onChange={setVista} />
           </div>
 
+          {vista === 'cards' ? (
+            documentosFiltrados.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {documentosFiltrados.map((documento) => (
+                  <div key={documento.id} className="p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="text-sm font-medium text-gray-900">{documento.titulo || 'Sin título'}</div>
+                      <div className="text-xs text-gray-500 whitespace-nowrap">
+                        {documento.fechaCreacion
+                          ? new Date(documento.fechaCreacion.toDate()).toLocaleDateString('es-AR')
+                          : documento.fecha
+                            ? new Date(documento.fecha).toLocaleDateString('es-AR')
+                            : 'No disponible'
+                        }
+                      </div>
+                    </div>
+                    <div className="mt-1 text-sm text-gray-500 line-clamp-2" title={documento.contenido}>
+                      {documento.contenido || 'N/A'}
+                    </div>
+
+                    <div className="flex justify-end pt-3 mt-3 space-x-4 border-t border-gray-100">
+                      <Link
+                        href={`/admin/documentos/${documento.id}`}
+                        title="Ver detalles"
+                        className="text-gray-600 hover:text-primary"
+                      >
+                        <Eye size={18} />
+                      </Link>
+                      <PDFDownloadLink
+                        document={<DocumentoPDF documento={documento} />}
+                        fileName={`Documento_${documento.titulo?.replace(/\s+/g, '_') || 'Sin_titulo'}.pdf`}
+                        className="text-primary hover:text-primary-light"
+                      >
+                        {({ blob, url, loading, error }) =>
+                          <Download size={18} className={loading ? "animate-pulse" : ""} />
+                        }
+                      </PDFDownloadLink>
+                      <Link
+                        href={`/admin/documentos/editar/${documento.id}`}
+                        title="Editar"
+                        className="text-secondary hover:text-secondary-light"
+                      >
+                        <Edit size={18} />
+                      </Link>
+                      <button
+                        onClick={() => handleDeleteDocumento(documento.id)}
+                        title="Eliminar"
+                        className="text-red-500 cursor-pointer hover:text-red-700"
+                      >
+                        <Trash size={18} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="px-6 py-4 text-center text-gray-500">
+                No hay documentos que coincidan con su búsqueda
+              </div>
+            )
+          ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -232,6 +264,7 @@ export default function HistorialDocumentos() {
               </tbody>
             </table>
           </div>
+          )}
 
           {documentosFiltrados.length === 0 && filtro && (
             <div className="py-10 text-center">

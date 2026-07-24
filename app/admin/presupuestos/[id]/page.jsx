@@ -4,9 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Home, LogOut, Edit, ArrowLeft, Download, Check, X } from 'lucide-react';
-import { signOut } from 'firebase/auth';
-import { auth } from '../../../lib/firebase';
+import { Home, Edit, ArrowLeft, Download, Check, X } from 'lucide-react';
 import { obtenerPresupuestoPorId, actualizarPresupuesto } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { use } from 'react';
@@ -71,15 +69,6 @@ export default function VerPresupuesto({ params }) {
     })();
   }, [id, user, router]);
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.push('/admin');
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-    }
-  };
-
   // Función para manejar el cambio de estado
   const handleCambiarEstado = async (nuevoEstado) => {
     if (presupuesto.estado === nuevoEstado) return;
@@ -121,28 +110,6 @@ export default function VerPresupuesto({ params }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header del administrador */}
-      <header className="text-white shadow bg-primary">
-        <div className="container flex items-center justify-between px-4 py-4 mx-auto">
-          <div className="flex items-center">
-            <div className="relative mr-2">
-              <div className="absolute inset-0 transform rotate-45 rounded-full bg-white/30"></div>
-              <div className="absolute inset-0 transform scale-75 -rotate-45 rounded-full bg-white/20"></div>
-            </div>
-            <h1 className="text-xl font-bold font-montserrat">Panel de Administración</h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="hidden md:inline">{user?.email}</span>
-            <button
-              onClick={handleLogout}
-              className="flex items-center p-2 text-white rounded-md hover:bg-primary-light"
-            >
-              <LogOut size={18} className="mr-2" /> Salir
-            </button>
-          </div>
-        </div>
-      </header>
-
       {/* Navegación y controles */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="container px-4 py-4 mx-auto">

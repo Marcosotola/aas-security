@@ -2,13 +2,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Home, LogOut, Search, Trash, MessageCircle, MailOpen, Mail, Eye, X } from 'lucide-react';
-import { signOut } from 'firebase/auth';
-import { auth } from '../../lib/firebase';
+import { Home, Search, Trash, MessageCircle, MailOpen, Mail, Eye, X } from 'lucide-react';
 import { obtenerConsultas, marcarConsultaLeida, eliminarConsulta } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
+import ViewToggle from '../../components/admin/ViewToggle';
 
 // Arma un link de WhatsApp a partir de un teléfono en cualquier formato común en Argentina
 const construirLinkWhatsApp = (telefono) => {
@@ -41,7 +39,7 @@ export default function Consultas() {
   const [consultas, setConsultas] = useState([]);
   const [filtro, setFiltro] = useState('');
   const [consultaSeleccionada, setConsultaSeleccionada] = useState(null);
-  const router = useRouter();
+  const [vista, setVista] = useState('tabla');
   const loading = loadingAuth || loadingData;
 
   useEffect(() => {
@@ -56,15 +54,6 @@ export default function Consultas() {
     } catch (error) {
       console.error('Error al cargar consultas:', error);
       setConsultas([]);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.push('/admin');
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
     }
   };
 
@@ -127,28 +116,7 @@ export default function Consultas() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="text-white shadow bg-primary">
-        <div className="container flex items-center justify-between px-4 py-20 mx-auto">
-          <div className="flex items-center">
-            <div className="relative mr-2">
-              <div className="absolute inset-0 transform rotate-45 rounded-full bg-white/30"></div>
-              <div className="absolute inset-0 transform scale-75 -rotate-45 rounded-full bg-white/20"></div>
-            </div>
-            <h1 className="text-xl font-bold font-montserrat">Panel de Administración</h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="hidden md:inline">{user?.email}</span>
-            <button
-              onClick={handleLogout}
-              className="flex items-center p-2 text-white rounded-md hover:bg-primary-light"
-            >
-              <LogOut size={18} className="mr-2" /> Salir
-            </button>
-          </div>
-        </div>
-      </header>
-
+    <div>
       <div className="container px-4 py-8 mx-auto">
         <div className="flex flex-wrap items-center justify-between mb-8">
           <div className="flex items-center mb-4">
@@ -175,21 +143,23 @@ export default function Consultas() {
         </div>
 
         <div className="p-4 mb-8 bg-white rounded-lg shadow-md md:p-6">
-          <div className="relative flex items-center mb-6">
-            <Search size={18} className="absolute text-gray-400 left-3" />
-            <input
-              type="text"
-              placeholder="Buscar por nombre, teléfono o consulta..."
-              value={filtro}
-              onChange={(e) => setFiltro(e.target.value)}
-              className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
+          <div className="flex items-center gap-3 mb-6">
+            <div className="relative flex items-center flex-1">
+              <Search size={18} className="absolute text-gray-400 left-3" />
+              <input
+                type="text"
+                placeholder="Buscar por nombre, teléfono o consulta..."
+                value={filtro}
+                onChange={(e) => setFiltro(e.target.value)}
+                className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+            </div>
+            <ViewToggle vista={vista} onChange={setVista} />
           </div>
 
           {consultasFiltradas.length > 0 ? (
-            <>
-              {/* Lista tipo tarjeta: solo en mobile, con acciones grandes y separadas */}
-              <div className="space-y-4 md:hidden">
+            vista === 'cards' ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {consultasFiltradas.map((consulta) => {
                   const linkWhatsApp = construirLinkWhatsApp(consulta.telefono);
                   return (
@@ -250,9 +220,8 @@ export default function Consultas() {
                   );
                 })}
               </div>
-
-              {/* Tabla: solo en escritorio */}
-              <div className="hidden overflow-x-auto md:block">
+            ) : (
+              <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
@@ -347,7 +316,7 @@ export default function Consultas() {
                   </tbody>
                 </table>
               </div>
-            </>
+            )
           ) : (
             <div className="py-10 text-center text-gray-500">
               No hay consultas que coincidan con su búsqueda

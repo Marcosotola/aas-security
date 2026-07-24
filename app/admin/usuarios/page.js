@@ -3,12 +3,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Home, LogOut, Search, ChevronDown, Users as UsersIcon, MapPin } from 'lucide-react';
-import { signOut } from 'firebase/auth';
-import { auth } from '../../lib/firebase';
+import { Home, Search, ChevronDown, Users as UsersIcon, MapPin, UserPlus } from 'lucide-react';
 import { obtenerUsuarios, actualizarUsuario } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import PortalDropdown from '../../components/PortalDropdown';
+import ViewToggle from '../../components/admin/ViewToggle';
 
 const ROLES = ['Cliente', 'Tecnico', 'Admin'];
 
@@ -20,6 +19,7 @@ export default function GestionUsuarios() {
   const [rolMenuAbierto, setRolMenuAbierto] = useState(null);
   const [actualizandoRol, setActualizandoRol] = useState(null);
   const [sedesAbiertas, setSedesAbiertas] = useState(null);
+  const [vista, setVista] = useState('tabla');
   const rolBtnRefs = useRef({});
   const sedesBtnRefs = useRef({});
 
@@ -37,15 +37,6 @@ export default function GestionUsuarios() {
       setUsuarios([]);
     } finally {
       setLoadingUsuarios(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      window.location.href = '/admin';
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
     }
   };
 
@@ -92,25 +83,7 @@ export default function GestionUsuarios() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="text-white shadow bg-primary">
-        <div className="container flex items-center justify-between px-4 py-20 mx-auto">
-          <div className="flex items-center">
-            <div className="relative mr-2">
-              <div className="absolute inset-0 transform rotate-45 rounded-full bg-white/30"></div>
-              <div className="absolute inset-0 transform scale-75 -rotate-45 rounded-full bg-white/20"></div>
-            </div>
-            <h1 className="text-xl font-bold font-montserrat">Panel de Administración</h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="hidden md:inline">{user?.email}</span>
-            <button onClick={handleLogout} className="flex items-center p-2 text-white rounded-md hover:bg-primary-light">
-              <LogOut size={18} className="mr-2" /> Salir
-            </button>
-          </div>
-        </div>
-      </header>
-
+    <div>
       <div className="container px-4 py-8 mx-auto">
         <div className="flex items-center mb-8">
           <Link href="/admin/dashboard" className="flex items-center mr-4 text-primary hover:underline">
@@ -120,22 +93,117 @@ export default function GestionUsuarios() {
           <span className="text-gray-700">Usuarios</span>
         </div>
 
-        <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
-          Usuarios
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <h2 className="text-2xl font-bold font-montserrat text-primary">
+            Usuarios
+          </h2>
+          <Link
+            href="/registro?origen=admin"
+            className="flex items-center gap-2 px-4 py-2 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
+          >
+            <UserPlus size={18} />
+            Agregar usuario
+          </Link>
+        </div>
 
         <div className="p-6 mb-8 bg-white rounded-lg shadow-md">
-          <div className="relative flex items-center mb-6">
-            <Search size={18} className="absolute text-gray-400 left-3" />
-            <input
-              type="text"
-              placeholder="Buscar por nombre, email o empresa..."
-              value={filtro}
-              onChange={(e) => setFiltro(e.target.value)}
-              className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
+          <div className="flex items-center gap-3 mb-6">
+            <div className="relative flex items-center flex-1">
+              <Search size={18} className="absolute text-gray-400 left-3" />
+              <input
+                type="text"
+                placeholder="Buscar por nombre, email o empresa..."
+                value={filtro}
+                onChange={(e) => setFiltro(e.target.value)}
+                className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+            </div>
+            <ViewToggle vista={vista} onChange={setVista} />
           </div>
 
+          {vista === 'cards' ? (
+            usuariosFiltrados.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {usuariosFiltrados.map((u) => (
+                  <div key={u.id} className="p-4 border border-gray-200 rounded-lg">
+                    <div className="text-sm font-medium text-gray-900">
+                      {u.nombre ? `${u.nombre} ${u.apellido || ''}` : <span className="text-gray-400">Sin completar</span>}
+                    </div>
+                    <div className="mt-1 text-sm text-gray-500">{u.email}</div>
+                    <div className="mt-1 text-sm text-gray-500">{u.empresa || '-'}</div>
+
+                    <div className="flex items-center justify-between pt-3 mt-3 border-t border-gray-100">
+                      <div>
+                        {(u.sedes || []).length > 0 ? (
+                          <button
+                            type="button"
+                            ref={(el) => { sedesBtnRefs.current[u.id] = el; }}
+                            onClick={() => setSedesAbiertas(sedesAbiertas === u.id ? null : u.id)}
+                            className="flex items-center gap-1 text-sm text-primary hover:underline"
+                          >
+                            <MapPin size={14} /> {u.sedes.length} {u.sedes.length === 1 ? 'sede' : 'sedes'}
+                          </button>
+                        ) : (
+                          <span className="text-sm text-gray-400">Sin sedes</span>
+                        )}
+                        <PortalDropdown
+                          open={sedesAbiertas === u.id}
+                          anchorRef={{ current: sedesBtnRefs.current[u.id] }}
+                          onClose={() => setSedesAbiertas(null)}
+                          width={224}
+                        >
+                          {(u.sedes || []).map((s) => (
+                            <div key={s.id} className="px-3 py-2 text-xs text-left border-b border-gray-100 last:border-0">
+                              <div className="font-medium text-gray-800">{s.nombre}</div>
+                              <div className="text-gray-500">{s.direccion}</div>
+                            </div>
+                          ))}
+                        </PortalDropdown>
+                      </div>
+
+                      <div>
+                        <button
+                          type="button"
+                          ref={(el) => { rolBtnRefs.current[u.id] = el; }}
+                          onClick={() => setRolMenuAbierto(rolMenuAbierto === u.id ? null : u.id)}
+                          disabled={actualizandoRol === u.id}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full transition-opacity hover:opacity-80 disabled:opacity-50
+                            ${u.role === 'Admin' ? 'bg-blue-100 text-blue-800' :
+                              u.role === 'Tecnico' ? 'bg-purple-100 text-purple-800' :
+                                'bg-green-100 text-green-800'}`}
+                        >
+                          {u.role || 'Cliente'}
+                          <ChevronDown size={12} />
+                        </button>
+
+                        <PortalDropdown
+                          open={rolMenuAbierto === u.id}
+                          anchorRef={{ current: rolBtnRefs.current[u.id] }}
+                          onClose={() => setRolMenuAbierto(null)}
+                          width={144}
+                        >
+                          {ROLES.map((rol) => (
+                            <button
+                              key={rol}
+                              type="button"
+                              onClick={() => handleCambiarRol(u.id, rol)}
+                              className={`block w-full px-3 py-2 text-xs text-left hover:bg-gray-50 ${(u.role || 'Cliente') === rol ? 'font-semibold text-primary' : 'text-gray-700'}`}
+                            >
+                              {rol}
+                            </button>
+                          ))}
+                        </PortalDropdown>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="px-4 py-6 text-center text-gray-500">
+                No hay usuarios que coincidan con tu búsqueda
+              </div>
+            )
+          ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -226,6 +294,7 @@ export default function GestionUsuarios() {
               </tbody>
             </table>
           </div>
+          )}
 
           {usuarios.length === 0 && (
             <div className="py-10 text-center">

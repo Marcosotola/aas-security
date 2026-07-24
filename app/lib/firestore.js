@@ -482,10 +482,14 @@ export const contarConsultasNoLeidas = async () => {
 // Crea el documento de usuario al registrarse. Rol fijo en 'Cliente':
 // el auto-registro público nunca puede asignarse Admin ni Tecnico (eso lo
 // hace un Admin después, desde /admin/usuarios).
-export const crearUsuario = async (uid, datos) => {
+// Acepta una instancia de Firestore opcional: cuando un Admin da de alta un
+// usuario desde el panel, esta escritura se hace autenticado como el usuario
+// recién creado (instancia secundaria), porque las reglas exigen
+// request.auth.uid == uid para poder crear el documento.
+export const crearUsuario = async (uid, datos, dbInstancia = db) => {
   try {
-    if (!db) throw new Error('Firebase no está configurado');
-    const docRef = doc(db, 'usuarios', uid);
+    if (!dbInstancia) throw new Error('Firebase no está configurado');
+    const docRef = doc(dbInstancia, 'usuarios', uid);
     await setDoc(docRef, {
       ...datos,
       role: 'Cliente',

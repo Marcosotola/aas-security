@@ -34,5 +34,20 @@ if (hasFirebaseConfig) {
   console.warn('Firebase no está configurado. Define NEXT_PUBLIC_FIREBASE_* para habilitar la conexión.');
 }
 
+// Instancia secundaria de Firebase: permite crear una cuenta de Firebase Auth
+// (p. ej. un Admin dando de alta un Cliente desde el panel) sin reemplazar la
+// sesión de quien está logueado en la app principal, ya que
+// createUserWithEmailAndPassword inicia sesión automáticamente con la cuenta
+// recién creada en la instancia de auth que se le pase.
+export const getAppSecundaria = () => {
+  if (!hasFirebaseConfig) throw new Error('Firebase no está configurado');
+  const nombre = 'Secundaria';
+  const appSecundaria = getApps().find((a) => a.name === nombre) || initializeApp(firebaseConfig, nombre);
+  return {
+    auth: getAuth(appSecundaria),
+    db: getFirestore(appSecundaria)
+  };
+};
+
 export { auth, db, storage };
 export default app;
