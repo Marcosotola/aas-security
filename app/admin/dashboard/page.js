@@ -29,6 +29,7 @@ import { collection, query, where, getCountFromServer } from 'firebase/firestore
 import { db } from '../../lib/firebase';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { obtenerConfigSuscripcion } from '../../lib/firestore';
+import { SUPER_ADMIN_EMAIL } from '../../lib/superAdmin';
 
 export default function Dashboard() {
   const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
@@ -83,7 +84,9 @@ export default function Dashboard() {
         contar(collection(db, 'consultas')),
         contar(query(collection(db, 'consultas'), where('leida', '==', false))),
         contar(collection(db, 'listaPrecios')),
-        contar(collection(db, 'usuarios')),
+        // El SuperAdmin nunca cuenta como "usuario" acá: mismo criterio que
+        // obtenerUsuarios() en app/lib/firestore.js.
+        contar(query(collection(db, 'usuarios'), where('email', '!=', SUPER_ADMIN_EMAIL))),
         contar(collection(db, 'movimientos')),
         obtenerConfigSuscripcion()
       ]);
