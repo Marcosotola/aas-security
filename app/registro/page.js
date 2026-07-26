@@ -44,7 +44,7 @@ function RegistroForm() {
         const credencial = await createUserWithEmailAndPassword(authSecundaria, email, password);
         await crearUsuario(credencial.user.uid, { email, perfilCompleto: false }, dbSecundaria);
         await signOut(authSecundaria);
-        router.push('/admin/usuarios');
+        router.push(`/admin/usuarios/completar?uid=${credencial.user.uid}`);
         return;
       }
 
@@ -82,7 +82,7 @@ function RegistroForm() {
           </h2>
           <p className="mt-2 text-sm text-center text-gray-600">
             {desdeAdmin
-              ? 'El cliente completa sus datos la primera vez que inicie sesión'
+              ? 'Paso 1 de 2 · Después vas a poder cargar sus datos'
               : 'Paso 1 de 2 · Correo y contraseña'}
           </p>
         </div>

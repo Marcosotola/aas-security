@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye } from 'lucide-react';
-import { collection, getDocs, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { obtenerDocumentos, eliminarDocumento } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import DocumentoPDF from '../../components/pdf/DocumentoPDF';
@@ -25,15 +24,7 @@ export default function HistorialDocumentos() {
 
   const cargarDocumentos = async () => {
     try {
-      const documentosRef = collection(db, 'documentos');
-      const q = query(documentosRef, orderBy('fechaCreacion', 'desc'));
-      const querySnapshot = await getDocs(q);
-
-      const documentosData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-
+      const documentosData = await obtenerDocumentos();
       console.log("documentos cargados:", documentosData.length);
       setDocumentos(documentosData);
     } catch (error) {
@@ -45,7 +36,7 @@ export default function HistorialDocumentos() {
   const handleDeleteDocumento = async (id) => {
     if (confirm('¿Está seguro de que desea eliminar este documento?')) {
       try {
-        await deleteDoc(doc(db, 'documentos', id));
+        await eliminarDocumento(id);
         setDocumentos(documentos.filter(d => d.id !== id));
       } catch (error) {
         console.error('Error al eliminar documento:', error);

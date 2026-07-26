@@ -344,6 +344,80 @@ export const eliminarRecibo = async (id) => {
   }
 };
 
+// ========== FUNCIONES PARA DOCUMENTOS (cartas, certificaciones, etc.) ==========
+
+// Función para crear un documento
+export const crearDocumento = async (documentoData) => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const docRef = await addDoc(collection(db, 'documentos'), {
+      ...documentoData,
+      fechaCreacion: serverTimestamp()
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error al crear documento:', error);
+    throw error;
+  }
+};
+
+// Función para obtener todos los documentos
+export const obtenerDocumentos = async () => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const q = query(collection(db, 'documentos'), orderBy('fechaCreacion', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error al obtener documentos:', error);
+    throw error;
+  }
+};
+
+// Función para obtener un documento por ID
+export const obtenerDocumentoPorId = async (id) => {
+  try {
+    const docRef = doc(db, 'documentos', id);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    } else {
+      throw new Error('Documento no encontrado');
+    }
+  } catch (error) {
+    console.error('Error al obtener documento:', error);
+    throw error;
+  }
+};
+
+// Función para actualizar un documento
+export const actualizarDocumento = async (id, documentoData) => {
+  try {
+    const docRef = doc(db, 'documentos', id);
+    await updateDoc(docRef, {
+      ...documentoData,
+      fechaActualizacion: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error al actualizar documento:', error);
+    throw error;
+  }
+};
+
+// Función para eliminar un documento
+export const eliminarDocumento = async (id) => {
+  try {
+    await deleteDoc(doc(db, 'documentos', id));
+  } catch (error) {
+    console.error('Error al eliminar documento:', error);
+    throw error;
+  }
+};
+
 // ========== FUNCIONES PARA CONSULTAS (formulario público de contacto) ==========
 
 // Crear una nueva consulta (usado por el formulario público, sin autenticación)
@@ -578,6 +652,21 @@ export const actualizarUsuario = async (uid, datosActualizados) => {
     return { id: uid };
   } catch (error) {
     console.error('Error al actualizar usuario:', error);
+    throw error;
+  }
+};
+
+// Elimina el perfil de un usuario (solo Admin, ver firestore.rules).
+// Nota: esto borra únicamente el documento de Firestore. La cuenta de
+// Firebase Auth asociada no se elimina (no hay Admin SDK/Cloud Function en
+// este proyecto para hacerlo desde el cliente), por lo que la persona
+// conservaría sus credenciales de acceso aunque pierda el perfil/rol.
+export const eliminarUsuario = async (uid) => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    await deleteDoc(doc(db, 'usuarios', uid));
+  } catch (error) {
+    console.error('Error al eliminar usuario:', error);
     throw error;
   }
 };

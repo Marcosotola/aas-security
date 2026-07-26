@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Save } from 'lucide-react';
-import { db } from '../../../../lib/firebase';
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { obtenerDocumentoPorId, actualizarDocumento } from '../../../../lib/firestore';
 import { useStaffAuth } from '../../../../lib/useStaffAuth';
 import { use } from 'react';
 
@@ -37,20 +36,12 @@ export default function EditarDocumento({ params }) {
 
     (async () => {
       try {
-        const docRef = doc(db, 'documentos', id);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setDocumento({
-            titulo: data.titulo || '',
-            fecha: data.fecha || '',
-            contenido: data.contenido || ''
-          });
-        } else {
-          alert('Documento no encontrado');
-          router.push('/admin/documentos');
-        }
+        const data = await obtenerDocumentoPorId(id);
+        setDocumento({
+          titulo: data.titulo || '',
+          fecha: data.fecha || '',
+          contenido: data.contenido || ''
+        });
         setLoadingData(false);
       } catch (error) {
         console.error('Error al cargar documento:', error);
@@ -90,12 +81,7 @@ export default function EditarDocumento({ params }) {
 
     setGuardando(true);
     try {
-      const docRef = doc(db, 'documentos', id);
-      await updateDoc(docRef, {
-        ...documento,
-        fechaActualizacion: serverTimestamp()
-      });
-
+      await actualizarDocumento(id, documento);
       alert('Documento actualizado exitosamente');
       router.push('/admin/documentos');
     } catch (error) {

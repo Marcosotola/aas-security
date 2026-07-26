@@ -3,8 +3,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Home, Search, ChevronDown, Users as UsersIcon, MapPin, UserPlus } from 'lucide-react';
+import { Home, Search, ChevronDown, Users as UsersIcon, MapPin, UserPlus, Edit, Trash } from 'lucide-react';
 import { obtenerUsuarios, actualizarUsuario } from '../../lib/firestore';
+import { auth } from '../../lib/firebase';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import PortalDropdown from '../../components/PortalDropdown';
 import ViewToggle from '../../components/admin/ViewToggle';
@@ -20,6 +21,7 @@ export default function GestionUsuarios() {
   const [actualizandoRol, setActualizandoRol] = useState(null);
   const [sedesAbiertas, setSedesAbiertas] = useState(null);
   const [vista, setVista] = useState('tabla');
+  const [eliminandoUsuario, setEliminandoUsuario] = useState(null);
   const rolBtnRefs = useRef({});
   const sedesBtnRefs = useRef({});
 
@@ -57,6 +59,32 @@ export default function GestionUsuarios() {
     } finally {
       setActualizandoRol(null);
       setRolMenuAbierto(null);
+    }
+  };
+
+  const handleEliminarUsuario = async (u) => {
+    const nombre = u.nombre ? `${u.nombre} ${u.apellido || ''}`.trim() : u.email;
+    if (!confirm(`¿Eliminar a "${nombre}"? Esto borra su perfil y su cuenta de acceso por completo. La acción no se puede deshacer.`)) {
+      return;
+    }
+
+    setEliminandoUsuario(u.id);
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch(`/api/admin/usuarios/${u.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Error desconocido');
+      }
+      setUsuarios(usuarios.filter(usuario => usuario.id !== u.id));
+    } catch (error) {
+      console.error('Error al eliminar el usuario:', error);
+      alert(error.message || 'Error al eliminar el usuario.');
+    } finally {
+      setEliminandoUsuario(null);
     }
   };
 
@@ -195,6 +223,25 @@ export default function GestionUsuarios() {
                         </PortalDropdown>
                       </div>
                     </div>
+
+                    <div className="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-gray-100">
+                      <Link
+                        href={`/admin/usuarios/completar?uid=${u.id}`}
+                        title="Editar datos"
+                        className="text-secondary hover:text-secondary-light"
+                      >
+                        <Edit size={18} />
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleEliminarUsuario(u)}
+                        disabled={eliminandoUsuario === u.id}
+                        title="Eliminar"
+                        className="text-red-500 cursor-pointer hover:text-red-700 disabled:opacity-50"
+                      >
+                        <Trash size={18} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -213,6 +260,7 @@ export default function GestionUsuarios() {
                   <th className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Empresa</th>
                   <th className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Sedes</th>
                   <th className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Rol</th>
+                  <th className="px-4 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Acciones</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -282,11 +330,31 @@ export default function GestionUsuarios() {
                           ))}
                         </PortalDropdown>
                       </td>
+                      <td className="px-4 py-3 text-sm text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-3">
+                          <Link
+                            href={`/admin/usuarios/completar?uid=${u.id}`}
+                            title="Editar datos"
+                            className="text-secondary hover:text-secondary-light"
+                          >
+                            <Edit size={18} />
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => handleEliminarUsuario(u)}
+                            disabled={eliminandoUsuario === u.id}
+                            title="Eliminar"
+                            className="text-red-500 cursor-pointer hover:text-red-700 disabled:opacity-50"
+                          >
+                            <Trash size={18} />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="px-4 py-6 text-center text-gray-500">
+                    <td colSpan="6" className="px-4 py-6 text-center text-gray-500">
                       No hay usuarios que coincidan con tu búsqueda
                     </td>
                   </tr>

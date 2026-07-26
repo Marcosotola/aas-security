@@ -4,9 +4,9 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye, ChevronDown } from 'lucide-react';
-import { collection, getDocs, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { actualizarPresupuesto } from '../../lib/firestore';
+import { actualizarPresupuesto, eliminarPresupuesto } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import PresupuestoPDF from '../../components/pdf/PresupuestoPDF';
@@ -78,7 +78,7 @@ export default function HistorialPresupuestos() {
     if (confirm('¿Está seguro de que desea eliminar este presupuesto?')) {
       try {
         // Eliminar el documento de Firestore
-        await deleteDoc(doc(db, 'presupuestos', id));
+        await eliminarPresupuesto(id);
 
         // Actualizar el estado local
         setPresupuestos(presupuestos.filter(p => p.id !== id));

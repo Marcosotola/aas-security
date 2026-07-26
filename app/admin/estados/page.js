@@ -4,8 +4,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye } from 'lucide-react';
-import { collection, getDocs, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { eliminarEstado } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import EstadoPDF from '../../components/pdf/EstadoPDF';
@@ -48,7 +49,7 @@ export default function HistorialEstados() {
     if (confirm('¿Está seguro de que desea eliminar este estado?')) {
       try {
         // Eliminar el documento de Firestore
-        await deleteDoc(doc(db, 'estados', id));
+        await eliminarEstado(id);
 
         // Actualizar el estado local
         setEstados(estados.filter(p => p.id !== id));

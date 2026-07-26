@@ -5,8 +5,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Edit, ArrowLeft, Download, Trash } from 'lucide-react';
-import { doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
+import { eliminarRemito } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { use } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
@@ -66,7 +67,7 @@ export default function VerRemito({ params }) {
   const handleDeleteRemito = async () => {
     if (confirm('¿Está seguro de que desea eliminar este remito?')) {
       try {
-        await deleteDoc(doc(db, 'remitos', id));
+        await eliminarRemito(id);
         alert('Remito eliminado exitosamente.');
         router.push('/admin/remitos');
       } catch (error) {

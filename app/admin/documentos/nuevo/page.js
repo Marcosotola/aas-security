@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Save, Download } from 'lucide-react';
-import { db } from '../../../lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { crearDocumento } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import DocumentoPDF from '../../../components/pdf/DocumentoPDF';
@@ -58,13 +57,10 @@ export default function NuevoDocumento() {
 
     setGuardando(true);
     try {
-      const documentoData = {
+      await crearDocumento({
         ...documento,
-        usuarioCreador: user.email,
-        fechaCreacion: serverTimestamp()
-      };
-
-      await addDoc(collection(db, 'documentos'), documentoData);
+        usuarioCreador: user.email
+      });
       alert('Documento guardado exitosamente');
       router.push('/admin/documentos');
     } catch (error) {

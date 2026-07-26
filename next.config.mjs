@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    // firebase-admin (usado en app/lib/firebaseAdmin.js) depende de jwks-rsa/jose,
+    // que son ESM y rompen el bundling de webpack para el servidor si no se
+    // marcan como externos: con esto Next.js los deja como require() nativo.
+    serverExternalPackages: ['firebase-admin'],
     webpack: (config, { isServer }) => {
         if (isServer) {
             // @react-pdf/renderer usa APIs de canvas que no están disponibles en el servidor

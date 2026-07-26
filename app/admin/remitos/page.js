@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye } from 'lucide-react';
-import { collection, getDocs, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { eliminarRemito } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import RemitoPDF from '../../components/pdf/RemitoPDF';
@@ -45,7 +46,7 @@ export default function HistorialRemitos() {
   const handleDeleteRemito = async (id) => {
     if (confirm('¿Está seguro de que desea eliminar este remito?')) {
       try {
-        await deleteDoc(doc(db, 'remitos', id));
+        await eliminarRemito(id);
         setRemitos(remitos.filter(r => r.id !== id));
       } catch (error) {
         console.error('Error al eliminar remito:', error);
