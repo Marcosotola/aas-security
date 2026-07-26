@@ -3,9 +3,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Home, CreditCard, ShieldCheck, ShieldAlert, Save, ExternalLink } from 'lucide-react';
+import { Home, CreditCard, ShieldCheck, ShieldAlert, Save, ExternalLink, Link2 } from 'lucide-react';
 import { obtenerConfigSuscripcion, actualizarConfigSuscripcion } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
+import { auth } from '../../lib/firebase';
 
 const formatMoney = (amount) => {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -20,6 +21,7 @@ export default function Suscripcion() {
   const { usuario, loading: loadingAuth } = useStaffAuth(['Admin']);
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
+  const [generandoLink, setGenerandoLink] = useState(false);
   const [config, setConfig] = useState(null);
   const [form, setForm] = useState({ monto: '', fechaVencimiento: '', appHabilitada: true });
 
@@ -62,6 +64,27 @@ export default function Suscripcion() {
       alert('No se pudo guardar. Inténtalo de nuevo más tarde.');
     } finally {
       setGuardando(false);
+    }
+  };
+
+  const handleGenerarLink = async () => {
+    setGenerandoLink(true);
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch('/api/mercadopago/crear-suscripcion', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Error desconocido');
+
+      const actualizado = await obtenerConfigSuscripcion();
+      setConfig(actualizado);
+    } catch (error) {
+      console.error('Error al generar el link de MercadoPago:', error);
+      alert(error.message || 'No se pudo generar el link de pago.');
+    } finally {
+      setGenerandoLink(false);
     }
   };
 
@@ -173,9 +196,39 @@ export default function Suscripcion() {
                 {guardando ? 'Guardando...' : 'Guardar'}
               </button>
 
-              <p className="pt-2 text-xs text-gray-400 border-t border-gray-100">
-                Cobro automático con MercadoPago: próximamente. Por ahora la renovación se registra a mano acá.
-              </p>
+              <div className="pt-4 space-y-3 border-t border-gray-100">
+                <p className="text-sm font-medium text-gray-700">Cobro recurrente con MercadoPago</p>
+                <button
+                  type="button"
+                  onClick={handleGenerarLink}
+                  disabled={generandoLink}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors border rounded-md text-primary border-primary hover:bg-primary/5 disabled:opacity-50"
+                >
+                  <Link2 size={16} />
+                  {generandoLink ? 'Generando...' : config?.mercadoPago?.initPoint ? 'Regenerar link de pago' : 'Generar link de pago'}
+                </button>
+
+                {config?.mercadoPago?.initPoint && (
+                  <div className="p-3 text-sm break-all rounded-md bg-gray-50">
+                    <p className="mb-1 text-xs text-gray-500">
+                      Estado: <span className="font-medium">{config.mercadoPago.estado}</span>
+                    </p>
+                    <a
+                      href={config.mercadoPago.initPoint}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-primary hover:underline"
+                    >
+                      {config.mercadoPago.initPoint} <ExternalLink size={12} />
+                    </a>
+                  </div>
+                )}
+
+                <p className="text-xs text-gray-400">
+                  Compartí este link con el admin para que autorice el débito mensual. Una vez autorizado,
+                  MercadoPago va a avisar automáticamente cada pago y la fecha de vencimiento se va a actualizar sola.
+                </p>
+              </div>
             </form>
           ) : (
             <p className="text-sm text-gray-500">
