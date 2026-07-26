@@ -3,10 +3,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Home, CreditCard, ShieldCheck, ShieldAlert, Save, ExternalLink, Link2 } from 'lucide-react';
+import { Home, CreditCard, ShieldCheck, ShieldAlert, Save, ExternalLink, Power } from 'lucide-react';
 import { obtenerConfigSuscripcion, actualizarConfigSuscripcion } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
-import { auth } from '../../lib/firebase';
 
 const formatMoney = (amount) => {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -21,9 +20,9 @@ export default function Suscripcion() {
   const { usuario, loading: loadingAuth } = useStaffAuth(['Admin']);
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
-  const [generandoLink, setGenerandoLink] = useState(false);
+  const [cambiandoEstado, setCambiandoEstado] = useState(false);
   const [config, setConfig] = useState(null);
-  const [form, setForm] = useState({ monto: '', fechaVencimiento: '', appHabilitada: true });
+  const [form, setForm] = useState({ monto: '', fechaVencimiento: '' });
 
   const loading = loadingAuth || loadingData;
   const esSuperAdmin = usuario?.esSuperAdmin;
@@ -35,8 +34,7 @@ export default function Suscripcion() {
         setConfig(data);
         setForm({
           monto: data.monto || '',
-          fechaVencimiento: data.fechaVencimiento || '',
-          appHabilitada: data.appHabilitada !== false
+          fechaVencimiento: data.fechaVencimiento || ''
         });
       })
       .catch((error) => console.error('Error al cargar la suscripción:', error))
@@ -45,7 +43,8 @@ export default function Suscripcion() {
 
   const hoy = new Date().toISOString().split('T')[0];
   const vencida = Boolean(config?.fechaVencimiento && config.fechaVencimiento < hoy);
-  const bloqueada = config ? (config.appHabilitada === false || vencida) : false;
+  const appHabilitada = config?.appHabilitada !== false;
+  const bloqueada = config ? (!appHabilitada || vencida) : false;
 
   const handleGuardar = async (e) => {
     e.preventDefault();
@@ -53,8 +52,7 @@ export default function Suscripcion() {
     try {
       await actualizarConfigSuscripcion({
         monto: parseFloat(form.monto) || 0,
-        fechaVencimiento: form.fechaVencimiento || null,
-        appHabilitada: form.appHabilitada
+        fechaVencimiento: form.fechaVencimiento || null
       });
       const actualizado = await obtenerConfigSuscripcion();
       setConfig(actualizado);
@@ -67,24 +65,23 @@ export default function Suscripcion() {
     }
   };
 
-  const handleGenerarLink = async () => {
-    setGenerandoLink(true);
-    try {
-      const token = await auth.currentUser.getIdToken();
-      const res = await fetch('/api/mercadopago/crear-suscripcion', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Error desconocido');
+  const handleToggleHabilitada = async () => {
+    const nuevoValor = !appHabilitada;
+    const confirmacion = nuevoValor
+      ? '¿Habilitar la app? El sitio público vuelve a estar disponible.'
+      : '¿Deshabilitar la app? El sitio público se bloquea al instante para todos los visitantes, sin importar si la suscripción está al día.';
+    if (!confirm(confirmacion)) return;
 
+    setCambiandoEstado(true);
+    try {
+      await actualizarConfigSuscripcion({ appHabilitada: nuevoValor });
       const actualizado = await obtenerConfigSuscripcion();
       setConfig(actualizado);
     } catch (error) {
-      console.error('Error al generar el link de MercadoPago:', error);
-      alert(error.message || 'No se pudo generar el link de pago.');
+      console.error('Error al cambiar el estado de la app:', error);
+      alert('No se pudo cambiar el estado. Inténtalo de nuevo más tarde.');
     } finally {
-      setGenerandoLink(false);
+      setCambiandoEstado(false);
     }
   };
 
@@ -129,23 +126,49 @@ export default function Suscripcion() {
               </p>
               {vencida && !esSuperAdmin && (
                 <p className="mt-2 text-sm text-danger">
-                  La suscripción está vencida. Regularizá el pago para reactivar el sitio.
-                  {config?.mercadoPago?.initPoint && (
-                    <a
-                      href={config.mercadoPago.initPoint}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 ml-2 font-medium underline"
-                    >
-                      Pagar ahora <ExternalLink size={14} />
-                    </a>
-                  )}
+                  La suscripción está vencida. Al entrar al panel te vamos a redirigir a MercadoPago para regularizar el pago.
                 </p>
               )}
             </div>
           </div>
 
-          {/* Edición: solo SuperAdmin */}
+          {/* Interruptor manual: solo SuperAdmin, con efecto inmediato */}
+          {esSuperAdmin && (
+            <div className="p-5 bg-white rounded-lg shadow-md">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="flex items-center gap-2 font-semibold text-gray-700">
+                    <Power size={18} /> Estado de la app
+                  </p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Interruptor manual, independiente del vencimiento. Sirve para bloquear el sitio por cualquier
+                    otro motivo, aunque la suscripción esté al día.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleToggleHabilitada}
+                  disabled={cambiandoEstado}
+                  role="switch"
+                  aria-checked={appHabilitada}
+                  className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${
+                    appHabilitada ? 'bg-success' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform ${
+                      appHabilitada ? 'translate-x-7' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+              <p className={`mt-3 text-sm font-medium ${appHabilitada ? 'text-success' : 'text-danger'}`}>
+                {cambiandoEstado ? 'Actualizando...' : appHabilitada ? 'Habilitada' : 'Deshabilitada'}
+              </p>
+            </div>
+          )}
+
+          {/* Edición de monto y vencimiento: solo SuperAdmin */}
           {esSuperAdmin ? (
             <form onSubmit={handleGuardar} className="p-6 space-y-4 bg-white rounded-lg shadow-md">
               <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-700">
@@ -173,19 +196,10 @@ export default function Suscripcion() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
                 <p className="mt-1 text-xs text-gray-400">
-                  Cuando esta fecha ya pasó, el sitio público se bloquea automáticamente.
+                  MercadoPago la actualiza sola con cada pago aprobado. Solo deberías tocarla a mano para una
+                  corrección puntual.
                 </p>
               </div>
-
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={form.appHabilitada}
-                  onChange={(e) => setForm({ ...form, appHabilitada: e.target.checked })}
-                  className="w-4 h-4"
-                />
-                App habilitada (interruptor manual, independiente del vencimiento)
-              </label>
 
               <button
                 type="submit"
@@ -196,18 +210,18 @@ export default function Suscripcion() {
                 {guardando ? 'Guardando...' : 'Guardar'}
               </button>
 
-              <div className="pt-4 space-y-3 border-t border-gray-100">
+              <div className="pt-4 space-y-2 border-t border-gray-100">
                 <p className="text-sm font-medium text-gray-700">Cobro recurrente con MercadoPago</p>
                 <p className="text-xs text-gray-400">
-                  Es automático: cuando el admin entra al panel con la suscripción vencida, el sistema lo manda
-                  directo a MercadoPago para autorizar el débito mensual. Una vez autorizado, MercadoPago avisa
-                  cada pago solo y la fecha de vencimiento se actualiza sola. No hace falta que compartas nada.
+                  Totalmente automático: cuando el admin entra al panel con la suscripción vencida, el sistema
+                  lo redirige directo a MercadoPago para autorizar el débito mensual. A partir de ahí,
+                  MercadoPago avisa cada pago solo y esta fecha se actualiza sola. No hay nada que generar ni compartir a mano.
                 </p>
 
-                {config?.mercadoPago?.initPoint ? (
+                {config?.mercadoPago?.initPoint && (
                   <div className="p-3 text-sm break-all rounded-md bg-gray-50">
                     <p className="mb-1 text-xs text-gray-500">
-                      Estado actual: <span className="font-medium">{config.mercadoPago.estado}</span>
+                      Último link generado · estado: <span className="font-medium">{config.mercadoPago.estado}</span>
                     </p>
                     <a
                       href={config.mercadoPago.initPoint}
@@ -218,19 +232,7 @@ export default function Suscripcion() {
                       {config.mercadoPago.initPoint} <ExternalLink size={12} />
                     </a>
                   </div>
-                ) : (
-                  <p className="text-xs text-gray-400">Todavía no se generó ningún link (se crea solo cuando hace falta).</p>
                 )}
-
-                <button
-                  type="button"
-                  onClick={handleGenerarLink}
-                  disabled={generandoLink}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors border rounded-md text-primary border-primary hover:bg-primary/5 disabled:opacity-50"
-                >
-                  <Link2 size={16} />
-                  {generandoLink ? 'Generando...' : 'Generar/actualizar link (reusa el actual si sigue vigente)'}
-                </button>
               </div>
             </form>
           ) : (
