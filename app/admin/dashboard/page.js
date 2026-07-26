@@ -22,11 +22,13 @@ import {
   MessageCircle,
   Tag,
   UserCog,
-  Wallet
+  Wallet,
+  CreditCard
 } from 'lucide-react';
 import { collection, query, where, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useStaffAuth } from '../../lib/useStaffAuth';
+import { obtenerConfigSuscripcion } from '../../lib/firestore';
 
 export default function Dashboard() {
   const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
@@ -43,6 +45,7 @@ export default function Dashboard() {
     usuarios: 0,
     movimientos: 0
   });
+  const [suscripcionVencida, setSuscripcionVencida] = useState(false);
   const loading = loadingAuth || loadingData;
 
   useEffect(() => {
@@ -69,7 +72,8 @@ export default function Dashboard() {
         consultasNoLeidas,
         listaPrecios,
         usuarios,
-        movimientos
+        movimientos,
+        config
       ] = await Promise.all([
         contar(collection(db, 'presupuestos')),
         contar(collection(db, 'estados')),
@@ -80,7 +84,8 @@ export default function Dashboard() {
         contar(query(collection(db, 'consultas'), where('leida', '==', false))),
         contar(collection(db, 'listaPrecios')),
         contar(collection(db, 'usuarios')),
-        contar(collection(db, 'movimientos'))
+        contar(collection(db, 'movimientos')),
+        obtenerConfigSuscripcion()
       ]);
 
       setTotales({
@@ -95,6 +100,10 @@ export default function Dashboard() {
         usuarios,
         movimientos
       });
+
+      const hoy = new Date().toISOString().split('T')[0];
+      const vencida = Boolean(config.fechaVencimiento && config.fechaVencimiento < hoy);
+      setSuscripcionVencida(config.appHabilitada === false || vencida);
     } catch (error) {
       console.error('Error al cargar totales:', error);
     }
@@ -251,6 +260,24 @@ export default function Dashboard() {
         historial: '/admin/finanzas'
       },
       activo: true
+    },
+    {
+      id: 'suscripcion',
+      titulo: 'Suscripción',
+      icono: CreditCard,
+      color: 'bg-[#154360]', // Mismo azul oscuro que Documentos, sin sumar un tono nuevo
+      colorClaro: 'bg-blue-100',
+      colorTexto: 'text-[#154360]',
+      descripcion: 'Estado de pago y habilitación de la app',
+      total: suscripcionVencida ? 'Vencida' : 'Al día',
+      badge: suscripcionVencida ? 1 : 0,
+      rutas: {
+        historial: '/admin/suscripcion'
+      },
+      activo: true,
+      sinNuevo: true,
+      textoAcceso: 'Ver suscripción',
+      iconoAcceso: CreditCard
     }
   ];
 

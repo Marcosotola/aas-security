@@ -24,6 +24,14 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == clienteId;
     }
 
+    // Única cuenta con permiso para configurar la suscripción de la app
+    // (monto, vencimiento, habilitar/deshabilitar). Identificada por email,
+    // no por "role": esa cuenta sigue con role Admin en /usuarios, así que
+    // esAdmin() también la cubre para lectura.
+    function esSuperAdmin() {
+      return request.auth != null && request.auth.token.email == 'marcosotola@gmail.com';
+    }
+
     // Cuentas staff creadas manualmente en Firebase Auth antes de que existiera
     // esta colección de roles: se les permite auto-provisionar su propio
     // documento como Admin la primera vez que entran (bootstrap único).
@@ -83,6 +91,14 @@ service cloud.firestore {
     // ganancias del negocio, solo para Admin, no para Tecnico.
     match /movimientos/{id} {
       allow read, write: if esAdmin();
+    }
+
+    // Suscripción de la app: cualquier Admin (incluido el SuperAdmin) puede
+    // leer monto y vencimiento, pero solo el SuperAdmin puede modificarlos o
+    // habilitar/deshabilitar la app.
+    match /config/{id} {
+      allow read: if esAdmin();
+      allow write: if esSuperAdmin();
     }
 
     // Consultas: cualquiera puede crear (formulario público de contacto),

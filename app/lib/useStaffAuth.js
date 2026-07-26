@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
 import { obtenerUsuarioPorId, crearUsuarioStaffHistorico } from './firestore';
+import { esSuperAdmin } from './superAdmin';
 
 // Cuentas de Firebase Auth creadas manualmente antes de que existiera la
 // colección de roles. Se auto-provisionan como Admin la primera vez que
@@ -48,7 +49,7 @@ export function useStaffAuth(rolesPermitidos = ['Admin']) {
         }
 
         setUser(currentUser);
-        setUsuario(perfil);
+        setUsuario({ ...perfil, esSuperAdmin: esSuperAdmin(currentUser.email) });
         setLoading(false);
       } catch (error) {
         console.error('Error al verificar el rol del usuario:', error);

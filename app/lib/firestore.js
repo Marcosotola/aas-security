@@ -14,6 +14,7 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { esSuperAdmin } from './superAdmin';
 
 const getCollection = (name) => {
   if (!db) {
@@ -668,13 +669,17 @@ export const obtenerUsuarioPorId = async (uid) => {
   }
 };
 
-// Obtener todos los usuarios (uso interno del panel admin)
+// Obtener todos los usuarios (uso interno del panel admin).
+// El SuperAdmin nunca aparece acá: es una sola cuenta identificada por email
+// (ver app/lib/superAdmin.js), invisible para el resto del staff.
 export const obtenerUsuarios = async () => {
   try {
     if (!db) throw new Error('Firebase no está configurado');
     const q = query(usuariosCollection, orderBy('fechaCreacion', 'desc'));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return querySnapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(u => !esSuperAdmin(u.email));
   } catch (error) {
     console.error('Error al obtener usuarios:', error);
     throw error;
@@ -736,3 +741,40 @@ const obtenerColeccionPorCliente = async (nombreColeccion, clienteId) => {
 export const obtenerPresupuestosPorCliente = (clienteId) => obtenerColeccionPorCliente('presupuestos', clienteId);
 export const obtenerRemitosPorCliente = (clienteId) => obtenerColeccionPorCliente('remitos', clienteId);
 export const obtenerRecibosPorCliente = (clienteId) => obtenerColeccionPorCliente('recibos', clienteId);
+
+// ========== SUSCRIPCIÓN DE LA APP (solo lectura para Admin, edición solo SuperAdmin) ==========
+// Doc único config/suscripcion. Si no existe todavía, se devuelven valores
+// por defecto que dejan la app habilitada (nunca bloquear por falta de dato).
+
+const SUSCRIPCION_DEFAULT = {
+  monto: 0,
+  moneda: 'ARS',
+  fechaVencimiento: null,
+  appHabilitada: true,
+  mercadoPago: null
+};
+
+export const obtenerConfigSuscripcion = async () => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const docSnap = await getDoc(doc(db, 'config', 'suscripcion'));
+    if (!docSnap.exists()) return { ...SUSCRIPCION_DEFAULT };
+    return { ...SUSCRIPCION_DEFAULT, ...docSnap.data() };
+  } catch (error) {
+    console.error('Error al obtener la configuración de suscripción:', error);
+    throw error;
+  }
+};
+
+export const actualizarConfigSuscripcion = async (datosActualizados) => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    await setDoc(doc(db, 'config', 'suscripcion'), {
+      ...datosActualizados,
+      actualizadoEn: serverTimestamp()
+    }, { merge: true });
+  } catch (error) {
+    console.error('Error al actualizar la configuración de suscripción:', error);
+    throw error;
+  }
+};

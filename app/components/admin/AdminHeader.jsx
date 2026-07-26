@@ -17,10 +17,13 @@ import {
   MessageCircle,
   Tag,
   UserCog,
-  Wallet
+  Wallet,
+  CreditCard,
+  ShieldAlert
 } from 'lucide-react';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
+import { obtenerConfigSuscripcion } from '../../lib/firestore';
 
 const MODULOS_NAV = [
   { id: 'dashboard', label: 'Inicio', icono: Home, href: '/admin/dashboard' },
@@ -33,11 +36,13 @@ const MODULOS_NAV = [
   { id: 'lista-precios', label: 'Lista de precios', icono: Tag, href: '/admin/lista-precios' },
   { id: 'usuarios', label: 'Usuarios', icono: UserCog, href: '/admin/usuarios' },
   { id: 'finanzas', label: 'Finanzas', icono: Wallet, href: '/admin/finanzas' },
+  { id: 'suscripcion', label: 'Suscripción', icono: CreditCard, href: '/admin/suscripcion' },
 ];
 
 export default function AdminHeader() {
   const [user, setUser] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [suscripcionVencida, setSuscripcionVencida] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -45,6 +50,17 @@ export default function AdminHeader() {
     const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    obtenerConfigSuscripcion()
+      .then((config) => {
+        const hoy = new Date().toISOString().split('T')[0];
+        const vencida = Boolean(config.fechaVencimiento && config.fechaVencimiento < hoy);
+        setSuscripcionVencida(config.appHabilitada === false || vencida);
+      })
+      .catch(() => {}); // sin permiso (ej. Tecnico) o sin datos todavía: no mostrar banner
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -120,6 +136,17 @@ export default function AdminHeader() {
           })}
         </div>
       </nav>
+
+      {/* Aviso de suscripción vencida/deshabilitada: visible en todo el panel */}
+      {suscripcionVencida && (
+        <Link
+          href="/admin/suscripcion"
+          className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-danger hover:bg-red-700"
+        >
+          <ShieldAlert size={16} />
+          Suscripción vencida: el sitio público está bloqueado. Tocá acá para regularizar el pago.
+        </Link>
+      )}
 
       {/* Menú móvil: mismos accesos, en formato lista */}
       {mobileMenuOpen && (
