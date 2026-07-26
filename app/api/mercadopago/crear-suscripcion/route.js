@@ -1,11 +1,12 @@
 // app/api/mercadopago/crear-suscripcion/route.js
-// Genera (o regenera) el link de suscripción mensual de MercadoPago. Solo el
-// SuperAdmin puede dispararlo: crea el preapproval con el monto configurado
-// y guarda el link/estado en config/suscripcion para que el Admin lo vea.
+// Consigue el link de suscripción mensual de MercadoPago: si ya existe uno
+// vigente (no cancelado) lo devuelve tal cual, si no lo crea. Lo llama el
+// propio panel automáticamente cuando el Admin entra con la suscripción
+// vencida, para mandarlo directo a pagar sin que nadie tenga que generarlo
+// ni compartirlo a mano.
 import { NextResponse } from 'next/server';
 import { adminAuth, adminDb, hasAdminConfig } from '../../../lib/firebaseAdmin';
 import { crearPreapproval, hasMercadoPagoConfig } from '../../../lib/mercadopago';
-import { esSuperAdmin } from '../../../lib/superAdmin';
 
 export async function POST(request) {
   if (!hasAdminConfig || !hasMercadoPagoConfig) {
@@ -29,16 +30,35 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Token inválido o expirado.' }, { status: 401 });
   }
 
-  if (!esSuperAdmin(decodedToken.email)) {
-    return NextResponse.json({ error: 'No tenés permisos para generar el link de pago.' }, { status: 403 });
+  try {
+    const solicitanteSnap = await adminDb.doc(`usuarios/${decodedToken.uid}`).get();
+    // Cubre tanto al Admin como al SuperAdmin: esa cuenta también tiene
+    // role 'Admin' en Firestore (ver app/lib/superAdmin.js).
+    if (solicitanteSnap.data()?.role !== 'Admin') {
+      return NextResponse.json({ error: 'No tenés permisos para generar el link de pago.' }, { status: 403 });
+    }
+  } catch (error) {
+    console.error('Error al verificar el rol del solicitante:', error);
+    return NextResponse.json({ error: 'No se pudo verificar el permiso.' }, { status: 500 });
   }
 
   try {
     const configSnap = await adminDb.doc('config/suscripcion').get();
-    const monto = configSnap.exists ? configSnap.data().monto : 0;
+    const config = configSnap.exists ? configSnap.data() : {};
+
+    // Ya hay un link vigente (pendiente de autorizar o autorizado): lo
+    // reusamos en vez de crear una suscripción duplicada en MercadoPago.
+    if (config.mercadoPago?.initPoint && config.mercadoPago.estado !== 'cancelled') {
+      return NextResponse.json({
+        initPoint: config.mercadoPago.initPoint,
+        estado: config.mercadoPago.estado
+      });
+    }
+
+    const monto = config.monto;
     if (!monto || monto <= 0) {
       return NextResponse.json(
-        { error: 'Configurá un monto mayor a cero antes de generar el link.' },
+        { error: 'Todavía no se configuró un monto de suscripción.' },
         { status: 400 }
       );
     }

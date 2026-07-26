@@ -198,20 +198,16 @@ export default function Suscripcion() {
 
               <div className="pt-4 space-y-3 border-t border-gray-100">
                 <p className="text-sm font-medium text-gray-700">Cobro recurrente con MercadoPago</p>
-                <button
-                  type="button"
-                  onClick={handleGenerarLink}
-                  disabled={generandoLink}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors border rounded-md text-primary border-primary hover:bg-primary/5 disabled:opacity-50"
-                >
-                  <Link2 size={16} />
-                  {generandoLink ? 'Generando...' : config?.mercadoPago?.initPoint ? 'Regenerar link de pago' : 'Generar link de pago'}
-                </button>
+                <p className="text-xs text-gray-400">
+                  Es automático: cuando el admin entra al panel con la suscripción vencida, el sistema lo manda
+                  directo a MercadoPago para autorizar el débito mensual. Una vez autorizado, MercadoPago avisa
+                  cada pago solo y la fecha de vencimiento se actualiza sola. No hace falta que compartas nada.
+                </p>
 
-                {config?.mercadoPago?.initPoint && (
+                {config?.mercadoPago?.initPoint ? (
                   <div className="p-3 text-sm break-all rounded-md bg-gray-50">
                     <p className="mb-1 text-xs text-gray-500">
-                      Estado: <span className="font-medium">{config.mercadoPago.estado}</span>
+                      Estado actual: <span className="font-medium">{config.mercadoPago.estado}</span>
                     </p>
                     <a
                       href={config.mercadoPago.initPoint}
@@ -222,12 +218,19 @@ export default function Suscripcion() {
                       {config.mercadoPago.initPoint} <ExternalLink size={12} />
                     </a>
                   </div>
+                ) : (
+                  <p className="text-xs text-gray-400">Todavía no se generó ningún link (se crea solo cuando hace falta).</p>
                 )}
 
-                <p className="text-xs text-gray-400">
-                  Compartí este link con el admin para que autorice el débito mensual. Una vez autorizado,
-                  MercadoPago va a avisar automáticamente cada pago y la fecha de vencimiento se va a actualizar sola.
-                </p>
+                <button
+                  type="button"
+                  onClick={handleGenerarLink}
+                  disabled={generandoLink}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors border rounded-md text-primary border-primary hover:bg-primary/5 disabled:opacity-50"
+                >
+                  <Link2 size={16} />
+                  {generandoLink ? 'Generando...' : 'Generar/actualizar link (reusa el actual si sigue vigente)'}
+                </button>
               </div>
             </form>
           ) : (

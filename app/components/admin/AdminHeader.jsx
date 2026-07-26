@@ -24,6 +24,7 @@ import {
 import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 import { obtenerConfigSuscripcion } from '../../lib/firestore';
+import { esSuperAdmin } from '../../lib/superAdmin';
 
 const MODULOS_NAV = [
   { id: 'dashboard', label: 'Inicio', icono: Home, href: '/admin/dashboard' },
@@ -43,6 +44,7 @@ export default function AdminHeader() {
   const [user, setUser] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [suscripcionVencida, setSuscripcionVencida] = useState(false);
+  const [redirigiendoAPago, setRedirigiendoAPago] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -62,6 +64,39 @@ export default function AdminHeader() {
       .catch(() => {}); // sin permiso (ej. Tecnico) o sin datos todavía: no mostrar banner
   }, [user]);
 
+  // Al Admin (no al SuperAdmin) lo mandamos directo a MercadoPago apenas
+  // detectamos que la suscripción está vencida, en vez de pedirle que
+  // encuentre un link en algún lado. El SuperAdmin nunca se redirige: es
+  // quien administra la app, no quien paga. La pantalla de Suscripción
+  // tampoco redirige, para poder revisar el estado sin que te saque.
+  useEffect(() => {
+    if (!user || !suscripcionVencida) return;
+    if (esSuperAdmin(user.email)) return;
+    if (pathname === '/admin/suscripcion') return;
+
+    let cancelado = false;
+    (async () => {
+      try {
+        setRedirigiendoAPago(true);
+        const token = await user.getIdToken();
+        const res = await fetch('/api/mercadopago/crear-suscripcion', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!cancelado && res.ok && data.initPoint) {
+          window.location.href = data.initPoint;
+          return;
+        }
+      } catch (error) {
+        console.error('Error al redirigir a MercadoPago:', error);
+      }
+      if (!cancelado) setRedirigiendoAPago(false);
+    })();
+
+    return () => { cancelado = true; };
+  }, [user, suscripcionVencida, pathname]);
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -72,6 +107,17 @@ export default function AdminHeader() {
   };
 
   const esActivo = (href) => pathname === href || pathname.startsWith(`${href}/`);
+
+  if (redirigiendoAPago) {
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-4 border-b-2 rounded-full animate-spin border-primary"></div>
+          <p className="text-gray-700">Te estamos llevando a MercadoPago para regularizar el pago...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <header className="sticky top-0 z-50 text-white shadow-lg bg-primary">
