@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Flame, FireExtinguisher, Building2, Shield, Camera, Lock, ArrowRight } from 'lucide-react';
 
 export default function Servicios() {
@@ -19,9 +20,18 @@ export default function Servicios() {
           Protección contra incendios
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-          <Link href="/servicios/incendios" className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow md:col-span-2">
-            <div className="bg-primary/10 p-6 flex justify-center">
-              <Flame size={64} className="text-primary" />
+          <Link href="/servicios/incendios" className="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow md:col-span-2">
+            <div className="relative h-56 md:h-72 w-full overflow-hidden">
+              <Image
+                src="/pages/paneles-incendio.jpeg"
+                alt="Detección y extinción de incendios"
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="100vw"
+              />
+              <div className="absolute bottom-4 left-4 bg-white/90 p-3 rounded-full shadow">
+                <Flame size={28} className="text-primary" />
+              </div>
             </div>
             <div className="p-6">
               <h2 className="text-2xl font-montserrat font-bold mb-4 text-primary">Detección y extinción de incendios</h2>
@@ -40,9 +50,18 @@ export default function Servicios() {
             </div>
           </Link>
 
-          <Link href="/servicios/matafuegos" className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
-            <div className="bg-primary/10 p-6 flex justify-center">
-              <FireExtinguisher size={64} className="text-primary" />
+          <Link href="/servicios/matafuegos" className="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+            <div className="relative h-56 w-full overflow-hidden">
+              <Image
+                src="/pages/matafuegos.jpeg"
+                alt="Matafuegos"
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+              <div className="absolute bottom-4 left-4 bg-white/90 p-3 rounded-full shadow">
+                <FireExtinguisher size={28} className="text-primary" />
+              </div>
             </div>
             <div className="p-6">
               <h2 className="text-2xl font-montserrat font-bold mb-4 text-primary">Matafuegos</h2>
@@ -61,9 +80,18 @@ export default function Servicios() {
             </div>
           </Link>
 
-          <Link href="/servicios/consorcios" className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
-            <div className="bg-primary/10 p-6 flex justify-center">
-              <Building2 size={64} className="text-primary" />
+          <Link href="/servicios/consorcios" className="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+            <div className="relative h-56 w-full overflow-hidden">
+              <Image
+                src="/pages/edificio-consorcio.png"
+                alt="Consorcios"
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+              <div className="absolute bottom-4 left-4 bg-white/90 p-3 rounded-full shadow">
+                <Building2 size={28} className="text-primary" />
+              </div>
             </div>
             <div className="p-6">
               <h2 className="text-2xl font-montserrat font-bold mb-4 text-primary">Consorcios</h2>
@@ -87,9 +115,18 @@ export default function Servicios() {
           Seguridad electrónica
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <Link href="/servicios/seguridad" className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
-            <div className="bg-primary/10 p-6 flex justify-center">
-              <Shield size={64} className="text-primary" />
+          <Link href="/servicios/seguridad" className="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+            <div className="relative h-56 w-full overflow-hidden">
+              <Image
+                src="/pages/alarma-intrusion.jpeg"
+                alt="Alarmas y robos"
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+              <div className="absolute bottom-4 left-4 bg-white/90 p-3 rounded-full shadow">
+                <Shield size={28} className="text-primary" />
+              </div>
             </div>
             <div className="p-6">
               <h2 className="text-2xl font-montserrat font-bold mb-4 text-primary">Alarmas y robos</h2>
@@ -108,9 +145,18 @@ export default function Servicios() {
             </div>
           </Link>
 
-          <Link href="/servicios/seguridad" className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
-            <div className="bg-primary/10 p-6 flex justify-center">
-              <Camera size={64} className="text-primary" />
+          <Link href="/servicios/seguridad" className="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+            <div className="relative h-56 w-full overflow-hidden">
+              <Image
+                src="/pages/camara-domo.jpeg"
+                alt="Cámaras y videovigilancia"
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+              <div className="absolute bottom-4 left-4 bg-white/90 p-3 rounded-full shadow">
+                <Camera size={28} className="text-primary" />
+              </div>
             </div>
             <div className="p-6">
               <h2 className="text-2xl font-montserrat font-bold mb-4 text-primary">Cámaras y videovigilancia</h2>
@@ -129,30 +175,18 @@ export default function Servicios() {
             </div>
           </Link>
 
-          <Link href="/servicios/seguridad" className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
-            <div className="bg-primary/10 p-6 flex justify-center">
-              <Lock size={64} className="text-primary" />
-            </div>
-            <div className="p-6">
-              <h2 className="text-2xl font-montserrat font-bold mb-4 text-primary">Control de acceso</h2>
-              <p className="text-gray-600 mb-6">
-                Gestionamos quién entra y cuándo, con sistemas de tarjetas, claves y tecnologías
-                de identificación para mayor control y trazabilidad.
-              </p>
-              <ul className="space-y-2 mb-6">
-                <li className="flex items-start"><span className="text-primary mr-2">•</span><span>Control de entradas y salidas</span></li>
-                <li className="flex items-start"><span className="text-primary mr-2">•</span><span>Restricción por áreas</span></li>
-                <li className="flex items-start"><span className="text-primary mr-2">•</span><span>Registros y auditoría</span></li>
-              </ul>
-              <span className="inline-flex items-center text-primary font-medium">
-                Ver más <ArrowRight size={16} className="ml-1" />
-              </span>
-            </div>
-          </Link>
-
-          <Link href="/servicios/seguridad" className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
-            <div className="bg-primary/10 p-6 flex justify-center">
-              <Shield size={64} className="text-primary" />
+          <Link href="/servicios/seguridad" className="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+            <div className="relative h-56 w-full overflow-hidden">
+              <Image
+                src="/pages/circuito-deteccion-incendios.jpeg"
+                alt="Monitoreo remoto"
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+              <div className="absolute bottom-4 left-4 bg-white/90 p-3 rounded-full shadow">
+                <Shield size={28} className="text-primary" />
+              </div>
             </div>
             <div className="p-6">
               <h2 className="text-2xl font-montserrat font-bold mb-4 text-primary">Monitoreo remoto</h2>
@@ -164,6 +198,36 @@ export default function Servicios() {
                 <li className="flex items-start"><span className="text-primary mr-2">•</span><span>Vigilancia 24/7</span></li>
                 <li className="flex items-start"><span className="text-primary mr-2">•</span><span>Alertas automáticas</span></li>
                 <li className="flex items-start"><span className="text-primary mr-2">•</span><span>Acceso remoto y seguimiento</span></li>
+              </ul>
+              <span className="inline-flex items-center text-primary font-medium">
+                Ver más <ArrowRight size={16} className="ml-1" />
+              </span>
+            </div>
+          </Link>
+
+          <Link href="/servicios/seguridad#control-de-acceso" className="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+            <div className="relative h-56 w-full overflow-hidden">
+              <Image
+                src="/pages/control-acceso.jpeg"
+                alt="Control de acceso"
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+              <div className="absolute bottom-4 left-4 bg-white/90 p-3 rounded-full shadow">
+                <Lock size={28} className="text-primary" />
+              </div>
+            </div>
+            <div className="p-6">
+              <h2 className="text-2xl font-montserrat font-bold mb-4 text-primary">Control de acceso</h2>
+              <p className="text-gray-600 mb-6">
+                Gestionamos quién entra y cuándo, con sistemas de tarjetas, claves y tecnologías
+                de identificación para mayor control y trazabilidad.
+              </p>
+              <ul className="space-y-2 mb-6">
+                <li className="flex items-start"><span className="text-primary mr-2">•</span><span>Control de entradas y salidas</span></li>
+                <li className="flex items-start"><span className="text-primary mr-2">•</span><span>Restricción por áreas</span></li>
+                <li className="flex items-start"><span className="text-primary mr-2">•</span><span>Registros y auditoría</span></li>
               </ul>
               <span className="inline-flex items-center text-primary font-medium">
                 Ver más <ArrowRight size={16} className="ml-1" />

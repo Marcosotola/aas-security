@@ -190,9 +190,9 @@ export default function Dashboard() {
       id: 'consultas',
       titulo: 'Consultas',
       icono: MessageCircle,
-      color: 'bg-emerald-600', // Distinto al resto para destacarlo
-      colorClaro: 'bg-emerald-100',
-      colorTexto: 'text-emerald-600',
+      color: 'bg-[#3498DB]', // Azul info del sitio, dentro de la misma paleta que el resto
+      colorClaro: 'bg-blue-100',
+      colorTexto: 'text-[#3498DB]',
       descripcion: 'Consultas recibidas desde la web',
       total: totales.consultas,
       badge: totales.consultasNoLeidas,
@@ -206,35 +206,31 @@ export default function Dashboard() {
       id: 'lista-precios',
       titulo: 'Lista de Precios',
       icono: Tag,
-      color: 'bg-amber-600', // Distinto al resto para destacarlo
-      colorClaro: 'bg-amber-100',
-      colorTexto: 'text-amber-600',
+      color: 'bg-slate-600', // Slate más claro, dentro de la misma familia que Estados/Recibos
+      colorClaro: 'bg-slate-100',
+      colorTexto: 'text-slate-600',
       descripcion: 'Catálogo de items para presupuestos',
       total: totales.listaPrecios,
       rutas: {
+        nuevo: '/admin/lista-precios?nuevo=1',
         historial: '/admin/lista-precios'
       },
-      activo: true,
-      sinNuevo: true,
-      textoAcceso: 'Ver catálogo',
-      iconoAcceso: Tag
+      activo: true
     },
     {
       id: 'usuarios',
       titulo: 'Usuarios',
       icono: UserCog,
-      color: 'bg-indigo-600', // Distinto al resto para destacarlo
-      colorClaro: 'bg-indigo-100',
-      colorTexto: 'text-indigo-600',
+      color: 'bg-slate-900', // Slate más oscuro, dentro de la misma familia que Estados/Recibos
+      colorClaro: 'bg-slate-200',
+      colorTexto: 'text-slate-900',
       descripcion: 'Clientes, técnicos y roles',
       total: totales.usuarios,
       rutas: {
+        nuevo: '/registro?origen=admin',
         historial: '/admin/usuarios'
       },
-      activo: true,
-      sinNuevo: true,
-      textoAcceso: 'Ver usuarios',
-      iconoAcceso: UserCog
+      activo: true
     }
   ];
 

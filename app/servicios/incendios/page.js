@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Flame, ArrowLeft, Check } from 'lucide-react';
 
 export default function ServicioIncendios() {
@@ -44,6 +45,14 @@ export default function ServicioIncendios() {
               el tipo de riesgo y la superficie a proteger, garantizando una detección temprana que
               permite actuar antes de que el foco se propague.
             </p>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="relative h-48 overflow-hidden rounded-lg">
+                <Image src="/pages/detector-humo.jpeg" alt="Detector de humo" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 33vw" />
+              </div>
+              <div className="relative h-48 overflow-hidden rounded-lg">
+                <Image src="/pages/dispositivos-deteccion-incendios.jpeg" alt="Dispositivos de detección de incendios" fill className="object-cover" sizes="(max-width: 1024px) 50vw, 33vw" />
+              </div>
+            </div>
 
             <h3 className="text-xl font-montserrat font-bold mb-4 text-primary mt-8">
               Sistemas de extinción
@@ -53,6 +62,9 @@ export default function ServicioIncendios() {
               tableros eléctricos y áreas críticas, además de rociadores automáticos (sprinklers) y
               redes de incendio para plantas industriales y edificios de gran superficie.
             </p>
+            <div className="relative h-64 w-full overflow-hidden rounded-lg mb-6">
+              <Image src="/pages/baterias-co2-extincion.jpeg" alt="Baterías de CO2 para extinción" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 66vw" />
+            </div>
 
             <h3 className="text-xl font-montserrat font-bold mb-4 text-primary mt-8">
               Alarma y evacuación
@@ -62,6 +74,9 @@ export default function ServicioIncendios() {
               inmediata a todos los ocupantes, junto con señalización de vías de escape y salidas
               de emergencia conforme a normativa municipal y provincial.
             </p>
+            <div className="relative h-64 w-full overflow-hidden rounded-lg mb-6">
+              <Image src="/pages/circuito-deteccion-incendios.jpeg" alt="Circuito de detección de incendios" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 66vw" />
+            </div>
 
             <h3 className="text-xl font-montserrat font-bold mb-4 text-primary mt-8">
               Inspección, mantenimiento y certificación
@@ -71,6 +86,9 @@ export default function ServicioIncendios() {
               informes técnicos y certificados que respaldan la habilitación del inmueble ante
               bomberos, aseguradoras y organismos de control.
             </p>
+            <div className="relative h-64 w-full overflow-hidden rounded-lg mb-6">
+              <Image src="/pages/paneles-incendio.jpeg" alt="Paneles de incendio" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 66vw" />
+            </div>
           </div>
 
           <div className="lg:col-span-1">

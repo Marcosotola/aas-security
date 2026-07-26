@@ -1,5 +1,6 @@
 // app/page.js
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, Flame, FireExtinguisher, Building2, Shield, Camera, Lock } from 'lucide-react';
 
 export default function Home() {
@@ -50,70 +51,136 @@ export default function Home() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            <Link href="/servicios/incendios" className="group bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
-              <div className="bg-primary/10 p-3 rounded-full w-fit mb-4">
-                <Flame size={28} className="text-primary" />
+            <Link href="/servicios/incendios" className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden">
+              <div className="relative h-44 w-full overflow-hidden">
+                <Image
+                  src="/pages/dispositivos-deteccion-incendios.jpeg"
+                  alt="Detección y extinción de incendios"
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+                <div className="absolute bottom-3 left-3 bg-white/90 p-2 rounded-full shadow">
+                  <Flame size={22} className="text-primary" />
+                </div>
               </div>
-              <h3 className="text-xl font-montserrat font-bold mb-3 group-hover:text-primary transition-colors">Detección y extinción de incendios</h3>
-              <p className="text-gray-600 mb-4">
-                Centrales y detectores de humo, calor y llama, extinción por agentes limpios y
-                gases nobles, sprinklers, alarma y audio evacuación.
-              </p>
+              <div className="p-6">
+                <h3 className="text-xl font-montserrat font-bold mb-3 group-hover:text-primary transition-colors">Detección y extinción de incendios</h3>
+                <p className="text-gray-600 mb-4">
+                  Centrales y detectores de humo, calor y llama, extinción por agentes limpios y
+                  gases nobles, sprinklers, alarma y audio evacuación.
+                </p>
+              </div>
             </Link>
 
-            <Link href="/servicios/matafuegos" className="group bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
-              <div className="bg-primary/10 p-3 rounded-full w-fit mb-4">
-                <FireExtinguisher size={28} className="text-primary" />
+            <Link href="/servicios/matafuegos" className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden">
+              <div className="relative h-44 w-full overflow-hidden">
+                <Image
+                  src="/pages/matafuegos.jpeg"
+                  alt="Matafuegos"
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+                <div className="absolute bottom-3 left-3 bg-white/90 p-2 rounded-full shadow">
+                  <FireExtinguisher size={22} className="text-primary" />
+                </div>
               </div>
-              <h3 className="text-xl font-montserrat font-bold mb-3 group-hover:text-primary transition-colors">Matafuegos</h3>
-              <p className="text-gray-600 mb-4">
-                Venta, recarga, inspección y control de vencimientos, con certificación IRAM 3542
-                y aviso automático cuando se acerca la fecha de renovación.
-              </p>
+              <div className="p-6">
+                <h3 className="text-xl font-montserrat font-bold mb-3 group-hover:text-primary transition-colors">Matafuegos</h3>
+                <p className="text-gray-600 mb-4">
+                  Venta, recarga, inspección y control de vencimientos, con certificación IRAM 3542
+                  y aviso automático cuando se acerca la fecha de renovación.
+                </p>
+              </div>
             </Link>
 
-            <Link href="/servicios/consorcios" className="group bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
-              <div className="bg-primary/10 p-3 rounded-full w-fit mb-4">
-                <Building2 size={28} className="text-primary" />
+            <Link href="/servicios/consorcios" className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden">
+              <div className="relative h-44 w-full overflow-hidden">
+                <Image
+                  src="/pages/edificio-consorcio.png"
+                  alt="Consorcios"
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+                <div className="absolute bottom-3 left-3 bg-white/90 p-2 rounded-full shadow">
+                  <Building2 size={22} className="text-primary" />
+                </div>
               </div>
-              <h3 className="text-xl font-montserrat font-bold mb-3 group-hover:text-primary transition-colors">Consorcios</h3>
-              <p className="text-gray-600 mb-4">
-                Mantenimiento de matafuegos y detección en áreas comunes, planes de evacuación y
-                contrato anual pensado para administradores.
-              </p>
+              <div className="p-6">
+                <h3 className="text-xl font-montserrat font-bold mb-3 group-hover:text-primary transition-colors">Consorcios</h3>
+                <p className="text-gray-600 mb-4">
+                  Mantenimiento de matafuegos y detección en áreas comunes, planes de evacuación y
+                  contrato anual pensado para administradores.
+                </p>
+              </div>
             </Link>
 
-            <Link href="/servicios/seguridad" className="group bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
-              <div className="bg-primary/10 p-3 rounded-full w-fit mb-4">
-                <Shield size={28} className="text-primary" />
+            <Link href="/servicios/seguridad" className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden">
+              <div className="relative h-44 w-full overflow-hidden">
+                <Image
+                  src="/pages/alarma-intrusion.jpeg"
+                  alt="Alarmas y prevención"
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+                <div className="absolute bottom-3 left-3 bg-white/90 p-2 rounded-full shadow">
+                  <Shield size={22} className="text-primary" />
+                </div>
               </div>
-              <h3 className="text-xl font-montserrat font-bold mb-3 group-hover:text-primary transition-colors">Alarmas y prevención</h3>
-              <p className="text-gray-600 mb-4">
-                Sistemas de alarma de intrusión para detectar accesos no autorizados y activar
-                respuestas rápidas ante cualquier evento.
-              </p>
+              <div className="p-6">
+                <h3 className="text-xl font-montserrat font-bold mb-3 group-hover:text-primary transition-colors">Alarmas y prevención</h3>
+                <p className="text-gray-600 mb-4">
+                  Sistemas de alarma de intrusión para detectar accesos no autorizados y activar
+                  respuestas rápidas ante cualquier evento.
+                </p>
+              </div>
             </Link>
 
-            <Link href="/servicios/seguridad" className="group bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
-              <div className="bg-primary/10 p-3 rounded-full w-fit mb-4">
-                <Camera size={28} className="text-primary" />
+            <Link href="/servicios/seguridad" className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden">
+              <div className="relative h-44 w-full overflow-hidden">
+                <Image
+                  src="/pages/camara-domo.jpeg"
+                  alt="Cámaras y monitoreo"
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+                <div className="absolute bottom-3 left-3 bg-white/90 p-2 rounded-full shadow">
+                  <Camera size={22} className="text-primary" />
+                </div>
               </div>
-              <h3 className="text-xl font-montserrat font-bold mb-3 group-hover:text-primary transition-colors">Cámaras y monitoreo</h3>
-              <p className="text-gray-600 mb-4">
-                Videovigilancia profesional con visualización en tiempo real, grabación y control
-                remoto desde cualquier lugar.
-              </p>
+              <div className="p-6">
+                <h3 className="text-xl font-montserrat font-bold mb-3 group-hover:text-primary transition-colors">Cámaras y monitoreo</h3>
+                <p className="text-gray-600 mb-4">
+                  Videovigilancia profesional con visualización en tiempo real, grabación y control
+                  remoto desde cualquier lugar.
+                </p>
+              </div>
             </Link>
 
-            <Link href="/servicios/seguridad" className="group bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
-              <div className="bg-primary/10 p-3 rounded-full w-fit mb-4">
-                <Lock size={28} className="text-primary" />
+            <Link href="/servicios/seguridad" className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden">
+              <div className="relative h-44 w-full overflow-hidden">
+                <Image
+                  src="/pages/control-acceso.jpeg"
+                  alt="Control de acceso"
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+                <div className="absolute bottom-3 left-3 bg-white/90 p-2 rounded-full shadow">
+                  <Lock size={22} className="text-primary" />
+                </div>
               </div>
-              <h3 className="text-xl font-montserrat font-bold mb-3 group-hover:text-primary transition-colors">Control de acceso</h3>
-              <p className="text-gray-600 mb-4">
-                Soluciones para restringir y registrar entradas, con mayor control, trazabilidad y
-                seguridad operativa.
-              </p>
+              <div className="p-6">
+                <h3 className="text-xl font-montserrat font-bold mb-3 group-hover:text-primary transition-colors">Control de acceso</h3>
+                <p className="text-gray-600 mb-4">
+                  Soluciones para restringir y registrar entradas, con mayor control, trazabilidad y
+                  seguridad operativa.
+                </p>
+              </div>
             </Link>
           </div>
         </div>

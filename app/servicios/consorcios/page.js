@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Building2, ArrowLeft, Check } from 'lucide-react';
 
 export default function ServicioConsorcios() {
@@ -34,6 +35,9 @@ export default function ServicioConsorcios() {
               administradores y consejos de propietarios para cumplir con la normativa vigente y
               mantener protegidos los espacios comunes durante todo el año.
             </p>
+            <div className="relative h-64 w-full overflow-hidden rounded-lg mb-6">
+              <Image src="/pages/edificio-consorcio.png" alt="Consorcio" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 66vw" />
+            </div>
 
             <h3 className="text-xl font-montserrat font-bold mb-4 text-primary mt-8">
               Matafuegos y protección contra incendios en áreas comunes
@@ -61,6 +65,9 @@ export default function ServicioConsorcios() {
               peatonal y vehicular (porteros eléctricos, tags e intercomunicadores) para reforzar
               la seguridad de todos los propietarios.
             </p>
+            <div className="relative h-64 w-full overflow-hidden rounded-lg mb-6">
+              <Image src="/pages/control-acceso.jpeg" alt="Control de acceso del edificio" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 66vw" />
+            </div>
 
             <h3 className="text-xl font-montserrat font-bold mb-4 text-primary mt-8">
               Contrato de mantenimiento anual

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Shield, ArrowLeft, Check } from 'lucide-react';
 
 export default function ServicioSeguridad() {
@@ -42,42 +43,78 @@ export default function ServicioSeguridad() {
               Instalamos sistemas de alarma de última generación que detectan cualquier 
               intento de intrusión y alertan inmediatamente a los propietarios o al centro 
               de monitoreo. Trabajamos con detectores de movimiento, sensores para puertas 
-              y ventanas, detectores de rotura de cristal y más, configurando cada sistema 
+              y ventanas, detectores de rotura de cristal y más, configurando cada sistema
               según las necesidades específicas de seguridad.
             </p>
+            <div className="relative h-64 w-full overflow-hidden rounded-lg mb-6">
+              <Image
+                src="/pages/alarma-intrusion.jpeg"
+                alt="Alarmas contra robo e intrusión"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 66vw"
+              />
+            </div>
 
             <h3 className="text-xl font-montserrat font-bold mb-4 text-primary mt-8">
               Cámaras de vigilancia y CCTV
             </h3>
             <p className="text-gray-600 mb-6">
-              Diseñamos e implementamos sistemas de videovigilancia con cámaras de alta 
-              definición, que permiten monitorear en tiempo real y grabar las actividades 
-              tanto del interior como del exterior de las instalaciones. Ofrecemos soluciones 
-              IP, analógicas y sistemas híbridos, con opciones de almacenamiento local o en 
+              Diseñamos e implementamos sistemas de videovigilancia con cámaras de alta
+              definición, que permiten monitorear en tiempo real y grabar las actividades
+              tanto del interior como del exterior de las instalaciones. Ofrecemos soluciones
+              IP, analógicas y sistemas híbridos, con opciones de almacenamiento local o en
               la nube y acceso remoto desde dispositivos móviles.
             </p>
-
-            <h3 className="text-xl font-montserrat font-bold mb-4 text-primary mt-8">
-              Controles de acceso
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Nuestros sistemas de control de acceso permiten gestionar quién, cuándo y dónde 
-              puede acceder a determinadas áreas de sus instalaciones. Trabajamos con diversas 
-              tecnologías como tarjetas de proximidad, códigos PIN, lectura biométrica y 
-              soluciones por aplicación móvil, adaptándonos a las necesidades de seguridad 
-              y comodidad de cada cliente.
-            </p>
+            <div className="relative h-64 w-full overflow-hidden rounded-lg mb-6">
+              <Image
+                src="/pages/camara-domo.jpeg"
+                alt="Cámaras de vigilancia y CCTV"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 66vw"
+              />
+            </div>
 
             <h3 className="text-xl font-montserrat font-bold mb-4 text-primary mt-8">
               Monitoreo remoto y sistemas integrados
             </h3>
             <p className="text-gray-600 mb-6">
-              Ofrecemos soluciones de monitoreo remoto que permiten vigilar sus instalaciones 
-              desde cualquier lugar a través de dispositivos móviles. Además, integramos 
-              todos los sistemas de seguridad (alarmas, cámaras, controles de acceso) en 
-              una única plataforma fácil de gestionar, proporcionando una solución completa 
+              Ofrecemos soluciones de monitoreo remoto que permiten vigilar sus instalaciones
+              desde cualquier lugar a través de dispositivos móviles. Además, integramos
+              todos los sistemas de seguridad (alarmas, cámaras, controles de acceso) en
+              una única plataforma fácil de gestionar, proporcionando una solución completa
               y coherente para todas sus necesidades de seguridad.
             </p>
+            <div className="relative h-64 w-full overflow-hidden rounded-lg mb-6">
+              <Image
+                src="/pages/circuito-deteccion-incendios.jpeg"
+                alt="Monitoreo remoto y sistemas integrados"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 66vw"
+              />
+            </div>
+
+            <h3 id="control-de-acceso" className="text-xl font-montserrat font-bold mb-4 text-primary mt-8 scroll-mt-24">
+              Controles de acceso
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Nuestros sistemas de control de acceso permiten gestionar quién, cuándo y dónde
+              puede acceder a determinadas áreas de sus instalaciones. Trabajamos con diversas
+              tecnologías como tarjetas de proximidad, códigos PIN, lectura biométrica y
+              soluciones por aplicación móvil, adaptándonos a las necesidades de seguridad
+              y comodidad de cada cliente.
+            </p>
+            <div className="relative h-64 w-full overflow-hidden rounded-lg mb-6">
+              <Image
+                src="/pages/control-acceso.jpeg"
+                alt="Controles de acceso"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 66vw"
+              />
+            </div>
           </div>
 
           <div className="lg:col-span-1">

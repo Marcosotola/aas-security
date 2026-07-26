@@ -1,8 +1,9 @@
 // app/admin/lista-precios/page.js
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Home, Search, PlusCircle, Edit, Trash, Tag, X } from 'lucide-react';
 import {
     obtenerListaPrecios,
@@ -26,8 +27,9 @@ const formatMoney = (amount) => {
 
 const ITEM_VACIO = { descripcion: '', precioUnitario: '' };
 
-export default function ListaPrecios() {
+function ListaPrecios() {
     const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+    const searchParams = useSearchParams();
     const [loadingData, setLoadingData] = useState(true);
     const [guardando, setGuardando] = useState(false);
     const [items, setItems] = useState([]);
@@ -41,6 +43,14 @@ export default function ListaPrecios() {
         if (!user) return;
         cargarItems().then(() => setLoadingData(false));
     }, [user]);
+
+    // Permite que el botón "Nuevo" del panel abra directo el modal de alta
+    useEffect(() => {
+        if (searchParams.get('nuevo') === '1') {
+            abrirModalNuevo();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
 
     const cargarItems = async () => {
         try {
@@ -334,5 +344,13 @@ export default function ListaPrecios() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function ListaPreciosPage() {
+    return (
+        <Suspense fallback={null}>
+            <ListaPrecios />
+        </Suspense>
     );
 }

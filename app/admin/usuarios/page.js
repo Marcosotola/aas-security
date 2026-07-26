@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Home, Search, ChevronDown, Users as UsersIcon, MapPin, UserPlus, Edit, Trash } from 'lucide-react';
+import { Home, Search, ChevronDown, Users as UsersIcon, MapPin, UserPlus, Edit, Trash, Eye, X, Phone, Building2, IdCard } from 'lucide-react';
 import { obtenerUsuarios, actualizarUsuario } from '../../lib/firestore';
 import { auth } from '../../lib/firebase';
 import { useStaffAuth } from '../../lib/useStaffAuth';
@@ -22,6 +22,7 @@ export default function GestionUsuarios() {
   const [sedesAbiertas, setSedesAbiertas] = useState(null);
   const [vista, setVista] = useState('tabla');
   const [eliminandoUsuario, setEliminandoUsuario] = useState(null);
+  const [usuarioViendo, setUsuarioViendo] = useState(null);
   const rolBtnRefs = useRef({});
   const sedesBtnRefs = useRef({});
 
@@ -225,6 +226,14 @@ export default function GestionUsuarios() {
                     </div>
 
                     <div className="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-gray-100">
+                      <button
+                        type="button"
+                        onClick={() => setUsuarioViendo(u)}
+                        title="Ver datos"
+                        className="text-gray-500 cursor-pointer hover:text-primary"
+                      >
+                        <Eye size={18} />
+                      </button>
                       <Link
                         href={`/admin/usuarios/completar?uid=${u.id}`}
                         title="Editar datos"
@@ -332,6 +341,14 @@ export default function GestionUsuarios() {
                       </td>
                       <td className="px-4 py-3 text-sm text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setUsuarioViendo(u)}
+                            title="Ver datos"
+                            className="text-gray-500 cursor-pointer hover:text-primary"
+                          >
+                            <Eye size={18} />
+                          </button>
                           <Link
                             href={`/admin/usuarios/completar?uid=${u.id}`}
                             title="Editar datos"
@@ -372,6 +389,103 @@ export default function GestionUsuarios() {
           )}
         </div>
       </div>
+
+      {/* Modal con el detalle completo del usuario, incluidas todas sus sedes */}
+      {usuarioViendo && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center p-0 bg-black/50 sm:items-center sm:p-4"
+          onClick={() => setUsuarioViendo(null)}
+        >
+          <div
+            className="w-full max-w-lg p-6 bg-white shadow-xl rounded-t-2xl sm:rounded-2xl max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-bold font-montserrat text-primary">
+                  {usuarioViendo.nombre
+                    ? `${usuarioViendo.nombre} ${usuarioViendo.apellido || ''}`
+                    : 'Sin completar'}
+                </h3>
+                <p className="text-sm text-gray-500">{usuarioViendo.email}</p>
+              </div>
+              <button
+                onClick={() => setUsuarioViendo(null)}
+                className="p-2 text-gray-400 rounded-full hover:bg-gray-100 hover:text-gray-600"
+                aria-label="Cerrar"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div>
+                <p className="mb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase">Rol</p>
+                <p className="text-gray-800">{usuarioViendo.role || 'Cliente'}</p>
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase">Empresa</p>
+                <p className="flex items-center gap-1 text-gray-800">
+                  <Building2 size={14} className="text-gray-400 shrink-0" />
+                  {usuarioViendo.empresa || '-'}
+                </p>
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase">DNI / CUIT</p>
+                <p className="flex items-center gap-1 text-gray-800">
+                  <IdCard size={14} className="text-gray-400 shrink-0" />
+                  {usuarioViendo.dniCuit || '-'}
+                </p>
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase">Teléfono</p>
+                <p className="flex items-center gap-1 text-gray-800">
+                  <Phone size={14} className="text-gray-400 shrink-0" />
+                  {usuarioViendo.telefono || '-'}
+                </p>
+              </div>
+              <div className="col-span-2">
+                <p className="mb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase">Dirección principal</p>
+                <p className="flex items-center gap-1 text-gray-800">
+                  <MapPin size={14} className="text-gray-400 shrink-0" />
+                  {usuarioViendo.direccion || '-'}
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-2">
+              <p className="mb-2 text-xs font-semibold tracking-wider text-gray-400 uppercase">
+                Sedes ({(usuarioViendo.sedes || []).length})
+              </p>
+              {(usuarioViendo.sedes || []).length > 0 ? (
+                <div className="space-y-2">
+                  {usuarioViendo.sedes.map((s) => (
+                    <div key={s.id} className="flex items-start gap-2 p-3 border border-gray-200 rounded-md bg-gray-50">
+                      <MapPin size={16} className="mt-0.5 text-primary shrink-0" />
+                      <div>
+                        <div className="text-sm font-medium text-gray-800">{s.nombre}</div>
+                        <div className="text-sm text-gray-500">{s.direccion}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400">Este usuario todavía no cargó ninguna sede.</p>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-4 mt-4 border-t border-gray-100">
+              <Link
+                href={`/admin/usuarios/completar?uid=${usuarioViendo.id}`}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
+              >
+                <Edit size={16} />
+                Editar datos
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

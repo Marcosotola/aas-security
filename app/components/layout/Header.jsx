@@ -108,6 +108,9 @@ const Header = () => {
                 <Link href="/servicios/seguridad" className="block px-4 py-2 text-gray-700 transition-colors hover:bg-primary hover:text-white">
                   Alarmas y cámaras
                 </Link>
+                <Link href="/servicios/seguridad#control-de-acceso" className="block px-4 py-2 text-gray-700 transition-colors hover:bg-primary hover:text-white">
+                  Control de acceso
+                </Link>
                 <Link href="/servicios" className="block px-4 py-2 font-medium transition-colors text-primary hover:bg-primary hover:text-white">
                   Ver todos
                 </Link>
@@ -206,6 +209,13 @@ const Header = () => {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Alarmas y cámaras
+                  </Link>
+                  <Link
+                    href="/servicios/seguridad#control-de-acceso"
+                    className="block py-2 text-gray-700 hover:text-primary"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Control de acceso
                   </Link>
                   <Link
                     href="/servicios"

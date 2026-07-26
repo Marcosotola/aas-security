@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { FireExtinguisher, ArrowLeft, Check } from 'lucide-react';
 
 export default function ServicioMatafuegos() {
@@ -42,6 +43,9 @@ export default function ServicioMatafuegos() {
               superficie a proteger: polvo químico ABC, dióxido de carbono (CO2), agua, espuma y
               agentes limpios. Instalamos soportes y señalización reglamentaria en cada punto.
             </p>
+            <div className="relative h-64 w-full overflow-hidden rounded-lg mb-6">
+              <Image src="/pages/matafuegos.jpeg" alt="Matafuegos" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 66vw" />
+            </div>
 
             <h3 className="text-xl font-montserrat font-bold mb-4 text-primary mt-8">
               Recarga y mantenimiento
@@ -51,6 +55,9 @@ export default function ServicioMatafuegos() {
               incluyendo prueba hidráulica cuando corresponde, para garantizar que cada equipo
               funcione correctamente en caso de emergencia.
             </p>
+            <div className="relative h-64 w-full overflow-hidden rounded-lg mb-6">
+              <Image src="/pages/baterias-co2-extincion.jpeg" alt="Recarga de matafuegos CO2" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 66vw" />
+            </div>
 
             <h3 className="text-xl font-montserrat font-bold mb-4 text-primary mt-8">
               Inspección y control de vencimientos
