@@ -21,7 +21,8 @@ import {
   File,
   MessageCircle,
   Tag,
-  UserCog
+  UserCog,
+  Wallet
 } from 'lucide-react';
 import { collection, query, where, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -39,7 +40,8 @@ export default function Dashboard() {
     consultas: 0,
     consultasNoLeidas: 0,
     listaPrecios: 0,
-    usuarios: 0
+    usuarios: 0,
+    movimientos: 0
   });
   const loading = loadingAuth || loadingData;
 
@@ -66,7 +68,8 @@ export default function Dashboard() {
         consultas,
         consultasNoLeidas,
         listaPrecios,
-        usuarios
+        usuarios,
+        movimientos
       ] = await Promise.all([
         contar(collection(db, 'presupuestos')),
         contar(collection(db, 'estados')),
@@ -76,7 +79,8 @@ export default function Dashboard() {
         contar(collection(db, 'consultas')),
         contar(query(collection(db, 'consultas'), where('leida', '==', false))),
         contar(collection(db, 'listaPrecios')),
-        contar(collection(db, 'usuarios'))
+        contar(collection(db, 'usuarios')),
+        contar(collection(db, 'movimientos'))
       ]);
 
       setTotales({
@@ -88,7 +92,8 @@ export default function Dashboard() {
         consultas,
         consultasNoLeidas,
         listaPrecios,
-        usuarios
+        usuarios,
+        movimientos
       });
     } catch (error) {
       console.error('Error al cargar totales:', error);
@@ -229,6 +234,21 @@ export default function Dashboard() {
       rutas: {
         nuevo: '/registro?origen=admin',
         historial: '/admin/usuarios'
+      },
+      activo: true
+    },
+    {
+      id: 'finanzas',
+      titulo: 'Finanzas',
+      icono: Wallet,
+      color: 'bg-blue-900', // Azul de la familia del sitio, distinto de los tonos ya usados
+      colorClaro: 'bg-blue-100',
+      colorTexto: 'text-blue-900',
+      descripcion: 'Ingresos, gastos y ganancia real',
+      total: totales.movimientos,
+      rutas: {
+        nuevo: '/admin/finanzas?nuevo=1',
+        historial: '/admin/finanzas'
       },
       activo: true
     }

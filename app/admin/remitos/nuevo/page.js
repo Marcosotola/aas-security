@@ -9,12 +9,14 @@ import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import RemitoPDF from '../../../components/pdf/RemitoPDF';
 import ClienteSelector from '../../../components/ClienteSelector';
+import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
 import SignatureCanvas from 'react-signature-canvas';
 
 export default function NuevoRemito() {
     const router = useRouter();
     const { user, loading } = useStaffAuth(['Admin']);
     const [guardando, setGuardando] = useState(false);
+    const [documentoGuardado, setDocumentoGuardado] = useState(null);
     const [clientes, setClientes] = useState([]);
     const [showCanvas, setShowCanvas] = useState(true);
     const [canvasSize, setCanvasSize] = useState({ width: 500, height: 200 });
@@ -180,8 +182,12 @@ export default function NuevoRemito() {
             };
 
             await crearRemito(remitoData);
-            alert('Remito guardado exitosamente');
-            router.push('/admin/remitos');
+            setDocumentoGuardado({
+                pdfElement: <RemitoPDF remito={remitoData} />,
+                fileName: `${remitoData.numero}.pdf`,
+                numero: remitoData.numero,
+                telefono: cliente.telefono
+            });
         } catch (error) {
             console.error('Error al guardar el remito:', error);
             alert('Error al guardar el remito. Inténtelo de nuevo más tarde.');
@@ -593,6 +599,18 @@ export default function NuevoRemito() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {documentoGuardado && (
+                <CompartirDocumentoModal
+                    abierto
+                    pdfElement={documentoGuardado.pdfElement}
+                    fileName={documentoGuardado.fileName}
+                    tipo="Remito"
+                    numero={documentoGuardado.numero}
+                    telefono={documentoGuardado.telefono}
+                    onIrALista={() => router.push('/admin/remitos')}
+                />
             )}
         </div>
     );

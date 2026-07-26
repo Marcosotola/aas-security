@@ -6,27 +6,8 @@ import Link from 'next/link';
 import { Home, Search, Trash, MessageCircle, MailOpen, Mail, Eye, X } from 'lucide-react';
 import { obtenerConsultas, marcarConsultaLeida, eliminarConsulta } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
+import { construirLinkWhatsApp } from '../../lib/whatsapp';
 import ViewToggle from '../../components/admin/ViewToggle';
-
-// Arma un link de WhatsApp a partir de un teléfono en cualquier formato común en Argentina
-const construirLinkWhatsApp = (telefono) => {
-  if (!telefono) return null;
-  const digitos = telefono.replace(/\D/g, '');
-  if (!digitos) return null;
-
-  let numero = digitos;
-  if (numero.startsWith('549')) {
-    // ya viene con código de país + 9
-  } else if (numero.startsWith('54')) {
-    numero = `549${numero.slice(2)}`;
-  } else if (numero.startsWith('9') && numero.length > 10) {
-    numero = `54${numero}`;
-  } else {
-    numero = `549${numero}`;
-  }
-
-  return `https://wa.me/${numero}`;
-};
 
 const formatearFecha = (fechaCreacion) => {
   if (!fechaCreacion) return 'No disponible';

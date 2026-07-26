@@ -16,7 +16,8 @@ import {
   File,
   MessageCircle,
   Tag,
-  UserCog
+  UserCog,
+  Wallet
 } from 'lucide-react';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
@@ -31,6 +32,7 @@ const MODULOS_NAV = [
   { id: 'consultas', label: 'Consultas', icono: MessageCircle, href: '/admin/consultas' },
   { id: 'lista-precios', label: 'Lista de precios', icono: Tag, href: '/admin/lista-precios' },
   { id: 'usuarios', label: 'Usuarios', icono: UserCog, href: '/admin/usuarios' },
+  { id: 'finanzas', label: 'Finanzas', icono: Wallet, href: '/admin/finanzas' },
 ];
 
 export default function AdminHeader() {

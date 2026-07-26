@@ -50,7 +50,9 @@ export default function ClienteSelector({ clientes, onSelect, placeholder = 'Bus
         empresa: cliente.empresa || '',
         email: cliente.email || '',
         telefono: cliente.telefono || '',
-        direccion: cliente.direccion || ''
+        direccion: cliente.direccion || '',
+        sedeId: null,
+        sedeNombre: 'Principal'
       });
       setClienteElegido(null);
     }
@@ -64,7 +66,9 @@ export default function ClienteSelector({ clientes, onSelect, placeholder = 'Bus
       empresa: clienteElegido.empresa || '',
       email: clienteElegido.email || '',
       telefono: clienteElegido.telefono || '',
-      direccion: sede ? sede.direccion : (clienteElegido.direccion || '')
+      direccion: sede ? sede.direccion : (clienteElegido.direccion || ''),
+      sedeId: sede ? sede.id : null,
+      sedeNombre: sede ? sede.nombre : 'Principal'
     });
     setClienteElegido(null);
   };

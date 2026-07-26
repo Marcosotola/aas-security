@@ -79,6 +79,12 @@ service cloud.firestore {
       allow read, write: if esStaff();
     }
 
+    // Movimientos financieros (ingresos/gastos manuales): datos sensibles de
+    // ganancias del negocio, solo para Admin, no para Tecnico.
+    match /movimientos/{id} {
+      allow read, write: if esAdmin();
+    }
+
     // Consultas: cualquiera puede crear (formulario público de contacto),
     // pero solo el staff logueado puede leerlas, marcarlas o borrarlas.
     match /consultas/{id} {

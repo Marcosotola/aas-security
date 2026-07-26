@@ -8,11 +8,13 @@ import { crearDocumento } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import DocumentoPDF from '../../../components/pdf/DocumentoPDF';
+import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
 
 export default function NuevoDocumento() {
   const router = useRouter();
   const { user, loading } = useStaffAuth(['Admin']);
   const [guardando, setGuardando] = useState(false);
+  const [documentoGuardado, setDocumentoGuardado] = useState(null);
 
   // Estado para el modal de contenido
   const [modalContenido, setModalContenido] = useState({
@@ -57,12 +59,16 @@ export default function NuevoDocumento() {
 
     setGuardando(true);
     try {
-      await crearDocumento({
+      const documentoData = {
         ...documento,
         usuarioCreador: user.email
+      };
+      await crearDocumento(documentoData);
+      setDocumentoGuardado({
+        pdfElement: <DocumentoPDF documento={documentoData} />,
+        fileName: `${documentoData.titulo.replace(/\s+/g, '_')}.pdf`,
+        numero: documentoData.titulo
       });
-      alert('Documento guardado exitosamente');
-      router.push('/admin/documentos');
     } catch (error) {
       console.error('Error al guardar el documento:', error);
       alert('Error al guardar el documento. Inténtelo de nuevo más tarde.');
@@ -276,6 +282,17 @@ export default function NuevoDocumento() {
             </div>
           </div>
         </div>
+      )}
+
+      {documentoGuardado && (
+        <CompartirDocumentoModal
+          abierto
+          pdfElement={documentoGuardado.pdfElement}
+          fileName={documentoGuardado.fileName}
+          tipo="Documento"
+          numero={documentoGuardado.numero}
+          onIrALista={() => router.push('/admin/documentos')}
+        />
       )}
     </div>
   );

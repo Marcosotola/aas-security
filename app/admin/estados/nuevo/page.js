@@ -8,6 +8,7 @@ import { crearEstado } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import EstadoPDF from '../../../components/pdf/EstadoPDF';
+import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
 
 // Función para formatear montos con separador de miles (punto) y decimal (coma)
 const formatMoney = (amount) => {
@@ -30,6 +31,7 @@ export default function NuevoEstado() {
     const router = useRouter();
     const { user, loading } = useStaffAuth(['Admin']);
     const [guardando, setGuardando] = useState(false);
+    const [documentoGuardado, setDocumentoGuardado] = useState(null);
 
     // Estado para el modal de descripción
     const [modalDescripcion, setModalDescripcion] = useState({
@@ -168,8 +170,12 @@ export default function NuevoEstado() {
 
             // Guardar en Firestore
             await crearEstado(estadoData);
-            alert('Estado guardado exitosamente');
-            router.push('/admin/estados');
+            setDocumentoGuardado({
+                pdfElement: <EstadoPDF estado={estadoData} />,
+                fileName: `${estadoData.numero}.pdf`,
+                numero: estadoData.numero,
+                telefono: cliente.telefono
+            });
         } catch (error) {
             console.error('Error al guardar el estado:', error);
             alert('Error al guardar el estado. Inténtelo de nuevo más tarde.');
@@ -595,6 +601,18 @@ Ejemplos:
                         </div>
                     </div>
                 </div>
+            )}
+
+            {documentoGuardado && (
+                <CompartirDocumentoModal
+                    abierto
+                    pdfElement={documentoGuardado.pdfElement}
+                    fileName={documentoGuardado.fileName}
+                    tipo="Estado de cuenta"
+                    numero={documentoGuardado.numero}
+                    telefono={documentoGuardado.telefono}
+                    onIrALista={() => router.push('/admin/estados')}
+                />
             )}
         </div>
     );

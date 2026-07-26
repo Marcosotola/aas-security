@@ -9,6 +9,7 @@ import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import ReciboPDF from '../../../components/pdf/ReciboPDF';
 import ClienteSelector from '../../../components/ClienteSelector';
+import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
 import SignatureCanvas from 'react-signature-canvas';
 
 // Función para convertir números a letras
@@ -68,6 +69,7 @@ export default function NuevoRecibo() {
   const router = useRouter();
   const { user, loading } = useStaffAuth(['Admin']);
   const [guardando, setGuardando] = useState(false);
+  const [documentoGuardado, setDocumentoGuardado] = useState(null);
   const [showCanvas, setShowCanvas] = useState(true);
   const [canvasSize, setCanvasSize] = useState({ width: 500, height: 200 });
   const [clientes, setClientes] = useState([]);
@@ -84,6 +86,8 @@ export default function NuevoRecibo() {
     numero: `R-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
     fecha: new Date().toISOString().split('T')[0],
     clienteId: null,
+    sedeId: null,
+    sedeNombre: '',
     recibiDe: '',
     monto: '',
     cantidadLetras: '',
@@ -185,8 +189,11 @@ export default function NuevoRecibo() {
       };
 
       await crearRecibo(reciboData);
-      alert('Recibo guardado exitosamente');
-      router.push('/admin/recibos');
+      setDocumentoGuardado({
+        pdfElement: <ReciboPDF recibo={reciboData} />,
+        fileName: `${reciboData.numero}.pdf`,
+        numero: reciboData.numero
+      });
     } catch (error) {
       console.error('Error al guardar el recibo:', error);
       alert('Error al guardar el recibo. Inténtelo de nuevo más tarde.');
@@ -292,8 +299,8 @@ export default function NuevoRecibo() {
                 <label className="block mb-1 text-sm font-medium text-gray-700">Recibí de</label>
                 <ClienteSelector
                   clientes={clientes}
-                  onSelect={({ clienteId, nombre, empresa }) => {
-                    setRecibo({ ...recibo, clienteId, recibiDe: empresa ? `${nombre} - ${empresa}` : nombre });
+                  onSelect={({ clienteId, nombre, empresa, sedeId, sedeNombre }) => {
+                    setRecibo({ ...recibo, clienteId, sedeId, sedeNombre, recibiDe: empresa ? `${nombre} - ${empresa}` : nombre });
                   }}
                   placeholder="Buscar cliente registrado (opcional)..."
                 />
@@ -305,6 +312,9 @@ export default function NuevoRecibo() {
                   placeholder="Nombre completo o razón social"
                   required
                 />
+                {recibo.clienteId && recibo.sedeNombre && (
+                  <p className="mt-1 text-xs text-gray-500">Sede: {recibo.sedeNombre}</p>
+                )}
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
@@ -504,6 +514,17 @@ export default function NuevoRecibo() {
             </div>
           </div>
         </div>
+      )}
+
+      {documentoGuardado && (
+        <CompartirDocumentoModal
+          abierto
+          pdfElement={documentoGuardado.pdfElement}
+          fileName={documentoGuardado.fileName}
+          tipo="Recibo"
+          numero={documentoGuardado.numero}
+          onIrALista={() => router.push('/admin/recibos')}
+        />
       )}
     </div>
   );

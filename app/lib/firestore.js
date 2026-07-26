@@ -418,6 +418,59 @@ export const eliminarDocumento = async (id) => {
   }
 };
 
+// ========== FUNCIONES PARA MOVIMIENTOS (finanzas: ingresos y gastos manuales) ==========
+// Los recibos ya representan el ingreso real cobrado a un cliente, así que no
+// se duplican acá: esta colección es solo para gastos y para ingresos que no
+// pasan por un recibo (ej. venta suelta, cobro en efectivo sin recibo emitido).
+
+export const crearMovimiento = async (movimientoData) => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const docRef = await addDoc(collection(db, 'movimientos'), {
+      ...movimientoData,
+      fechaCreacion: serverTimestamp()
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error al crear movimiento:', error);
+    throw error;
+  }
+};
+
+export const obtenerMovimientos = async () => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const q = query(collection(db, 'movimientos'), orderBy('fecha', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error al obtener movimientos:', error);
+    throw error;
+  }
+};
+
+export const actualizarMovimiento = async (id, datosActualizados) => {
+  try {
+    const docRef = doc(db, 'movimientos', id);
+    await updateDoc(docRef, datosActualizados);
+  } catch (error) {
+    console.error('Error al actualizar movimiento:', error);
+    throw error;
+  }
+};
+
+export const eliminarMovimiento = async (id) => {
+  try {
+    await deleteDoc(doc(db, 'movimientos', id));
+  } catch (error) {
+    console.error('Error al eliminar movimiento:', error);
+    throw error;
+  }
+};
+
 // ========== FUNCIONES PARA CONSULTAS (formulario público de contacto) ==========
 
 // Crear una nueva consulta (usado por el formulario público, sin autenticación)
