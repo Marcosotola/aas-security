@@ -1,5 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import { formatearFecha } from '../../lib/fecha';
 
 // Estilos para el PDF
 const styles = StyleSheet.create({
@@ -149,22 +150,6 @@ const styles = StyleSheet.create({
 });
 
 const RemitoPDF = ({ remito }) => {
-  // Función para formatear fechas
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (e) {
-      return dateString;
-    }
-  };
-
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -187,7 +172,7 @@ const RemitoPDF = ({ remito }) => {
 
         {/* Nueva Fila de Encabezado con Fecha, Título y Número */}
         <View style={styles.headerRow}>
-          <Text style={styles.headerRowText}>Fecha: {formatDate(remito.fecha)}</Text>
+          <Text style={styles.headerRowText}>Fecha: {formatearFecha(remito.fecha)}</Text>
           <Text style={styles.title}>REMITO</Text>
           <Text style={styles.headerRowText}>N.º {remito.numero || ''}</Text>
         </View>

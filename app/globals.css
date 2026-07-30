@@ -258,28 +258,28 @@ select {
 /* Placeholder con color más suave pero legible */
 input::placeholder,
 textarea::placeholder {
-  color: #6b7280 !important;
+  color: #9ca3af !important;
   opacity: 1 !important;
 }
 
 /* Para navegadores WebKit (Chrome, Safari, Edge) */
 input::-webkit-input-placeholder,
 textarea::-webkit-input-placeholder {
-  color: #6b7280 !important;
+  color: #9ca3af !important;
   opacity: 1 !important;
 }
 
 /* Para Firefox */
 input::-moz-placeholder,
 textarea::-moz-placeholder {
-  color: #6b7280 !important;
+  color: #9ca3af !important;
   opacity: 1 !important;
 }
 
 /* Para Edge */
 input::-ms-input-placeholder,
 textarea::-ms-input-placeholder {
-  color: #6b7280 !important;
+  color: #9ca3af !important;
   opacity: 1 !important;
 }
 

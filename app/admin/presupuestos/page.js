@@ -12,6 +12,7 @@ import { PDFDownloadLink } from '@react-pdf/renderer';
 import PresupuestoPDF from '../../components/pdf/PresupuestoPDF';
 import PortalDropdown from '../../components/PortalDropdown';
 import ViewToggle from '../../components/admin/ViewToggle';
+import { formatearFecha, fechaHoyLocal } from '../../lib/fecha';
 
 const ESTADOS_PRESUPUESTO = ['Pendiente', 'Aprobado', 'Rechazado'];
 
@@ -36,7 +37,7 @@ export default function HistorialPresupuestos() {
 
   const [presupuesto, setPresupuesto] = useState({
     numero: `P-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
-    fecha: new Date().toISOString().split('T')[0],
+    fecha: fechaHoyLocal(),
     validez: '30 días',
     items: [
       { id: 1, descripcion: '', cantidad: '', precioUnitario: '', subtotal: 0 }
@@ -184,7 +185,7 @@ export default function HistorialPresupuestos() {
                         {presupuesto.fechaCreacion
                           ? new Date(presupuesto.fechaCreacion.toDate()).toLocaleDateString()
                           : presupuesto.fecha
-                            ? new Date(presupuesto.fecha).toLocaleDateString()
+                            ? formatearFecha(presupuesto.fecha)
                             : 'No disponible'
                         }
                       </div>
@@ -313,7 +314,7 @@ export default function HistorialPresupuestos() {
                           {presupuesto.fechaCreacion
                             ? new Date(presupuesto.fechaCreacion.toDate()).toLocaleDateString()
                             : presupuesto.fecha
-                              ? new Date(presupuesto.fecha).toLocaleDateString()
+                              ? formatearFecha(presupuesto.fecha)
                               : 'No disponible'
                           }
                         </div>

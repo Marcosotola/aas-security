@@ -12,6 +12,7 @@ import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { use } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import RemitoPDF from '../../../components/pdf/RemitoPDF';
+import { formatearFecha } from '../../../lib/fecha';
 
 export default function VerRemito({ params }) {
   // Usar React.use para manejar params como una promesa
@@ -23,22 +24,6 @@ export default function VerRemito({ params }) {
   const [loadingData, setLoadingData] = useState(true);
   const [remito, setRemito] = useState(null);
   const loading = loadingAuth || loadingData;
-
-  // Función para formatear fechas
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (e) {
-      return dateString;
-    }
-  };
 
   useEffect(() => {
     if (!id || !user) return;
@@ -196,7 +181,7 @@ export default function VerRemito({ params }) {
                 </div>
                 <div className="flex">
                   <span className="w-20 font-bold">Fecha:</span>
-                  <span className="flex-1">{formatDate(remito.fecha)}</span>
+                  <span className="flex-1">{formatearFecha(remito.fecha)}</span>
                 </div>
               </div>
             </div>

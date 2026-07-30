@@ -10,6 +10,7 @@ import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { use } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import EstadoPDF from '../../../components/pdf/EstadoPDF';
+import { formatearFecha } from '../../../lib/fecha';
 
 // Función para formatear montos con separador de miles (punto) y decimal (coma)
 const formatMoney = (amount) => {
@@ -19,22 +20,6 @@ const formatMoney = (amount) => {
     const parts = formatted.split(',');
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     return '$' + parts.join(',');
-};
-
-// Función para formatear fechas
-const formatDate = (dateString) => {
-  if (!dateString) return '';
-  
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-AR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  } catch (e) {
-    return dateString;
-  }
 };
 
 export default function VerEstado({ params }) {
@@ -173,7 +158,7 @@ export default function VerEstado({ params }) {
                 </div>
                 <div className="flex">
                   <span className="w-20 font-medium text-gray-700">Fecha:</span>
-                  <span className="text-gray-900">{formatDate(estado.fecha)}</span>
+                  <span className="text-gray-900">{formatearFecha(estado.fecha)}</span>
                 </div>
               </div>
             </div>
@@ -230,7 +215,7 @@ export default function VerEstado({ params }) {
                   {(estado.items || []).map((item, index) => (
                     <tr key={item.id} className={index % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
                       <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-300">
-                        {formatDate(item.fecha)}
+                        {formatearFecha(item.fecha)}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-300">
                         {item.descripcion || ''}

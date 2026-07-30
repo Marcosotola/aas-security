@@ -8,6 +8,7 @@ import { useStaffAuth } from '../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import DocumentoPDF from '../../components/pdf/DocumentoPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
+import { formatearFecha } from '../../lib/fecha';
 
 export default function HistorialDocumentos() {
   const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
@@ -119,7 +120,7 @@ export default function HistorialDocumentos() {
                         {documento.fechaCreacion
                           ? new Date(documento.fechaCreacion.toDate()).toLocaleDateString('es-AR')
                           : documento.fecha
-                            ? new Date(documento.fecha).toLocaleDateString('es-AR')
+                            ? formatearFecha(documento.fecha)
                             : 'No disponible'
                         }
                       </div>
@@ -199,7 +200,7 @@ export default function HistorialDocumentos() {
                           {documento.fechaCreacion
                             ? new Date(documento.fechaCreacion.toDate()).toLocaleDateString('es-AR')
                             : documento.fecha
-                              ? new Date(documento.fecha).toLocaleDateString('es-AR')
+                              ? formatearFecha(documento.fecha)
                               : 'No disponible'
                           }
                         </div>

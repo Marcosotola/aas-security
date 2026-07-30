@@ -18,6 +18,7 @@ import { PDFDownloadLink } from '@react-pdf/renderer';
 import PresupuestoPDF from '../components/pdf/PresupuestoPDF';
 import RemitoPDF from '../components/pdf/RemitoPDF';
 import ReciboPDF from '../components/pdf/ReciboPDF';
+import { formatearFecha } from '../lib/fecha';
 
 const formatMoney = (amount) => {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -30,7 +31,7 @@ const formatMoney = (amount) => {
 
 const formatFecha = (doc) => {
   if (doc.fechaCreacion?.toDate) return doc.fechaCreacion.toDate().toLocaleDateString('es-AR');
-  if (doc.fecha) return new Date(doc.fecha).toLocaleDateString('es-AR');
+  if (doc.fecha) return formatearFecha(doc.fecha);
   return '-';
 };
 

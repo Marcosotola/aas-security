@@ -13,6 +13,7 @@ import PresupuestoPDF from '../../../components/pdf/PresupuestoPDF';
 import BuscadorPrecio from '../../../components/BuscadorPrecio';
 import ClienteSelector from '../../../components/ClienteSelector';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
+import { fechaHoyLocal } from '../../../lib/fecha';
 
 // Función para formatear montos con separador de miles (punto) y decimal (coma)
 const formatMoney = (amount) => {
@@ -59,7 +60,7 @@ export default function NuevoPresupuesto() {
 
     const [presupuesto, setPresupuesto] = useState({
         numero: `P-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
-        fecha: new Date().toISOString().split('T')[0],
+        fecha: fechaHoyLocal(),
         validez: '30 días',
         clienteId: null, // uid del cliente registrado seleccionado (null = cliente manual, sin cuenta)
         modo: 'items', // 'items' (detalle por ítem) o 'global' (una sola descripción y un precio)

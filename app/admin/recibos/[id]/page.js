@@ -9,6 +9,7 @@ import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { use } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import ReciboPDF from '../../../components/pdf/ReciboPDF';
+import { formatearFecha } from '../../../lib/fecha';
 
 export default function VerRecibo({ params }) {
   const resolvedParams = use(params);
@@ -113,7 +114,7 @@ export default function VerRecibo({ params }) {
                 </div>
                 <div className="mb-4">
                   <span className="block mb-1 text-sm font-medium text-gray-600">Fecha:</span>
-                  <span className="text-gray-900">{new Date(recibo.fecha).toLocaleDateString('es-AR')}</span>
+                  <span className="text-gray-900">{formatearFecha(recibo.fecha)}</span>
                 </div>
               </div>
               <div>

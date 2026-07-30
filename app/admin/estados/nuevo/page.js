@@ -10,6 +10,7 @@ import { PDFDownloadLink } from '@react-pdf/renderer';
 import EstadoPDF from '../../../components/pdf/EstadoPDF';
 import ClienteSelector from '../../../components/ClienteSelector';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
+import { fechaHoyLocal } from '../../../lib/fecha';
 
 // Función para formatear montos con separador de miles (punto) y decimal (coma)
 const formatMoney = (amount) => {
@@ -62,10 +63,10 @@ export default function NuevoEstado() {
 
     const [estado, setEstado] = useState({
         numero: `E-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
-        fecha: new Date().toISOString().split('T')[0],
+        fecha: fechaHoyLocal(),
         clienteId: null,
         items: [
-            { id: 1, fecha: new Date().toISOString().split('T')[0], descripcion: '', precio: '', comentarios: '' }
+            { id: 1, fecha: fechaHoyLocal(), descripcion: '', precio: '', comentarios: '' }
         ],
         total: 0
     });
@@ -148,7 +149,7 @@ export default function NuevoEstado() {
             ...estado,
             items: [
                 ...estado.items,
-                { id: newId, fecha: new Date().toISOString().split('T')[0], descripcion: '', precio: '', comentarios: '' }
+                { id: newId, fecha: fechaHoyLocal(), descripcion: '', precio: '', comentarios: '' }
             ]
         });
     };

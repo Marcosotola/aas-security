@@ -10,6 +10,7 @@ import { useStaffAuth } from '../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import ReciboPDF from '../../components/pdf/ReciboPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
+import { formatearFecha } from '../../lib/fecha';
 
 export default function HistorialRecibos() {
   const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
@@ -139,7 +140,7 @@ export default function HistorialRecibos() {
                         {recibo.fechaCreacion
                           ? new Date(recibo.fechaCreacion.toDate()).toLocaleDateString('es-AR')
                           : recibo.fecha
-                            ? new Date(recibo.fecha).toLocaleDateString('es-AR')
+                            ? formatearFecha(recibo.fecha)
                             : 'No disponible'
                         }
                       </div>
@@ -232,7 +233,7 @@ export default function HistorialRecibos() {
                           {recibo.fechaCreacion
                             ? new Date(recibo.fechaCreacion.toDate()).toLocaleDateString('es-AR')
                             : recibo.fecha
-                              ? new Date(recibo.fecha).toLocaleDateString('es-AR')
+                              ? formatearFecha(recibo.fecha)
                               : 'No disponible'
                           }
                         </div>

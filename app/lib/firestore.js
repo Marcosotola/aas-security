@@ -13,7 +13,8 @@ import {
   where,
   serverTimestamp
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { ref, deleteObject } from 'firebase/storage';
+import { db, storage } from './firebase';
 import { esSuperAdmin } from './superAdmin';
 
 const getCollection = (name) => {
@@ -30,6 +31,8 @@ const remitosCollection = db ? collection(db, 'remitos') : null;
 const consultasCollection = db ? collection(db, 'consultas') : null;
 const listaPreciosCollection = db ? collection(db, 'listaPrecios') : null;
 const usuariosCollection = db ? collection(db, 'usuarios') : null;
+const ordenesTrabajoCollection = db ? collection(db, 'ordenesTrabajo') : null;
+const plantillasCollection = db ? collection(db, 'plantillas') : null;
 
 // ========== FUNCIONES PARA PRESUPUESTOS ==========
 
@@ -415,6 +418,171 @@ export const eliminarDocumento = async (id) => {
     await deleteDoc(doc(db, 'documentos', id));
   } catch (error) {
     console.error('Error al eliminar documento:', error);
+    throw error;
+  }
+};
+
+// ========== FUNCIONES PARA ÓRDENES DE TRABAJO (planillas) ==========
+// A diferencia del resto de los documentos (que usan addDoc), acá el id se
+// reserva antes de guardar: las fotos se suben a Storage bajo una carpeta
+// con ese id, y necesitamos conocerlo antes de escribir el documento.
+
+// Reserva un id de documento sin escribir nada todavía (para la carpeta de Storage)
+export const generarIdOrdenTrabajo = () => doc(ordenesTrabajoCollection).id;
+
+// Crea la orden de trabajo con un id ya reservado por generarIdOrdenTrabajo
+export const crearOrdenTrabajo = async (id, otData) => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    await setDoc(doc(db, 'ordenesTrabajo', id), {
+      ...otData,
+      fechaCreacion: serverTimestamp()
+    });
+    return { id };
+  } catch (error) {
+    console.error('Error al crear la orden de trabajo:', error);
+    throw error;
+  }
+};
+
+// Obtener todas las órdenes de trabajo
+export const obtenerOrdenesTrabajo = async () => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const q = query(ordenesTrabajoCollection, orderBy('fechaCreacion', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error al obtener las órdenes de trabajo:', error);
+    throw error;
+  }
+};
+
+// Obtener una orden de trabajo por ID
+export const obtenerOrdenTrabajoPorId = async (id) => {
+  try {
+    const docRef = doc(db, 'ordenesTrabajo', id);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    } else {
+      throw new Error('Orden de trabajo no encontrada');
+    }
+  } catch (error) {
+    console.error('Error al obtener la orden de trabajo:', error);
+    throw error;
+  }
+};
+
+// Actualizar una orden de trabajo ya creada (edición desde
+// ordenes-trabajo/editar/[id]). El array `fotos` que se pase reemplaza al
+// anterior: las fotos que el usuario haya sacado del preview antes de
+// guardar se borran de Storage aparte, con eliminarFotosStorage.
+export const actualizarOrdenTrabajo = async (id, otData) => {
+  try {
+    const docRef = doc(db, 'ordenesTrabajo', id);
+    await updateDoc(docRef, {
+      ...otData,
+      fechaActualizacion: serverTimestamp()
+    });
+    return { id };
+  } catch (error) {
+    console.error('Error al actualizar la orden de trabajo:', error);
+    throw error;
+  }
+};
+
+// Borra del Storage las fotos indicadas (array de { path }). Se usa tanto al
+// eliminar una orden de trabajo completa como al sacar fotos puntuales en la
+// edición. Silencioso ante fallos individuales (ej. la foto ya no existe).
+export const eliminarFotosStorage = async (fotos) => {
+  if (!fotos?.length) return;
+  await Promise.all(
+    fotos.map((foto) => deleteObject(ref(storage, foto.path)).catch(() => {}))
+  );
+};
+
+// Eliminar una orden de trabajo, incluidas sus fotos en Storage
+export const eliminarOrdenTrabajo = async (id) => {
+  try {
+    const ot = await obtenerOrdenTrabajoPorId(id).catch(() => null);
+    await eliminarFotosStorage(ot?.fotos);
+    await deleteDoc(doc(db, 'ordenesTrabajo', id));
+    return { id };
+  } catch (error) {
+    console.error('Error al eliminar la orden de trabajo:', error);
+    throw error;
+  }
+};
+
+// ========== FUNCIONES PARA PLANTILLAS (checklists de inspección para adjuntar a una OT) ==========
+
+export const crearPlantilla = async (plantillaData) => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const docRef = await addDoc(plantillasCollection, {
+      ...plantillaData,
+      fechaCreacion: serverTimestamp()
+    });
+    return { id: docRef.id };
+  } catch (error) {
+    console.error('Error al crear la plantilla:', error);
+    throw error;
+  }
+};
+
+// Sin orderBy: el dataset es chico y se agrupa por grupo del lado del cliente
+export const obtenerPlantillas = async () => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const querySnapshot = await getDocs(plantillasCollection);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error al obtener las plantillas:', error);
+    throw error;
+  }
+};
+
+export const obtenerPlantillaPorId = async (id) => {
+  try {
+    const docRef = doc(db, 'plantillas', id);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    } else {
+      throw new Error('Plantilla no encontrada');
+    }
+  } catch (error) {
+    console.error('Error al obtener la plantilla:', error);
+    throw error;
+  }
+};
+
+export const actualizarPlantilla = async (id, datosActualizados) => {
+  try {
+    const docRef = doc(db, 'plantillas', id);
+    await updateDoc(docRef, {
+      ...datosActualizados,
+      fechaActualizacion: serverTimestamp()
+    });
+    return { id };
+  } catch (error) {
+    console.error('Error al actualizar la plantilla:', error);
+    throw error;
+  }
+};
+
+export const eliminarPlantilla = async (id) => {
+  try {
+    await deleteDoc(doc(db, 'plantillas', id));
+    return { id };
+  } catch (error) {
+    console.error('Error al eliminar la plantilla:', error);
     throw error;
   }
 };

@@ -1,6 +1,7 @@
 // components/pdf/PresupuestoPDF.js
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
+import { formatearFecha } from '../../lib/fecha';
 
 // Estilos para el PDF
 const styles = StyleSheet.create({
@@ -249,21 +250,6 @@ const formatearMonto = (valor) => {
 };
 
 const PresupuestoPDF = ({ presupuesto }) => {
-  // Función para formatear fechas
-  const formatDateLocal = (dateString) => {
-    if (!dateString) return '';
-
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (e) {
-      return dateString; // Si hay error, devuelve el string original
-    }
-  };
 
   // Verificar que cliente existe y tiene propiedades
   const clienteData = presupuesto.cliente || {};
@@ -293,7 +279,7 @@ const PresupuestoPDF = ({ presupuesto }) => {
 
         {/* Nueva Fila de Encabezado con Fecha, Título y Número */}
         <View style={styles.headerRow}>
-          <Text style={styles.headerRowText}>Fecha: {formatDateLocal(presupuesto.fecha)}</Text>
+          <Text style={styles.headerRowText}>Fecha: {formatearFecha(presupuesto.fecha)}</Text>
           <Text style={styles.title}>PRESUPUESTO</Text>
           <Text style={styles.headerRowText}>N.º {presupuesto.numero || ''}</Text>
         </View>

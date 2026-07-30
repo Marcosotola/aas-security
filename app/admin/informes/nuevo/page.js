@@ -9,6 +9,7 @@ import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import DocumentoPDF from '../../../components/pdf/DocumentoPDF';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
+import { fechaHoyLocal } from '../../../lib/fecha';
 
 export default function NuevoDocumento() {
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function NuevoDocumento() {
   // Estado del formulario
   const [documento, setDocumento] = useState({
     titulo: '',
-    fecha: new Date().toISOString().split('T')[0],
+    fecha: fechaHoyLocal(),
     contenido: ''
   });
 

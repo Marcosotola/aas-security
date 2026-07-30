@@ -1,0 +1,27 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Rol del usuario logueado, leído desde su documento en Firestore
+    // (misma lógica que firestore.rules).
+    function rolDe(uid) {
+      return firestore.get(/databases/(default)/documents/usuarios/$(uid)).data.role;
+    }
+
+    function esStaff() {
+      return request.auth != null && rolDe(request.auth.uid) in ['Admin', 'Tecnico'];
+    }
+
+    // Fotos de las órdenes de trabajo: solo el staff (Admin/Tecnico) puede
+    // subirlas, leerlas o borrarlas.
+    match /ordenes-trabajo/{otId}/{fileName} {
+      allow read, write: if esStaff();
+    }
+
+    // Todo lo demás, denegado por defecto.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

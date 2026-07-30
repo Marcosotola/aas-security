@@ -48,10 +48,12 @@ export default function ModuloCard({ modulo }) {
                   </span>
                 )}
               </div>
-              <div className="text-right">
-                <p className="text-xl font-bold leading-none md:text-2xl">{modulo.total}</p>
-                <p className="text-[10px] opacity-80 uppercase font-semibold mt-1">Total</p>
-              </div>
+              {modulo.total !== undefined && modulo.total !== null && (
+                <div className="text-right">
+                  <p className="text-xl font-bold leading-none md:text-2xl">{modulo.total}</p>
+                  <p className="text-[10px] opacity-80 uppercase font-semibold mt-1">Total</p>
+                </div>
+              )}
             </div>
 
             <h4 className="text-base font-bold leading-tight md:text-lg">{modulo.titulo}</h4>

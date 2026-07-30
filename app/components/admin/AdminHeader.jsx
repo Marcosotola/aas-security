@@ -21,6 +21,7 @@ import {
   Wallet,
   CreditCard,
   ClipboardList,
+  ListChecks,
   ShieldAlert
 } from 'lucide-react';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
@@ -41,7 +42,8 @@ const DOCUMENTOS_SUBMENU = [
 ];
 
 const MODULOS_NAV = [
-  { id: 'planillas', label: 'Planillas', icono: ClipboardList, href: '/admin/planillas' },
+  { id: 'ordenes-trabajo', label: 'Órdenes de Trabajo', icono: ClipboardList, href: '/admin/ordenes-trabajo' },
+  { id: 'planillas', label: 'Planillas', icono: ListChecks, href: '/admin/planillas' },
   { id: 'finanzas', label: 'Finanzas', icono: Wallet, href: '/admin/finanzas' },
   { id: 'lista-precios', label: 'Lista de precios', icono: Tag, href: '/admin/lista-precios' },
   { id: 'usuarios', label: 'Usuarios', icono: UserCog, href: '/admin/usuarios' },

@@ -14,87 +14,54 @@ import {
   UserCog,
   Wallet,
   CreditCard,
-  ClipboardList
+  ClipboardList,
+  ListChecks
 } from 'lucide-react';
 import { collection, query, where, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { obtenerConfigSuscripcion } from '../../lib/firestore';
-import { SUPER_ADMIN_EMAIL } from '../../lib/superAdmin';
 import ModuloCard from '../../components/admin/ModuloCard';
 
+// Único módulo visible para el Técnico por ahora: el resto de las
+// colecciones (movimientos, config, etc.) están bloqueadas para su rol por
+// firestore.rules, así que ni siquiera se consultan cuando el usuario es
+// Técnico (antes esto no importaba porque el dashboard era Admin-only).
+const IDS_VISIBLES_PARA_TECNICO = ['ordenes-trabajo'];
+
 export default function Dashboard() {
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, usuario, loading: loadingAuth } = useStaffAuth(['Admin', 'Tecnico']);
   const [loadingData, setLoadingData] = useState(true);
   const [totales, setTotales] = useState({
-    presupuestos: 0,
-    estados: 0,
-    remitos: 0,
-    recibos: 0,
-    documentos: 0,
     consultas: 0,
-    consultasNoLeidas: 0,
-    listaPrecios: 0,
-    usuarios: 0,
-    movimientos: 0
+    consultasNoLeidas: 0
   });
   const [suscripcionVencida, setSuscripcionVencida] = useState(false);
   const loading = loadingAuth || loadingData;
 
   useEffect(() => {
-    if (!user) return;
+    if (!usuario) return;
     cargarTotales().then(() => setLoadingData(false));
-  }, [user]);
+  }, [usuario]);
 
+  // Los módulos del dashboard ya no muestran cantidades (solo la tarjeta de
+  // Consultas, que además usa el conteo de no leídas para el badge rojo), así
+  // que acá solo se piden esos dos números y el estado de la suscripción --
+  // nada de lo demás se lee más, para no gastar lecturas de Firestore en
+  // datos que no se muestran en ningún lado.
   const cargarTotales = async () => {
     try {
-      // Cuenta cada colección con una agregación en el servidor (no descarga
-      // los documentos) y todas en paralelo: antes se hacían 9 lecturas
-      // completas de colección en serie, una esperando a la anterior, lo que
-      // hacía que el dashboard tardara varios segundos en mostrar solo unos
-      // números de acceso.
+      if (usuario.role === 'Tecnico') return;
+
       const contar = async (ref) => (await getCountFromServer(ref)).data().count;
 
-      const [
-        presupuestos,
-        estados,
-        remitos,
-        recibos,
-        documentos,
-        consultas,
-        consultasNoLeidas,
-        listaPrecios,
-        usuarios,
-        movimientos,
-        config
-      ] = await Promise.all([
-        contar(collection(db, 'presupuestos')),
-        contar(collection(db, 'estados')),
-        contar(collection(db, 'remitos')),
-        contar(collection(db, 'recibos')),
-        contar(collection(db, 'documentos')),
+      const [consultas, consultasNoLeidas, config] = await Promise.all([
         contar(collection(db, 'consultas')),
         contar(query(collection(db, 'consultas'), where('leida', '==', false))),
-        contar(collection(db, 'listaPrecios')),
-        // El SuperAdmin nunca cuenta como "usuario" acá: mismo criterio que
-        // obtenerUsuarios() en app/lib/firestore.js.
-        contar(query(collection(db, 'usuarios'), where('email', '!=', SUPER_ADMIN_EMAIL))),
-        contar(collection(db, 'movimientos')),
         obtenerConfigSuscripcion()
       ]);
 
-      setTotales({
-        presupuestos,
-        estados,
-        remitos,
-        recibos,
-        documentos,
-        consultas,
-        consultasNoLeidas,
-        listaPrecios,
-        usuarios,
-        movimientos
-      });
+      setTotales({ consultas, consultasNoLeidas });
 
       const hoy = new Date().toISOString().split('T')[0];
       const vencida = Boolean(config.fechaVencimiento && config.fechaVencimiento < hoy);
@@ -121,10 +88,21 @@ export default function Dashboard() {
   // tarjeta por tipo, mismo estilo, cada una con su "Nuevo"), y el botón
   // "Nuevo" de esta tarjeta despliega el acceso directo para crear cada tipo
   // sin tener que entrar primero al hub.
-  const totalDocumentos = totales.presupuestos + totales.estados + totales.remitos + totales.recibos + totales.documentos;
-
-  // Definir módulos del sistema con totales
   const modulos = [
+    {
+      id: 'ordenes-trabajo',
+      titulo: 'Órdenes de Trabajo',
+      icono: ClipboardList,
+      color: 'bg-teal-700', // Verde azulado, distinto de los tonos ya usados
+      colorClaro: 'bg-teal-100',
+      colorTexto: 'text-teal-700',
+      descripcion: 'Detalle del trabajo, fotos y firmas',
+      rutas: {
+        nuevo: '/admin/ordenes-trabajo/nueva',
+        historial: '/admin/ordenes-trabajo'
+      },
+      activo: true
+    },
     {
       id: 'documentos',
       titulo: 'Documentos',
@@ -133,7 +111,6 @@ export default function Dashboard() {
       colorClaro: 'bg-blue-100',
       colorTexto: 'text-[#154360]',
       descripcion: 'Presupuestos, remitos, recibos, estados e informes',
-      total: totalDocumentos,
       rutas: {
         historial: '/admin/documentos'
       },
@@ -150,19 +127,16 @@ export default function Dashboard() {
     {
       id: 'planillas',
       titulo: 'Planillas',
-      icono: ClipboardList,
-      color: 'bg-teal-700', // Verde azulado, distinto de los tonos ya usados
-      colorClaro: 'bg-teal-100',
-      colorTexto: 'text-teal-700',
-      descripcion: 'Próximamente',
-      total: '-',
+      icono: ListChecks,
+      color: 'bg-slate-700',
+      colorClaro: 'bg-slate-100',
+      colorTexto: 'text-slate-700',
+      descripcion: 'Plantillas de inspección para las OT',
       rutas: {
+        nuevo: '/admin/planillas/nueva',
         historial: '/admin/planillas'
       },
-      activo: true,
-      sinNuevo: true,
-      textoAcceso: 'Ver planillas',
-      iconoAcceso: ClipboardList
+      activo: true
     },
     {
       id: 'finanzas',
@@ -172,7 +146,6 @@ export default function Dashboard() {
       colorClaro: 'bg-blue-100',
       colorTexto: 'text-blue-900',
       descripcion: 'Ingresos, gastos y ganancia real',
-      total: totales.movimientos,
       rutas: {
         nuevo: '/admin/finanzas?nuevo=1',
         historial: '/admin/finanzas'
@@ -187,7 +160,6 @@ export default function Dashboard() {
       colorClaro: 'bg-slate-100',
       colorTexto: 'text-slate-600',
       descripcion: 'Catálogo de items para presupuestos',
-      total: totales.listaPrecios,
       rutas: {
         nuevo: '/admin/lista-precios?nuevo=1',
         historial: '/admin/lista-precios'
@@ -202,7 +174,6 @@ export default function Dashboard() {
       colorClaro: 'bg-slate-200',
       colorTexto: 'text-slate-900',
       descripcion: 'Clientes, técnicos y roles',
-      total: totales.usuarios,
       rutas: {
         nuevo: '/registro?origen=admin',
         historial: '/admin/usuarios'
@@ -245,6 +216,12 @@ export default function Dashboard() {
     }
   ];
 
+  // El Técnico solo ve las tarjetas que le corresponden (por ahora, Órdenes
+  // de Trabajo): el resto de los módulos son de gestión administrativa.
+  const modulosVisibles = usuario.role === 'Admin'
+    ? modulos
+    : modulos.filter((m) => IDS_VISIBLES_PARA_TECNICO.includes(m.id));
+
   return (
     <div>
       <div className="container px-4 py-8 mx-auto">
@@ -261,7 +238,7 @@ export default function Dashboard() {
         {/* Módulos del sistema */}
         <h3 className="mb-4 text-xl font-bold text-gray-800">Módulos del sistema</h3>
         <div className="grid grid-cols-2 gap-3 mb-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 md:gap-4">
-          {modulos.map((modulo) => (
+          {modulosVisibles.map((modulo) => (
             <ModuloCard key={modulo.id} modulo={modulo} />
           ))}
         </div>

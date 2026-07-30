@@ -10,6 +10,7 @@ import { useStaffAuth } from '../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import RemitoPDF from '../../components/pdf/RemitoPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
+import { formatearFecha } from '../../lib/fecha';
 
 export default function HistorialRemitos() {
   const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
@@ -130,7 +131,7 @@ export default function HistorialRemitos() {
                         {remito.fechaCreacion
                           ? new Date(remito.fechaCreacion.toDate()).toLocaleDateString('es-AR')
                           : remito.fecha
-                            ? new Date(remito.fecha).toLocaleDateString('es-AR')
+                            ? formatearFecha(remito.fecha)
                             : 'No disponible'
                         }
                       </div>
@@ -219,7 +220,7 @@ export default function HistorialRemitos() {
                           {remito.fechaCreacion
                             ? new Date(remito.fechaCreacion.toDate()).toLocaleDateString('es-AR')
                             : remito.fecha
-                              ? new Date(remito.fecha).toLocaleDateString('es-AR')
+                              ? formatearFecha(remito.fecha)
                               : 'No disponible'
                           }
                         </div>

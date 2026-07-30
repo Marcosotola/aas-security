@@ -24,6 +24,13 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == clienteId;
     }
 
+    // El Técnico que creó un documento (hoy solo se usa para Órdenes de
+    // Trabajo): compara contra el email guardado en `usuarioCreador` al
+    // crearlo, igual que ya se usa request.auth.token.email en esSuperAdmin().
+    function esCreador(datos) {
+      return request.auth != null && request.auth.token.email == datos.usuarioCreador;
+    }
+
     // Única cuenta con permiso para configurar la suscripción de la app
     // (monto, vencimiento, habilitar/deshabilitar). Identificada por email,
     // no por "role": esa cuenta sigue con role Admin en /usuarios, así que
@@ -81,6 +88,23 @@ service cloud.firestore {
 
     match /documentos/{id} {
       allow read, write: if esStaff();
+    }
+
+    // El Admin gestiona todas las OT. El Técnico solo puede leer/editar/
+    // borrar las que él mismo creó (usuarioCreador == su email) -- no las de
+    // otros técnicos. El Cliente solo puede leer las suyas (esPropietario).
+    match /ordenesTrabajo/{id} {
+      allow read: if esAdmin() || esPropietario(resource.data.clienteId) || esCreador(resource.data);
+      allow create: if esAdmin() || (esStaff() && esCreador(request.resource.data));
+      allow update, delete: if esAdmin() || (esStaff() && esCreador(resource.data));
+    }
+
+    // Plantillas de inspección (checklists reutilizables para adjuntar a una
+    // OT): el Técnico las puede leer para completarlas, pero solo el Admin
+    // las crea, edita o borra.
+    match /plantillas/{id} {
+      allow read: if esStaff();
+      allow write: if esAdmin();
     }
 
     match /listaPrecios/{id} {

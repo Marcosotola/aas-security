@@ -235,22 +235,6 @@ const formatearMonto = (valor) => {
 };
 
 const EstadoPDF = ({ estado }) => {
-  // Función para formatear fechas
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (e) {
-      return dateString;
-    }
-  };
-
   // Verificar que cliente existe y tiene propiedades
   const clienteData = estado.cliente || {};
 

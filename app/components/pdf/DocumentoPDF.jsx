@@ -1,6 +1,7 @@
 // app/components/pdf/DocumentoPDF.js
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import { formatearFecha } from '../../lib/fecha';
 
 // Estilos para el PDF
 const styles = StyleSheet.create({
@@ -86,19 +87,6 @@ const styles = StyleSheet.create({
 });
 
 const DocumentoPDF = ({ documento }) => {
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (e) {
-      return dateString;
-    }
-  };
 
   return (
     <Document>
@@ -122,7 +110,7 @@ const DocumentoPDF = ({ documento }) => {
 
         {/* Nueva Fila de Encabezado con Fecha y Título */}
         <View style={styles.headerRow}>
-          <Text style={styles.headerRowText}>Fecha: {formatDate(documento.fecha)}</Text>
+          <Text style={styles.headerRowText}>Fecha: {formatearFecha(documento.fecha)}</Text>
           <Text style={styles.title}>{documento.titulo || 'INFORME'}</Text>
           <Text style={styles.headerRowText}></Text>
         </View>

@@ -9,6 +9,7 @@ import { obtenerEstadoPorId, actualizarEstado, obtenerClientes } from '../../../
 import { useStaffAuth } from '../../../../lib/useStaffAuth';
 import { use } from 'react';
 import ClienteSelector from '../../../../components/ClienteSelector';
+import { fechaHoyLocal } from '../../../../lib/fecha';
 
 // Función para formatear montos con separador de miles (punto) y decimal (coma)
 const formatMoney = (amount) => {
@@ -63,7 +64,7 @@ export default function EditarEstado({ params }) {
     fecha: '',
     clienteId: null,
     items: [
-      { id: 1, fecha: new Date().toISOString().split('T')[0], descripcion: '', precio: '', comentarios: '' }
+      { id: 1, fecha: fechaHoyLocal(), descripcion: '', precio: '', comentarios: '' }
     ],
     total: 0
   });
@@ -174,7 +175,7 @@ export default function EditarEstado({ params }) {
       ...estado,
       items: [
         ...estado.items,
-        { id: newId, fecha: new Date().toISOString().split('T')[0], descripcion: '', precio: '', comentarios: '' }
+        { id: newId, fecha: fechaHoyLocal(), descripcion: '', precio: '', comentarios: '' }
       ]
     });
   };

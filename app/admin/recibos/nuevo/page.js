@@ -11,6 +11,7 @@ import ReciboPDF from '../../../components/pdf/ReciboPDF';
 import ClienteSelector from '../../../components/ClienteSelector';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
 import SignatureCanvas from 'react-signature-canvas';
+import { fechaHoyLocal } from '../../../lib/fecha';
 
 // Función para convertir números a letras
 const numeroALetras = (numero) => {
@@ -84,7 +85,7 @@ export default function NuevoRecibo() {
   // Estado del formulario
   const [recibo, setRecibo] = useState({
     numero: `R-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
-    fecha: new Date().toISOString().split('T')[0],
+    fecha: fechaHoyLocal(),
     clienteId: null,
     sedeId: null,
     sedeNombre: '',

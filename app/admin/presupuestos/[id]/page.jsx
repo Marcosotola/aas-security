@@ -10,6 +10,7 @@ import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { use } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import PresupuestoPDF from '../../../components/pdf/PresupuestoPDF';
+import { formatearFecha } from '../../../lib/fecha';
 
 export default function VerPresupuesto({ params }) {
   // Usar React.use para manejar params como una promesa
@@ -37,21 +38,6 @@ export default function VerPresupuesto({ params }) {
       .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
-  // Función para formatear fechas
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (e) {
-      return dateString;
-    }
-  };
 
   useEffect(() => {
     if (!id || !user) return;
@@ -206,7 +192,7 @@ export default function VerPresupuesto({ params }) {
                 </div>
                 <div className="flex">
                   <span className="w-20 font-bold">Fecha:</span>
-                  <span className="flex-1">{formatDate(presupuesto.fecha)}</span>
+                  <span className="flex-1">{formatearFecha(presupuesto.fecha)}</span>
                 </div>
                 <div className="flex">
                   <span className="w-20 font-bold">Validez:</span>

@@ -10,6 +10,7 @@ import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { use } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import DocumentoPDF from '../../../components/pdf/DocumentoPDF';
+import { formatearFecha } from '../../../lib/fecha';
 
 export default function VerDocumento({ params }) {
   const resolvedParams = use(params);
@@ -125,7 +126,7 @@ export default function VerDocumento({ params }) {
                   <span className="block mb-1 text-sm font-medium text-gray-600">Fecha:</span>
                   <span className="text-gray-900">
                     {documento.fecha
-                      ? new Date(documento.fecha).toLocaleDateString('es-AR')
+                      ? formatearFecha(documento.fecha)
                       : 'No disponible'}
                   </span>
                 </div>

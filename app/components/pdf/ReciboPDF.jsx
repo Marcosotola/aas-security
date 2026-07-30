@@ -1,6 +1,7 @@
 // app/components/pdf/ReciboPDF.js
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import { formatearFecha } from '../../lib/fecha';
 
 // Estilos compactos para el PDF
 const styles = StyleSheet.create({
@@ -139,20 +140,6 @@ const styles = StyleSheet.create({
 });
 
 const ReciboPDF = ({ recibo }) => {
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (e) {
-      return dateString;
-    }
-  };
-
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
@@ -183,7 +170,7 @@ const ReciboPDF = ({ recibo }) => {
 
         {/* Nueva Fila de Encabezado con Fecha, Título y Número */}
         <View style={styles.headerRow}>
-          <Text style={styles.headerRowText}>Fecha: {formatDate(recibo.fecha)}</Text>
+          <Text style={styles.headerRowText}>Fecha: {formatearFecha(recibo.fecha)}</Text>
           <Text style={styles.title}>RECIBO</Text>
           <Text style={styles.headerRowText}>N.º {recibo.numero || ''}</Text>
         </View>

@@ -11,6 +11,7 @@ import { useStaffAuth } from '../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import EstadoPDF from '../../components/pdf/EstadoPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
+import { formatearFecha } from '../../lib/fecha';
 
 export default function HistorialEstados() {
   const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
@@ -145,7 +146,7 @@ export default function HistorialEstados() {
                         {estado.fechaCreacion
                           ? new Date(estado.fechaCreacion.toDate()).toLocaleDateString('es-AR')
                           : estado.fecha
-                            ? new Date(estado.fecha).toLocaleDateString('es-AR')
+                            ? formatearFecha(estado.fecha)
                             : 'No disponible'
                         }
                       </div>
@@ -236,7 +237,7 @@ export default function HistorialEstados() {
                           {estado.fechaCreacion
                             ? new Date(estado.fechaCreacion.toDate()).toLocaleDateString('es-AR')
                             : estado.fecha
-                              ? new Date(estado.fecha).toLocaleDateString('es-AR')
+                              ? formatearFecha(estado.fecha)
                               : 'No disponible'
                           }
                         </div>
