@@ -137,6 +137,9 @@ export default function HistorialRemitos() {
                     </div>
                     <div className="mt-1 text-sm text-gray-900">{remito.cliente?.nombre || 'N/A'}</div>
                     <div className="text-sm text-gray-500">{remito.cliente?.empresa || 'N/A'}</div>
+                    {remito.cliente?.sedeNombre && (
+                      <div className="text-xs text-gray-400">Sede: {remito.cliente.sedeNombre}</div>
+                    )}
                     <div className="mt-2 text-sm text-gray-500">{remito.items?.length || 0} items</div>
 
                     <div className="flex justify-end pt-3 mt-3 space-x-4 border-t border-gray-100">
@@ -223,6 +226,9 @@ export default function HistorialRemitos() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{remito.cliente?.nombre || 'N/A'}</div>
+                        {remito.cliente?.sedeNombre && (
+                          <div className="text-xs text-gray-400">Sede: {remito.cliente.sedeNombre}</div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500">{remito.cliente?.empresa || 'N/A'}</div>

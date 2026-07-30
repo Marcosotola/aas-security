@@ -4,9 +4,11 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Home } from 'lucide-react';
+import { Home, MapPin, PlusCircle, Trash2, Edit, Check, X } from 'lucide-react';
 import { obtenerUsuarioPorId, actualizarUsuario } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
+
+const SEDE_VACIA = { nombre: '', direccion: '' };
 
 // Paso 2 del alta de un cliente hecha por un Admin desde /admin/usuarios: a
 // diferencia de /registro/datos (que completa el perfil del usuario logueado
@@ -33,6 +35,12 @@ function CompletarDatosAdmin() {
     telefono: ''
   });
 
+  const [sedes, setSedes] = useState([]);
+  const [nuevaSede, setNuevaSede] = useState(SEDE_VACIA);
+  const [guardandoSede, setGuardandoSede] = useState(false);
+  const [editandoSedeId, setEditandoSedeId] = useState(null);
+  const [sedeEditada, setSedeEditada] = useState(SEDE_VACIA);
+
   useEffect(() => {
     if (loadingAuth || !uid) return;
 
@@ -49,6 +57,7 @@ function CompletarDatosAdmin() {
             direccion: perfil.direccion || '',
             telefono: perfil.telefono || ''
           });
+          setSedes(perfil.sedes || []);
         }
       } catch (err) {
         console.error('Error al cargar el perfil:', err);
@@ -64,6 +73,62 @@ function CompletarDatosAdmin() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setDatos({ ...datos, [name]: value });
+  };
+
+  const handleAgregarSede = async () => {
+    if (!nuevaSede.nombre.trim() || !nuevaSede.direccion.trim()) return;
+
+    setGuardandoSede(true);
+    try {
+      const nuevasSedes = [...sedes, { id: Date.now().toString(), ...nuevaSede }];
+      await actualizarUsuario(uid, { sedes: nuevasSedes });
+      setSedes(nuevasSedes);
+      setNuevaSede(SEDE_VACIA);
+    } catch (err) {
+      console.error('Error al agregar la sede:', err);
+      alert('No se pudo agregar la sede. Inténtalo de nuevo más tarde.');
+    } finally {
+      setGuardandoSede(false);
+    }
+  };
+
+  const handleEliminarSede = async (id) => {
+    if (!confirm('¿Eliminar esta sede?')) return;
+    try {
+      const nuevasSedes = sedes.filter((s) => s.id !== id);
+      await actualizarUsuario(uid, { sedes: nuevasSedes });
+      setSedes(nuevasSedes);
+    } catch (err) {
+      console.error('Error al eliminar la sede:', err);
+      alert('No se pudo eliminar la sede. Inténtalo de nuevo más tarde.');
+    }
+  };
+
+  const handleEmpezarEditarSede = (sede) => {
+    setEditandoSedeId(sede.id);
+    setSedeEditada({ nombre: sede.nombre, direccion: sede.direccion });
+  };
+
+  const handleCancelarEdicionSede = () => {
+    setEditandoSedeId(null);
+    setSedeEditada(SEDE_VACIA);
+  };
+
+  const handleGuardarEdicionSede = async (id) => {
+    if (!sedeEditada.nombre.trim() || !sedeEditada.direccion.trim()) return;
+
+    setGuardandoSede(true);
+    try {
+      const nuevasSedes = sedes.map((s) => (s.id === id ? { ...s, ...sedeEditada } : s));
+      await actualizarUsuario(uid, { sedes: nuevasSedes });
+      setSedes(nuevasSedes);
+      setEditandoSedeId(null);
+    } catch (err) {
+      console.error('Error al editar la sede:', err);
+      alert('No se pudo guardar la sede. Inténtalo de nuevo más tarde.');
+    } finally {
+      setGuardandoSede(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -227,6 +292,101 @@ function CompletarDatosAdmin() {
             </Link>
           </div>
         </form>
+
+        <div className="pt-6 border-t border-gray-200">
+          <h3 className="mb-1 text-lg font-semibold text-gray-700">Sedes</h3>
+          <p className="mb-4 text-sm text-gray-500">
+            Ubicaciones adicionales del cliente (por ejemplo varios edificios de un consorcio). Se podrán elegir al hacerle un presupuesto, remito o recibo.
+          </p>
+
+          <div className="mb-4 space-y-2">
+            {sedes.length === 0 && (
+              <p className="text-sm text-gray-400">Todavía no hay sedes cargadas.</p>
+            )}
+            {sedes.map((sede) => (
+              <div key={sede.id} className="p-3 border border-gray-200 rounded-md bg-gray-50">
+                {editandoSedeId === sede.id ? (
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={sedeEditada.nombre}
+                      onChange={(e) => setSedeEditada({ ...sedeEditada, nombre: e.target.value })}
+                      placeholder="Nombre de la sede"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
+                    />
+                    <input
+                      type="text"
+                      value={sedeEditada.direccion}
+                      onChange={(e) => setSedeEditada({ ...sedeEditada, direccion: e.target.value })}
+                      placeholder="Dirección de la sede"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={handleCancelarEdicionSede}
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs text-gray-600 border border-gray-300 rounded-md hover:bg-gray-100"
+                      >
+                        <X size={14} /> Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleGuardarEdicionSede(sede.id)}
+                        disabled={guardandoSede}
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs text-white rounded-md bg-primary hover:bg-primary-light disabled:opacity-50"
+                      >
+                        <Check size={14} /> Guardar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-start">
+                      <MapPin size={16} className="mt-0.5 mr-2 text-primary shrink-0" />
+                      <div>
+                        <div className="text-sm font-medium text-gray-800">{sede.nombre}</div>
+                        <div className="text-xs text-gray-500">{sede.direccion}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button type="button" onClick={() => handleEmpezarEditarSede(sede)} className="text-secondary hover:text-secondary-light">
+                        <Edit size={16} />
+                      </button>
+                      <button type="button" onClick={() => handleEliminarSede(sede.id)} className="text-red-500 hover:text-red-700">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-2">
+            <input
+              type="text"
+              value={nuevaSede.nombre}
+              onChange={(e) => setNuevaSede({ ...nuevaSede, nombre: e.target.value })}
+              placeholder="Nombre de la sede (ej: Edificio Torre Norte)"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
+            />
+            <input
+              type="text"
+              value={nuevaSede.direccion}
+              onChange={(e) => setNuevaSede({ ...nuevaSede, direccion: e.target.value })}
+              placeholder="Dirección de la sede"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
+            />
+            <button
+              type="button"
+              onClick={handleAgregarSede}
+              disabled={guardandoSede}
+              className="flex items-center justify-center w-full gap-1 px-4 py-2 text-sm text-white rounded-md bg-primary hover:bg-primary-light disabled:opacity-50"
+            >
+              <PlusCircle size={16} /> Agregar sede
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

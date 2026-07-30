@@ -312,9 +312,16 @@ export default function NuevoRecibo() {
                   placeholder="Nombre completo o razón social"
                   required
                 />
-                {recibo.clienteId && recibo.sedeNombre && (
-                  <p className="mt-1 text-xs text-gray-500">Sede: {recibo.sedeNombre}</p>
-                )}
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Sede</label>
+                <input
+                  type="text"
+                  value={recibo.sedeNombre}
+                  onChange={(e) => setRecibo({ ...recibo, sedeNombre: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="Ej: Edificio Torre Norte"
+                />
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>

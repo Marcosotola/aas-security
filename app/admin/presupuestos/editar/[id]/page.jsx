@@ -55,7 +55,9 @@ export default function EditarPresupuesto({ params }) {
     empresa: '',
     email: '',
     telefono: '',
-    direccion: ''
+    direccion: '',
+    sedeId: null,
+    sedeNombre: ''
   });
   
   const [presupuesto, setPresupuesto] = useState({
@@ -99,7 +101,7 @@ export default function EditarPresupuesto({ params }) {
           total: presupuestoData.total
         });
 
-        setCliente(presupuestoData.cliente);
+        setCliente({ sedeId: null, sedeNombre: '', ...presupuestoData.cliente });
 
         try {
           const [lista, clientesData] = await Promise.all([obtenerListaPrecios(), obtenerClientes()]);
@@ -414,9 +416,9 @@ export default function EditarPresupuesto({ params }) {
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
             <ClienteSelector
               clientes={clientes}
-              onSelect={({ clienteId, nombre, empresa, email, telefono, direccion }) => {
+              onSelect={({ clienteId, nombre, empresa, email, telefono, direccion, sedeId, sedeNombre }) => {
                 setPresupuesto({ ...presupuesto, clienteId });
-                setCliente({ nombre, empresa, email, telefono, direccion });
+                setCliente({ nombre, empresa, email, telefono, direccion, sedeId, sedeNombre });
               }}
               placeholder="Buscar cliente registrado (opcional)..."
             />
@@ -461,12 +463,23 @@ export default function EditarPresupuesto({ params }) {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
-              <div className="md:col-span-2">
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Sede</label>
+                <input
+                  type="text"
+                  name="sedeNombre"
+                  value={cliente.sedeNombre}
+                  onChange={handleClienteChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="Ej: Edificio Torre Norte"
+                />
+              </div>
+              <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Dirección</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="direccion"
-                  value={cliente.direccion} 
+                  value={cliente.direccion}
                   onChange={handleClienteChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />

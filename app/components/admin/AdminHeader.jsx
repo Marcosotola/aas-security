@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -14,39 +14,50 @@ import {
   FileCheck,
   Receipt,
   File,
+  ChevronDown,
   MessageCircle,
   Tag,
   UserCog,
   Wallet,
   CreditCard,
+  ClipboardList,
   ShieldAlert
 } from 'lucide-react';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 import { obtenerConfigSuscripcion } from '../../lib/firestore';
 import { esSuperAdmin } from '../../lib/superAdmin';
+import PortalDropdown from '../PortalDropdown';
 
-const MODULOS_NAV = [
-  { id: 'dashboard', label: 'Inicio', icono: Home, href: '/admin/dashboard' },
+// Presupuestos, Recibos, Remitos, Estados de cuenta e Informes viven agrupados
+// bajo el menú "Documentos" (nav de escritorio como dropdown, mobile como
+// sublista) para no saturar la barra de navegación con tantos ítems sueltos.
+const DOCUMENTOS_SUBMENU = [
   { id: 'presupuestos', label: 'Presupuestos', icono: FileText, href: '/admin/presupuestos' },
   { id: 'estados', label: 'Estados de cuenta', icono: DollarSign, href: '/admin/estados' },
   { id: 'remitos', label: 'Remitos', icono: FileCheck, href: '/admin/remitos' },
   { id: 'recibos', label: 'Recibos', icono: Receipt, href: '/admin/recibos' },
-  { id: 'documentos', label: 'Documentos', icono: File, href: '/admin/documentos' },
-  { id: 'consultas', label: 'Consultas', icono: MessageCircle, href: '/admin/consultas' },
+  { id: 'informes', label: 'Informes', icono: File, href: '/admin/informes' },
+];
+
+const MODULOS_NAV = [
+  { id: 'planillas', label: 'Planillas', icono: ClipboardList, href: '/admin/planillas' },
+  { id: 'finanzas', label: 'Finanzas', icono: Wallet, href: '/admin/finanzas' },
   { id: 'lista-precios', label: 'Lista de precios', icono: Tag, href: '/admin/lista-precios' },
   { id: 'usuarios', label: 'Usuarios', icono: UserCog, href: '/admin/usuarios' },
-  { id: 'finanzas', label: 'Finanzas', icono: Wallet, href: '/admin/finanzas' },
+  { id: 'consultas', label: 'Consultas', icono: MessageCircle, href: '/admin/consultas' },
   { id: 'suscripcion', label: 'Suscripción', icono: CreditCard, href: '/admin/suscripcion' },
 ];
 
 export default function AdminHeader() {
   const [user, setUser] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [documentosMenuAbierto, setDocumentosMenuAbierto] = useState(false);
   const [suscripcionVencida, setSuscripcionVencida] = useState(false);
   const [redirigiendoAPago, setRedirigiendoAPago] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const documentosBtnRef = useRef(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
@@ -107,6 +118,7 @@ export default function AdminHeader() {
   };
 
   const esActivo = (href) => pathname === href || pathname.startsWith(`${href}/`);
+  const documentosActivo = DOCUMENTOS_SUBMENU.some((item) => esActivo(item.href));
 
   if (redirigiendoAPago) {
     return (
@@ -162,6 +174,59 @@ export default function AdminHeader() {
       {/* Navegador de módulos: solo en escritorio. En mobile ya está el menú hamburguesa. */}
       <nav className="hidden border-t border-white/20 bg-primary md:block">
         <div className="container flex px-2 mx-auto overflow-x-auto">
+          <Link
+            href="/admin/dashboard"
+            className={`flex items-center flex-shrink-0 gap-1.5 px-3 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+              esActivo('/admin/dashboard')
+                ? 'border-white text-white bg-white/10'
+                : 'border-transparent text-white/70 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Home size={16} />
+            Inicio
+          </Link>
+
+          <div className="relative flex-shrink-0">
+            <button
+              type="button"
+              ref={documentosBtnRef}
+              onClick={() => setDocumentosMenuAbierto((o) => !o)}
+              className={`flex items-center flex-shrink-0 gap-1.5 px-3 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                documentosActivo
+                  ? 'border-white text-white bg-white/10'
+                  : 'border-transparent text-white/70 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <FileText size={16} />
+              Documentos
+              <ChevronDown size={14} className={documentosMenuAbierto ? 'rotate-180 transition-transform' : 'transition-transform'} />
+            </button>
+
+            <PortalDropdown
+              open={documentosMenuAbierto}
+              anchorRef={documentosBtnRef}
+              onClose={() => setDocumentosMenuAbierto(false)}
+              width={200}
+            >
+              {DOCUMENTOS_SUBMENU.map((item) => {
+                const Icono = item.icono;
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    onClick={() => setDocumentosMenuAbierto(false)}
+                    className={`flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 ${
+                      esActivo(item.href) ? 'font-semibold text-primary' : 'text-gray-700'
+                    }`}
+                  >
+                    <Icono size={15} />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </PortalDropdown>
+          </div>
+
           {MODULOS_NAV.map((modulo) => {
             const Icono = modulo.icono;
             const activo = esActivo(modulo.href);
@@ -213,6 +278,31 @@ export default function AdminHeader() {
               <FileDown size={16} className="mr-2" />
               Descargar carta de presentación
             </a>
+            <Link
+              href="/admin/dashboard"
+              className="flex items-center py-2 text-gray-700 hover:text-primary"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Home size={16} className="mr-2" />
+              Inicio
+            </Link>
+
+            <span className="pt-3 pb-1 text-xs font-semibold tracking-wide text-gray-400 uppercase">Documentos</span>
+            {DOCUMENTOS_SUBMENU.map((item) => {
+              const Icono = item.icono;
+              return (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className="flex items-center py-2 pl-2 text-gray-700 hover:text-primary"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Icono size={16} className="mr-2" />
+                  {item.label}
+                </Link>
+              );
+            })}
+
             {MODULOS_NAV.map((modulo) => {
               const Icono = modulo.icono;
               return (

@@ -88,6 +88,8 @@ export default function EditarRecibo({ params }) {
     numero: '',
     fecha: '',
     clienteId: null,
+    sedeId: null,
+    sedeNombre: '',
     recibiDe: '',
     monto: '',
     cantidadLetras: '',
@@ -127,6 +129,8 @@ export default function EditarRecibo({ params }) {
           numero: reciboData.numero || '',
           fecha: reciboData.fecha || '',
           clienteId: reciboData.clienteId || null,
+          sedeId: reciboData.sedeId || null,
+          sedeNombre: reciboData.sedeNombre || '',
           recibiDe: reciboData.recibiDe || '',
           monto: reciboData.monto || '',
           cantidadLetras: reciboData.cantidadLetras || '',
@@ -305,8 +309,8 @@ export default function EditarRecibo({ params }) {
                 <label className="block mb-1 text-sm font-medium text-gray-700">Recibí de</label>
                 <ClienteSelector
                   clientes={clientes}
-                  onSelect={({ clienteId, nombre, empresa }) => {
-                    setRecibo({ ...recibo, clienteId, recibiDe: empresa ? `${nombre} - ${empresa}` : nombre });
+                  onSelect={({ clienteId, nombre, empresa, sedeId, sedeNombre }) => {
+                    setRecibo({ ...recibo, clienteId, sedeId, sedeNombre, recibiDe: empresa ? `${nombre} - ${empresa}` : nombre });
                   }}
                   placeholder="Buscar cliente registrado (opcional)..."
                 />
@@ -316,6 +320,16 @@ export default function EditarRecibo({ params }) {
                   onChange={(e) => setRecibo({ ...recibo, recibiDe: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="Nombre completo o razón social"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Sede</label>
+                <input
+                  type="text"
+                  value={recibo.sedeNombre}
+                  onChange={(e) => setRecibo({ ...recibo, sedeNombre: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="Ej: Edificio Torre Norte"
                 />
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

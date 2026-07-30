@@ -3,20 +3,18 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Home, Save } from 'lucide-react';
-import { obtenerDocumentoPorId, actualizarDocumento } from '../../../../lib/firestore';
-import { useStaffAuth } from '../../../../lib/useStaffAuth';
-import { use } from 'react';
+import { Home, Save, Download } from 'lucide-react';
+import { crearDocumento } from '../../../lib/firestore';
+import { useStaffAuth } from '../../../lib/useStaffAuth';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import DocumentoPDF from '../../../components/pdf/DocumentoPDF';
+import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
 
-export default function EditarDocumento({ params }) {
-  const resolvedParams = use(params);
-  const id = resolvedParams.id;
-
+export default function NuevoDocumento() {
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
-  const [loadingData, setLoadingData] = useState(true);
+  const { user, loading } = useStaffAuth(['Admin']);
   const [guardando, setGuardando] = useState(false);
-  const loading = loadingAuth || loadingData;
+  const [documentoGuardado, setDocumentoGuardado] = useState(null);
 
   // Estado para el modal de contenido
   const [modalContenido, setModalContenido] = useState({
@@ -27,35 +25,15 @@ export default function EditarDocumento({ params }) {
   // Estado del formulario
   const [documento, setDocumento] = useState({
     titulo: '',
-    fecha: '',
+    fecha: new Date().toISOString().split('T')[0],
     contenido: ''
   });
-
-  useEffect(() => {
-    if (!id || !user) return;
-
-    (async () => {
-      try {
-        const data = await obtenerDocumentoPorId(id);
-        setDocumento({
-          titulo: data.titulo || '',
-          fecha: data.fecha || '',
-          contenido: data.contenido || ''
-        });
-        setLoadingData(false);
-      } catch (error) {
-        console.error('Error al cargar documento:', error);
-        alert('Error al cargar los datos del documento.');
-        router.push('/admin/documentos');
-      }
-    })();
-  }, [id, user, router]);
 
   // Función para abrir el modal de contenido
   const abrirModalContenido = () => {
     setModalContenido({
       isOpen: true,
-      value: documento.contenido || ''
+      value: documento.contenido
     });
   };
 
@@ -70,23 +48,30 @@ export default function EditarDocumento({ params }) {
 
   const handleGuardarDocumento = async () => {
     if (!documento.titulo.trim()) {
-      alert('Por favor ingrese un título para el documento');
+      alert('Por favor ingrese un título para el informe');
       return;
     }
 
     if (!documento.contenido.trim()) {
-      alert('Por favor ingrese el contenido del documento');
+      alert('Por favor ingrese el contenido del informe');
       return;
     }
 
     setGuardando(true);
     try {
-      await actualizarDocumento(id, documento);
-      alert('Documento actualizado exitosamente');
-      router.push('/admin/documentos');
+      const documentoData = {
+        ...documento,
+        usuarioCreador: user.email
+      };
+      await crearDocumento(documentoData);
+      setDocumentoGuardado({
+        pdfElement: <DocumentoPDF documento={documentoData} />,
+        fileName: `${documentoData.titulo.replace(/\s+/g, '_')}.pdf`,
+        numero: documentoData.titulo
+      });
     } catch (error) {
-      console.error('Error al actualizar el documento:', error);
-      alert('Error al actualizar el documento. Inténtelo de nuevo más tarde.');
+      console.error('Error al guardar el informe:', error);
+      alert('Error al guardar el informe. Inténtelo de nuevo más tarde.');
     } finally {
       setGuardando(false);
     }
@@ -116,13 +101,13 @@ export default function EditarDocumento({ params }) {
             </Link>
             <span className="mx-2 text-gray-500">/</span>
             <Link
-              href="/admin/documentos"
+              href="/admin/informes"
               className="flex items-center mr-4 text-primary hover:underline"
             >
-              Documentos
+              Informes
             </Link>
             <span className="mx-2 text-gray-500">/</span>
-            <span className="text-gray-700">Editar Documento</span>
+            <span className="text-gray-700">Nuevo Informe</span>
           </div>
 
           <div className="flex mb-4 space-x-2">
@@ -132,19 +117,32 @@ export default function EditarDocumento({ params }) {
               className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-success hover:bg-green-700 disabled:opacity-50"
             >
               <Save size={18} className="mr-2" />
-              {guardando ? 'Guardando...' : 'Guardar Cambios'}
+              {guardando ? 'Guardando...' : 'Guardar'}
             </button>
+            {documento.titulo && documento.contenido && (
+              <PDFDownloadLink
+                document={<DocumentoPDF documento={documento} />}
+                fileName={`${documento.titulo.replace(/\s+/g, '_')}.pdf`}
+                className={`bg-secondary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors flex items-center`}
+              >
+                {({ blob, url, loading, error }) =>
+                  loading ?
+                    <span><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
+                    <span><Download size={18} className="mr-2" /> Descargar PDF</span>
+                }
+              </PDFDownloadLink>
+            )}
           </div>
         </div>
 
         <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
-          Editar Documento
+          Nuevo Informe
         </h2>
 
         <div className="grid grid-cols-1 gap-6">
           {/* Información básica */}
           <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Documento</h3>
+            <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Informe</h3>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Título *</label>
@@ -164,6 +162,7 @@ export default function EditarDocumento({ params }) {
                   value={documento.fecha}
                   onChange={(e) => setDocumento({ ...documento, fecha: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  required
                 />
               </div>
             </div>
@@ -171,16 +170,16 @@ export default function EditarDocumento({ params }) {
 
           {/* Contenido del documento */}
           <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="mb-4 text-lg font-semibold text-gray-700">Contenido del Documento *</h3>
-            
+            <h3 className="mb-4 text-lg font-semibold text-gray-700">Contenido del Informe *</h3>
+
             {/* Vista móvil - Botón que abre modal */}
             <div className="md:hidden">
-              <div 
+              <div
                 onClick={abrirModalContenido}
                 className="min-h-[150px] p-3 border border-gray-300 rounded-md bg-gray-50 cursor-pointer flex items-start justify-between transition-colors hover:bg-gray-100"
               >
                 <span className={`text-sm flex-1 ${documento.contenido ? 'text-gray-800' : 'text-gray-400'}`}>
-                  {documento.contenido || 'Toca para editar el contenido del documento'}
+                  {documento.contenido || 'Toca para agregar el contenido del informe'}
                 </span>
                 <svg className="flex-shrink-0 w-5 h-5 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -193,14 +192,14 @@ export default function EditarDocumento({ params }) {
                 </div>
               )}
             </div>
-            
+
             {/* Vista desktop - Textarea normal */}
             <div className="hidden md:block">
               <textarea
                 value={documento.contenido}
                 onChange={(e) => setDocumento({ ...documento, contenido: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md min-h-[300px] resize-y focus:outline-none focus:ring-2 focus:ring-primary/50"
-                placeholder="Edite el contenido del documento..."
+                placeholder="Escriba aquí el contenido completo del informe. Este texto aparecerá en el cuerpo de la hoja membretada."
                 rows={12}
                 required
               />
@@ -214,7 +213,7 @@ export default function EditarDocumento({ params }) {
           {/* Botones de acción */}
           <div className="flex justify-end space-x-2">
             <button
-              onClick={() => router.push('/admin/documentos')}
+              onClick={() => router.push('/admin/informes')}
               className="px-4 py-2 text-gray-700 transition-colors border border-gray-300 rounded-md hover:bg-gray-100"
             >
               Cancelar
@@ -225,7 +224,7 @@ export default function EditarDocumento({ params }) {
               className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-success hover:bg-green-700 disabled:opacity-50"
             >
               <Save size={18} className="mr-2" />
-              {guardando ? 'Guardando...' : 'Guardar Cambios'}
+              {guardando ? 'Guardando...' : 'Guardar Informe'}
             </button>
           </div>
         </div>
@@ -237,7 +236,7 @@ export default function EditarDocumento({ params }) {
           <div className="flex flex-col w-full h-full bg-white md:w-11/12 md:h-5/6 md:rounded-lg md:max-w-4xl">
             {/* Header del modal */}
             <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200 md:rounded-t-lg">
-              <h3 className="text-lg font-semibold text-gray-800">Editar contenido del documento</h3>
+              <h3 className="text-lg font-semibold text-gray-800">Contenido del informe</h3>
               <button
                 onClick={() => setModalContenido({ isOpen: false, value: '' })}
                 className="p-2 text-gray-500 transition-colors hover:text-gray-700"
@@ -247,24 +246,24 @@ export default function EditarDocumento({ params }) {
                 </svg>
               </button>
             </div>
-            
+
             {/* Contenido del modal */}
             <div className="flex flex-col flex-1 p-4 bg-white md:rounded-b-lg">
               <textarea
                 value={modalContenido.value}
                 onChange={(e) => setModalContenido({ ...modalContenido, value: e.target.value })}
                 className="flex-1 w-full p-4 text-base border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Edite el contenido del documento..."
+                placeholder="Escriba aquí el contenido completo del informe..."
                 autoFocus
                 style={{ minHeight: '200px' }}
               />
-              
+
               {/* Contador de caracteres */}
               <div className="flex items-center justify-between mt-3 text-sm text-gray-500">
                 <span>{modalContenido.value.length} caracteres</span>
                 <span className="text-xs text-gray-400">El texto se ajustará automáticamente en el PDF</span>
               </div>
-              
+
               {/* Botones del modal */}
               <div className="flex justify-end mt-4 space-x-3">
                 <button
@@ -277,12 +276,23 @@ export default function EditarDocumento({ params }) {
                   onClick={guardarContenido}
                   className="px-6 py-2 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
                 >
-                  Guardar Cambios
+                  Guardar
                 </button>
               </div>
             </div>
           </div>
         </div>
+      )}
+
+      {documentoGuardado && (
+        <CompartirDocumentoModal
+          abierto
+          pdfElement={documentoGuardado.pdfElement}
+          fileName={documentoGuardado.fileName}
+          tipo="Informe"
+          numero={documentoGuardado.numero}
+          onIrALista={() => router.push('/admin/informes')}
+        />
       )}
     </div>
   );

@@ -198,6 +198,16 @@ export default function VerEstado({ params }) {
                   <span className="w-20 font-medium text-gray-700">Tel:</span>
                   <span className="text-gray-900">{estado.cliente.telefono || ''}</span>
                 </div>
+                <div className="flex">
+                  <span className="w-20 font-medium text-gray-700">Dirección:</span>
+                  <span className="text-gray-900">{estado.cliente.direccion || ''}</span>
+                </div>
+                {estado.cliente.sedeNombre && (
+                  <div className="flex">
+                    <span className="w-20 font-medium text-gray-700">Sede:</span>
+                    <span className="text-gray-900">{estado.cliente.sedeNombre}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

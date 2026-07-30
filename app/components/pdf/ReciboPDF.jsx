@@ -202,6 +202,15 @@ const ReciboPDF = ({ recibo }) => {
             </View>
           </View>
 
+          {recibo.sedeNombre && (
+            <View style={styles.field}>
+              <View style={styles.fieldRow}>
+                <Text style={styles.label}>SEDE:</Text>
+                <Text style={styles.value}>{recibo.sedeNombre}</Text>
+              </View>
+            </View>
+          )}
+
           <View style={styles.field}>
             <View style={styles.fieldRow}>
               <Text style={styles.label}>LA SUMA DE:</Text>

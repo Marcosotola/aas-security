@@ -191,6 +191,9 @@ export default function HistorialPresupuestos() {
                     </div>
                     <div className="mt-1 text-sm text-gray-900">{presupuesto.cliente?.nombre || 'N/A'}</div>
                     <div className="text-sm text-gray-500">{presupuesto.cliente?.empresa || ''}</div>
+                    {presupuesto.cliente?.sedeNombre && (
+                      <div className="text-xs text-gray-400">Sede: {presupuesto.cliente.sedeNombre}</div>
+                    )}
                     <div className="mt-2 text-sm font-medium text-gray-900">
                       ${presupuesto.total ? presupuesto.total.toLocaleString() : '0.00'}
                     </div>
@@ -318,6 +321,9 @@ export default function HistorialPresupuestos() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{presupuesto.cliente?.nombre || 'N/A'}</div>
                         <div className="text-sm text-gray-500">{presupuesto.cliente?.empresa || ''}</div>
+                        {presupuesto.cliente?.sedeNombre && (
+                          <div className="text-xs text-gray-400">Sede: {presupuesto.cliente.sedeNombre}</div>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                         ${presupuesto.total ? presupuesto.total.toLocaleString() : '0.00'}

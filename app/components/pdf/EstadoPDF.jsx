@@ -311,6 +311,16 @@ const EstadoPDF = ({ estado }) => {
               <Text style={styles.label}>Tel:</Text>
               <Text style={styles.value}>{estado.cliente.telefono || ''}</Text>
             </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Dirección:</Text>
+              <Text style={styles.value}>{estado.cliente.direccion || ''}</Text>
+            </View>
+            {estado.cliente.sedeNombre && (
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Sede:</Text>
+                <Text style={styles.value}>{estado.cliente.sedeNombre}</Text>
+              </View>
+            )}
           </View>
         </View>
 

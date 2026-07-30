@@ -273,6 +273,16 @@ export default function VerPresupuesto({ params }) {
                   <span className="w-20 font-bold">Tel:</span>
                   <span className="flex-1">{presupuesto.cliente?.telefono || ''}</span>
                 </div>
+                <div className="flex">
+                  <span className="w-20 font-bold">Dirección:</span>
+                  <span className="flex-1">{presupuesto.cliente?.direccion || ''}</span>
+                </div>
+                {presupuesto.cliente?.sedeNombre && (
+                  <div className="flex">
+                    <span className="w-20 font-bold">Sede:</span>
+                    <span className="flex-1">{presupuesto.cliente.sedeNombre}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

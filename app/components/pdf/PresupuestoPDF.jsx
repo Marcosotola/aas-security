@@ -328,6 +328,16 @@ const PresupuestoPDF = ({ presupuesto }) => {
               <Text style={styles.label}>Tel:</Text>
               <Text style={styles.value}>{presupuesto.cliente?.telefono || ''}</Text>
             </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Dirección:</Text>
+              <Text style={styles.value}>{presupuesto.cliente?.direccion || ''}</Text>
+            </View>
+            {presupuesto.cliente?.sedeNombre && (
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Sede:</Text>
+                <Text style={styles.value}>{presupuesto.cliente.sedeNombre}</Text>
+              </View>
+            )}
           </View>
         </View>
 

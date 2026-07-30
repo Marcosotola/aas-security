@@ -52,7 +52,9 @@ export default function NuevoPresupuesto() {
         empresa: '',
         email: '',
         telefono: '',
-        direccion: ''
+        direccion: '',
+        sedeId: null,
+        sedeNombre: ''
     });
 
     const [presupuesto, setPresupuesto] = useState({
@@ -404,9 +406,9 @@ export default function NuevoPresupuesto() {
                         <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
                         <ClienteSelector
                             clientes={clientes}
-                            onSelect={({ clienteId, nombre, empresa, email, telefono, direccion }) => {
+                            onSelect={({ clienteId, nombre, empresa, email, telefono, direccion, sedeId, sedeNombre }) => {
                                 setPresupuesto({ ...presupuesto, clienteId });
-                                setCliente({ nombre, empresa, email, telefono, direccion });
+                                setCliente({ nombre, empresa, email, telefono, direccion, sedeId, sedeNombre });
                             }}
                             placeholder="Buscar cliente registrado (opcional)..."
                         />
@@ -451,7 +453,18 @@ export default function NuevoPresupuesto() {
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
                                 />
                             </div>
-                            <div className="md:col-span-2">
+                            <div>
+                                <label className="block mb-1 text-sm font-medium text-gray-700">Sede</label>
+                                <input
+                                    type="text"
+                                    name="sedeNombre"
+                                    value={cliente.sedeNombre}
+                                    onChange={handleClienteChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    placeholder="Ej: Edificio Torre Norte"
+                                />
+                            </div>
+                            <div>
                                 <label className="block mb-1 text-sm font-medium text-gray-700">Dirección</label>
                                 <input
                                     type="text"

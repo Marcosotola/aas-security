@@ -5,9 +5,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Save, Download, Eye, PlusCircle, Trash2 } from 'lucide-react';
-import { obtenerEstadoPorId, actualizarEstado } from '../../../../lib/firestore';
+import { obtenerEstadoPorId, actualizarEstado, obtenerClientes } from '../../../../lib/firestore';
 import { useStaffAuth } from '../../../../lib/useStaffAuth';
 import { use } from 'react';
+import ClienteSelector from '../../../../components/ClienteSelector';
 
 // Función para formatear montos con separador de miles (punto) y decimal (coma)
 const formatMoney = (amount) => {
@@ -29,6 +30,7 @@ export default function EditarEstado({ params }) {
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [estadoOriginal, setEstadoOriginal] = useState(null);
+  const [clientes, setClientes] = useState([]);
   const loading = loadingAuth || loadingData;
 
   // Estado para el modal de descripción
@@ -51,12 +53,15 @@ export default function EditarEstado({ params }) {
     empresa: '',
     email: '',
     telefono: '',
-    direccion: ''
+    direccion: '',
+    sedeId: null,
+    sedeNombre: ''
   });
-  
+
   const [estado, setEstado] = useState({
     numero: '',
     fecha: '',
+    clienteId: null,
     items: [
       { id: 1, fecha: new Date().toISOString().split('T')[0], descripcion: '', precio: '', comentarios: '' }
     ],
@@ -76,11 +81,19 @@ export default function EditarEstado({ params }) {
         setEstado({
           numero: estadoData.numero,
           fecha: estadoData.fecha,
+          clienteId: estadoData.clienteId || null,
           items: estadoData.items || [],
           total: estadoData.total || 0
         });
 
-        setCliente(estadoData.cliente);
+        setCliente({ sedeId: null, sedeNombre: '', ...estadoData.cliente });
+
+        try {
+          setClientes(await obtenerClientes());
+        } catch (error) {
+          console.error('Error al cargar los clientes:', error);
+        }
+
         setLoadingData(false);
       } catch (error) {
         console.error('Error al cargar estado:', error);
@@ -186,6 +199,7 @@ export default function EditarEstado({ params }) {
       const estadoData = {
         numero: estado.numero,
         fecha: estado.fecha,
+        clienteId: estado.clienteId || null,
         cliente: cliente,
         items: estado.items,
         total: estado.total,
@@ -282,13 +296,21 @@ export default function EditarEstado({ params }) {
           {/* Información del cliente */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
+            <ClienteSelector
+              clientes={clientes}
+              onSelect={({ clienteId, nombre, empresa, email, telefono, direccion, sedeId, sedeNombre }) => {
+                setEstado({ ...estado, clienteId });
+                setCliente({ nombre, empresa, email, telefono, direccion, sedeId, sedeNombre });
+              }}
+              placeholder="Buscar cliente registrado (opcional)..."
+            />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Nombre</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="nombre"
-                  value={cliente.nombre} 
+                  value={cliente.nombre}
                   onChange={handleClienteChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
@@ -323,7 +345,18 @@ export default function EditarEstado({ params }) {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
-              <div className="md:col-span-2">
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Sede</label>
+                <input
+                  type="text"
+                  name="sedeNombre"
+                  value={cliente.sedeNombre}
+                  onChange={handleClienteChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="Ej: Edificio Torre Norte"
+                />
+              </div>
+              <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Dirección</label>
                 <input 
                   type="text" 

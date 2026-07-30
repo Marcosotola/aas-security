@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Save, Download, Eye, PlusCircle, Trash2 } from 'lucide-react';
-import { crearEstado } from '../../../lib/firestore';
+import { crearEstado, obtenerClientes } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import EstadoPDF from '../../../components/pdf/EstadoPDF';
+import ClienteSelector from '../../../components/ClienteSelector';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
 
 // Función para formatear montos con separador de miles (punto) y decimal (coma)
@@ -32,6 +33,7 @@ export default function NuevoEstado() {
     const { user, loading } = useStaffAuth(['Admin']);
     const [guardando, setGuardando] = useState(false);
     const [documentoGuardado, setDocumentoGuardado] = useState(null);
+    const [clientes, setClientes] = useState([]);
 
     // Estado para el modal de descripción
     const [modalDescripcion, setModalDescripcion] = useState({
@@ -53,17 +55,27 @@ export default function NuevoEstado() {
         empresa: '',
         email: '',
         telefono: '',
-        direccion: ''
+        direccion: '',
+        sedeId: null,
+        sedeNombre: ''
     });
 
     const [estado, setEstado] = useState({
         numero: `E-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
         fecha: new Date().toISOString().split('T')[0],
+        clienteId: null,
         items: [
             { id: 1, fecha: new Date().toISOString().split('T')[0], descripcion: '', precio: '', comentarios: '' }
         ],
         total: 0
     });
+
+    useEffect(() => {
+        if (!user) return;
+        obtenerClientes()
+            .then(setClientes)
+            .catch((error) => console.error('Error al cargar los clientes:', error));
+    }, [user]);
 
     // Función para abrir el modal de descripción
     const abrirModalDescripcion = (itemId, descripcion) => {
@@ -161,6 +173,7 @@ export default function NuevoEstado() {
             const estadoData = {
                 numero: estado.numero,
                 fecha: estado.fecha,
+                clienteId: estado.clienteId || null,
                 cliente: cliente,
                 items: estado.items,
                 total: estado.total,
@@ -275,6 +288,14 @@ export default function NuevoEstado() {
                     {/* Información del cliente */}
                     <div className="p-6 bg-white rounded-lg shadow-md">
                         <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
+                        <ClienteSelector
+                            clientes={clientes}
+                            onSelect={({ clienteId, nombre, empresa, email, telefono, direccion, sedeId, sedeNombre }) => {
+                                setEstado({ ...estado, clienteId });
+                                setCliente({ nombre, empresa, email, telefono, direccion, sedeId, sedeNombre });
+                            }}
+                            placeholder="Buscar cliente registrado (opcional)..."
+                        />
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
                                 <label className="block mb-1 text-sm font-medium text-gray-700">Nombre</label>
@@ -316,7 +337,18 @@ export default function NuevoEstado() {
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
                                 />
                             </div>
-                            <div className="md:col-span-2">
+                            <div>
+                                <label className="block mb-1 text-sm font-medium text-gray-700">Sede</label>
+                                <input
+                                    type="text"
+                                    name="sedeNombre"
+                                    value={cliente.sedeNombre}
+                                    onChange={handleClienteChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    placeholder="Ej: Edificio Torre Norte"
+                                />
+                            </div>
+                            <div>
                                 <label className="block mb-1 text-sm font-medium text-gray-700">Dirección</label>
                                 <input
                                     type="text"

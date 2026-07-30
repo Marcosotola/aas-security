@@ -218,6 +218,12 @@ const RemitoPDF = ({ remito }) => {
               <Text style={styles.label}>Dirección:</Text>
               <Text style={styles.value}>{remito.cliente?.direccion || ''}</Text>
             </View>
+            {remito.cliente?.sedeNombre && (
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Sede:</Text>
+                <Text style={styles.value}>{remito.cliente.sedeNombre}</Text>
+              </View>
+            )}
           </View>
         </View>
 

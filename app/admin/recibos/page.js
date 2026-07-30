@@ -145,6 +145,9 @@ export default function HistorialRecibos() {
                       </div>
                     </div>
                     <div className="mt-1 text-sm text-gray-900">{recibo.recibiDe || 'N/A'}</div>
+                    {recibo.sedeNombre && (
+                      <div className="text-xs text-gray-400">Sede: {recibo.sedeNombre}</div>
+                    )}
                     <div className="mt-1 text-sm text-gray-500 line-clamp-2" title={recibo.concepto}>
                       {recibo.concepto || 'N/A'}
                     </div>
@@ -236,6 +239,9 @@ export default function HistorialRecibos() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{recibo.recibiDe || 'N/A'}</div>
+                        {recibo.sedeNombre && (
+                          <div className="text-xs text-gray-400">Sede: {recibo.sedeNombre}</div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="max-w-xs text-sm text-gray-500 truncate" title={recibo.concepto}>

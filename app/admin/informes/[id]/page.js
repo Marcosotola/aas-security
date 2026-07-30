@@ -32,14 +32,14 @@ export default function VerDocumento({ params }) {
         if (docSnap.exists()) {
           setDocumento({ id: docSnap.id, ...docSnap.data() });
         } else {
-          alert('Documento no encontrado');
-          router.push('/admin/documentos');
+          alert('Informe no encontrado');
+          router.push('/admin/informes');
         }
         setLoadingData(false);
       } catch (error) {
-        console.error('Error al cargar documento:', error);
-        alert('Error al cargar los datos del documento.');
-        router.push('/admin/documentos');
+        console.error('Error al cargar informe:', error);
+        alert('Error al cargar los datos del informe.');
+        router.push('/admin/informes');
       }
     })();
   }, [id, user, router]);
@@ -68,31 +68,31 @@ export default function VerDocumento({ params }) {
             </Link>
             <span className="mx-2 text-gray-500">/</span>
             <Link
-              href="/admin/documentos"
+              href="/admin/informes"
               className="flex items-center mr-4 text-primary hover:underline"
             >
-              Documentos
+              Informes
             </Link>
             <span className="mx-2 text-gray-500">/</span>
-            <span className="text-gray-700">Detalles del Documento</span>
+            <span className="text-gray-700">Detalles del Informe</span>
           </div>
 
           <div className="flex mb-4 space-x-2">
             <Link
-              href="/admin/documentos"
+              href="/admin/informes"
               className="flex items-center px-4 py-2 text-gray-700 transition-colors bg-gray-200 rounded-md hover:bg-gray-300"
             >
               <ArrowLeft size={18} className="mr-2" /> Volver
             </Link>
             <Link
-              href={`/admin/documentos/editar/${id}`}
+              href={`/admin/informes/editar/${id}`}
               className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
             >
               <Edit size={18} className="mr-2" /> Editar
             </Link>
             <PDFDownloadLink
               document={<DocumentoPDF documento={documento} />}
-              fileName={`${documento.titulo?.replace(/\s+/g, '_') || 'Documento'}.pdf`}
+              fileName={`${documento.titulo?.replace(/\s+/g, '_') || 'Informe'}.pdf`}
               className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
             >
               {({ blob, url, loading, error }) =>
@@ -105,14 +105,14 @@ export default function VerDocumento({ params }) {
         </div>
 
         <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
-          {documento.titulo || 'Documento'}
+          {documento.titulo || 'Informe'}
         </h2>
 
         {/* Contenido principal */}
         <div className="grid grid-cols-1 gap-6">
           {/* Información del documento */}
           <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Documento</h3>
+            <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Informe</h3>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <div className="mb-4">
@@ -124,7 +124,7 @@ export default function VerDocumento({ params }) {
                 <div className="mb-4">
                   <span className="block mb-1 text-sm font-medium text-gray-600">Fecha:</span>
                   <span className="text-gray-900">
-                    {documento.fecha 
+                    {documento.fecha
                       ? new Date(documento.fecha).toLocaleDateString('es-AR')
                       : 'No disponible'}
                   </span>
@@ -154,7 +154,7 @@ export default function VerDocumento({ params }) {
               <div>
                 <span className="block mb-1 text-sm font-medium text-gray-600">Fecha de creación:</span>
                 <span className="text-gray-900">
-                  {documento.fechaCreacion && documento.fechaCreacion.toDate 
+                  {documento.fechaCreacion && documento.fechaCreacion.toDate
                     ? new Date(documento.fechaCreacion.toDate()).toLocaleString('es-AR')
                     : 'No disponible'}
                 </span>
@@ -163,7 +163,7 @@ export default function VerDocumento({ params }) {
                 <div>
                   <span className="block mb-1 text-sm font-medium text-gray-600">Última actualización:</span>
                   <span className="text-gray-900">
-                    {documento.fechaActualizacion.toDate 
+                    {documento.fechaActualizacion.toDate
                       ? new Date(documento.fechaActualizacion.toDate()).toLocaleString('es-AR')
                       : 'No disponible'}
                   </span>

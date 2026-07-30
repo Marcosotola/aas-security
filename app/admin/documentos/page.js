@@ -1,59 +1,51 @@
+// app/admin/documentos/page.js
 'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye } from 'lucide-react';
-import { obtenerDocumentos, eliminarDocumento } from '../../lib/firestore';
+import { Home, FileText, DollarSign, FileCheck, Receipt, File } from 'lucide-react';
+import { collection, getCountFromServer } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 import { useStaffAuth } from '../../lib/useStaffAuth';
-import { PDFDownloadLink } from '@react-pdf/renderer';
-import DocumentoPDF from '../../components/pdf/DocumentoPDF';
-import ViewToggle from '../../components/admin/ViewToggle';
+import ModuloCard from '../../components/admin/ModuloCard';
 
-export default function HistorialDocumentos() {
+// Hub de "Documentos": agrupa los 5 tipos de documento (Presupuestos, Estados
+// de Cuenta, Remitos, Recibos, Informes) con las mismas tarjetas que el panel
+// principal (ver app/components/admin/ModuloCard.jsx), para no perder ese
+// estilo al sacarlos del dashboard y agruparlos bajo un solo acceso.
+export default function DocumentosHub() {
   const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
   const [loadingData, setLoadingData] = useState(true);
-  const [documentos, setDocumentos] = useState([]);
-  const [filtro, setFiltro] = useState('');
-  const [vista, setVista] = useState('tabla');
+  const [totales, setTotales] = useState({
+    presupuestos: 0,
+    estados: 0,
+    remitos: 0,
+    recibos: 0,
+    documentos: 0
+  });
   const loading = loadingAuth || loadingData;
 
   useEffect(() => {
     if (!user) return;
-    cargarDocumentos().then(() => setLoadingData(false));
-  }, [user]);
 
-  const cargarDocumentos = async () => {
-    try {
-      const documentosData = await obtenerDocumentos();
-      console.log("documentos cargados:", documentosData.length);
-      setDocumentos(documentosData);
-    } catch (error) {
-      console.error('Error al cargar documentos:', error);
-      setDocumentos([]);
-    }
-  };
-
-  const handleDeleteDocumento = async (id) => {
-    if (confirm('¿Está seguro de que desea eliminar este documento?')) {
+    (async () => {
       try {
-        await eliminarDocumento(id);
-        setDocumentos(documentos.filter(d => d.id !== id));
+        const contar = async (ref) => (await getCountFromServer(ref)).data().count;
+        const [presupuestos, estados, remitos, recibos, documentos] = await Promise.all([
+          contar(collection(db, 'presupuestos')),
+          contar(collection(db, 'estados')),
+          contar(collection(db, 'remitos')),
+          contar(collection(db, 'recibos')),
+          contar(collection(db, 'documentos'))
+        ]);
+        setTotales({ presupuestos, estados, remitos, recibos, documentos });
       } catch (error) {
-        console.error('Error al eliminar documento:', error);
-        alert('Error al eliminar el documento. Inténtelo de nuevo más tarde.');
+        console.error('Error al cargar totales de documentos:', error);
+      } finally {
+        setLoadingData(false);
       }
-    }
-  };
-
-  const documentosFiltrados = documentos.filter((documento) => {
-    if (!filtro) return true;
-
-    const terminoBusqueda = filtro.toLowerCase();
-    return (
-      documento.titulo?.toLowerCase().includes(terminoBusqueda) ||
-      documento.contenido?.toLowerCase().includes(terminoBusqueda)
-    );
-  });
+    })();
+  }, [user]);
 
   if (loading) {
     return (
@@ -66,204 +58,103 @@ export default function HistorialDocumentos() {
     );
   }
 
+  const modulos = [
+    {
+      id: 'presupuestos',
+      titulo: 'Presupuestos',
+      icono: FileText,
+      color: 'bg-[#1A5276]',
+      colorClaro: 'bg-blue-100',
+      colorTexto: 'text-[#1A5276]',
+      descripcion: 'Crear y gestionar presupuestos',
+      total: totales.presupuestos,
+      rutas: {
+        nuevo: '/admin/presupuestos/nuevo',
+        historial: '/admin/presupuestos'
+      },
+      activo: true
+    },
+    {
+      id: 'estados',
+      titulo: 'Estados de Cuenta',
+      icono: DollarSign,
+      color: 'bg-slate-700',
+      colorClaro: 'bg-slate-100',
+      colorTexto: 'text-slate-700',
+      descripcion: 'Control de estados de cuenta',
+      total: totales.estados,
+      rutas: {
+        nuevo: '/admin/estados/nuevo',
+        historial: '/admin/estados'
+      },
+      activo: true
+    },
+    {
+      id: 'remitos',
+      titulo: 'Remitos',
+      icono: FileCheck,
+      color: 'bg-[#2E86C1]',
+      colorClaro: 'bg-blue-100',
+      colorTexto: 'text-[#2E86C1]',
+      descripcion: 'Gestión de remitos',
+      total: totales.remitos,
+      rutas: {
+        nuevo: '/admin/remitos/nuevo',
+        historial: '/admin/remitos'
+      },
+      activo: true
+    },
+    {
+      id: 'recibos',
+      titulo: 'Recibos',
+      icono: Receipt,
+      color: 'bg-slate-800',
+      colorClaro: 'bg-slate-200',
+      colorTexto: 'text-slate-800',
+      descripcion: 'Administrar recibos',
+      total: totales.recibos,
+      rutas: {
+        nuevo: '/admin/recibos/nuevo',
+        historial: '/admin/recibos'
+      },
+      activo: true
+    },
+    {
+      id: 'informes',
+      titulo: 'Informes',
+      icono: File,
+      color: 'bg-[#154360]',
+      colorClaro: 'bg-blue-100',
+      colorTexto: 'text-[#154360]',
+      descripcion: 'Hojas membretadas y certificaciones',
+      total: totales.documentos,
+      rutas: {
+        nuevo: '/admin/informes/nuevo',
+        historial: '/admin/informes'
+      },
+      activo: true
+    }
+  ];
+
   return (
     <div>
       <div className="container px-4 py-8 mx-auto">
-        <div className="flex flex-wrap items-center justify-between mb-8">
-          <div className="flex items-center mb-4">
-            <Link
-              href="/admin/dashboard"
-              className="flex items-center mr-4 text-primary hover:underline"
-            >
-              <Home size={16} className="mr-1" /> Panel
-            </Link>
-            <span className="mx-2 text-gray-500">/</span>
-            <span className="text-gray-700">Historial de Documentos</span>
-          </div>
-
-          <Link
-            href="/admin/documentos/nuevo"
-            className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
-          >
-            <FilePlus size={18} className="mr-2" /> Nuevo Documento
+        <div className="flex items-center mb-8">
+          <Link href="/admin/dashboard" className="flex items-center mr-4 text-primary hover:underline">
+            <Home size={16} className="mr-1" /> Panel
           </Link>
+          <span className="mx-2 text-gray-500">/</span>
+          <span className="text-gray-700">Documentos</span>
         </div>
 
         <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
           Documentos
         </h2>
 
-        <div className="p-6 mb-8 bg-white rounded-lg shadow-md">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="relative flex items-center flex-1">
-              <Search size={18} className="absolute text-gray-400 left-3" />
-              <input
-                type="text"
-                placeholder="Buscar por título o contenido..."
-                value={filtro}
-                onChange={(e) => setFiltro(e.target.value)}
-                className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-            </div>
-            <ViewToggle vista={vista} onChange={setVista} />
-          </div>
-
-          {vista === 'cards' ? (
-            documentosFiltrados.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {documentosFiltrados.map((documento) => (
-                  <div key={documento.id} className="p-4 border border-gray-200 rounded-lg">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="text-sm font-medium text-gray-900">{documento.titulo || 'Sin título'}</div>
-                      <div className="text-xs text-gray-500 whitespace-nowrap">
-                        {documento.fechaCreacion
-                          ? new Date(documento.fechaCreacion.toDate()).toLocaleDateString('es-AR')
-                          : documento.fecha
-                            ? new Date(documento.fecha).toLocaleDateString('es-AR')
-                            : 'No disponible'
-                        }
-                      </div>
-                    </div>
-                    <div className="mt-1 text-sm text-gray-500 line-clamp-2" title={documento.contenido}>
-                      {documento.contenido || 'N/A'}
-                    </div>
-
-                    <div className="flex justify-end pt-3 mt-3 space-x-4 border-t border-gray-100">
-                      <Link
-                        href={`/admin/documentos/${documento.id}`}
-                        title="Ver detalles"
-                        className="text-gray-600 hover:text-primary"
-                      >
-                        <Eye size={18} />
-                      </Link>
-                      <PDFDownloadLink
-                        document={<DocumentoPDF documento={documento} />}
-                        fileName={`Documento_${documento.titulo?.replace(/\s+/g, '_') || 'Sin_titulo'}.pdf`}
-                        className="text-primary hover:text-primary-light"
-                      >
-                        {({ blob, url, loading, error }) =>
-                          <Download size={18} className={loading ? "animate-pulse" : ""} />
-                        }
-                      </PDFDownloadLink>
-                      <Link
-                        href={`/admin/documentos/editar/${documento.id}`}
-                        title="Editar"
-                        className="text-secondary hover:text-secondary-light"
-                      >
-                        <Edit size={18} />
-                      </Link>
-                      <button
-                        onClick={() => handleDeleteDocumento(documento.id)}
-                        title="Eliminar"
-                        className="text-red-500 cursor-pointer hover:text-red-700"
-                      >
-                        <Trash size={18} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="px-6 py-4 text-center text-gray-500">
-                No hay documentos que coincidan con su búsqueda
-              </div>
-            )
-          ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                    Título
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                    Fecha
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                    Contenido
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {documentosFiltrados.length > 0 ? (
-                  documentosFiltrados.map((documento) => (
-                    <tr key={documento.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{documento.titulo || 'Sin título'}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">
-                          {documento.fechaCreacion
-                            ? new Date(documento.fechaCreacion.toDate()).toLocaleDateString('es-AR')
-                            : documento.fecha
-                              ? new Date(documento.fecha).toLocaleDateString('es-AR')
-                              : 'No disponible'
-                          }
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="max-w-xs text-sm text-gray-500 truncate" title={documento.contenido}>
-                          {documento.contenido || 'N/A'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
-                        <div className="flex justify-end space-x-4">
-                          <Link
-                            href={`/admin/documentos/${documento.id}`}
-                            title="Ver detalles"
-                            className="text-gray-600 hover:text-primary"
-                          >
-                            <Eye size={18} />
-                          </Link>
-                          <PDFDownloadLink
-                            document={<DocumentoPDF documento={documento} />}
-                            fileName={`Documento_${documento.titulo?.replace(/\s+/g, '_') || 'Sin_titulo'}.pdf`}
-                            className="text-primary hover:text-primary-light"
-                          >
-                            {({ blob, url, loading, error }) =>
-                              <Download size={18} className={loading ? "animate-pulse" : ""} />
-                            }
-                          </PDFDownloadLink>
-                          <Link
-                            href={`/admin/documentos/editar/${documento.id}`}
-                            title="Editar"
-                            className="text-secondary hover:text-secondary-light"
-                          >
-                            <Edit size={18} />
-                          </Link>
-                          <button
-                            onClick={() => handleDeleteDocumento(documento.id)}
-                            title="Eliminar"
-                            className="text-red-500 cursor-pointer hover:text-red-700"
-                          >
-                            <Trash size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
-                      No hay documentos que coincidan con su búsqueda
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          )}
-
-          {documentosFiltrados.length === 0 && filtro && (
-            <div className="py-10 text-center">
-              <FileText size={48} className="mx-auto mb-4 text-gray-400" />
-              <p className="mb-2 text-gray-500">No hay documentos que coincidan con su búsqueda</p>
-              <p className="text-sm text-gray-400">Intente con otros términos o cree un nuevo documento</p>
-            </div>
-          )}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 md:gap-4">
+          {modulos.map((modulo) => (
+            <ModuloCard key={modulo.id} modulo={modulo} />
+          ))}
         </div>
       </div>
     </div>

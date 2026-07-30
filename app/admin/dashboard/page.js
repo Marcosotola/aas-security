@@ -2,34 +2,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import {
-  FilePlus,
   FileText,
-  Home,
-  BarChart3,
   DollarSign,
   FileCheck,
   Receipt,
-  ScrollText,
-  TrendingUp,
-  Users,
-  Calendar,
-  ChevronRight,
-  Clock,
-  AlertCircle,
   File,
+  Files,
   MessageCircle,
   Tag,
   UserCog,
   Wallet,
-  CreditCard
+  CreditCard,
+  ClipboardList
 } from 'lucide-react';
 import { collection, query, where, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { obtenerConfigSuscripcion } from '../../lib/firestore';
 import { SUPER_ADMIN_EMAIL } from '../../lib/superAdmin';
+import ModuloCard from '../../components/admin/ModuloCard';
 
 export default function Dashboard() {
   const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
@@ -123,101 +115,69 @@ export default function Dashboard() {
     );
   }
 
+  // Presupuestos, Estados, Remitos, Recibos e Informes viven agrupados atrás
+  // de una sola tarjeta "Documentos" (nada de tarjetas sueltas en el panel
+  // principal): al tocar la tarjeta se entra al hub /admin/documentos (una
+  // tarjeta por tipo, mismo estilo, cada una con su "Nuevo"), y el botón
+  // "Nuevo" de esta tarjeta despliega el acceso directo para crear cada tipo
+  // sin tener que entrar primero al hub.
+  const totalDocumentos = totales.presupuestos + totales.estados + totales.remitos + totales.recibos + totales.documentos;
+
   // Definir módulos del sistema con totales
   const modulos = [
     {
-      id: 'presupuestos',
-      titulo: 'Presupuestos',
-      icono: FileText,
-      color: 'bg-[#1A5276]', // Primary Corporate Blue
-      colorClaro: 'bg-blue-100',
-      colorTexto: 'text-[#1A5276]',
-      descripcion: 'Crear y gestionar presupuestos',
-      total: totales.presupuestos,
-      rutas: {
-        nuevo: '/admin/presupuestos/nuevo',
-        historial: '/admin/presupuestos'
-      },
-      activo: true
-    },
-    {
-      id: 'estados',
-      titulo: 'Estados de Cuenta',
-      icono: DollarSign,
-      color: 'bg-slate-700', // Professional Slate
-      colorClaro: 'bg-slate-100',
-      colorTexto: 'text-slate-700',
-      descripcion: 'Control de estados de cuenta',
-      total: totales.estados,
-      rutas: {
-        nuevo: '/admin/estados/nuevo',
-        historial: '/admin/estados'
-      },
-      activo: true
-    },
-    {
-      id: 'remitos',
-      titulo: 'Remitos',
-      icono: FileCheck,
-      color: 'bg-[#2E86C1]', // Secondary Corporate Blue
-      colorClaro: 'bg-blue-100',
-      colorTexto: 'text-[#2E86C1]',
-      descripcion: 'Gestión de remitos',
-      total: totales.remitos,
-      rutas: {
-        nuevo: '/admin/remitos/nuevo',
-        historial: '/admin/remitos'
-      },
-      activo: true,
-      proximamente: false
-    },
-    {
-      id: 'recibos',
-      titulo: 'Recibos',
-      icono: Receipt,
-      color: 'bg-slate-800', // Darker Professional Slate
-      colorClaro: 'bg-slate-200',
-      colorTexto: 'text-slate-800',
-      descripcion: 'Administrar recibos',
-      total: totales.recibos,
-      rutas: {
-        nuevo: '/admin/recibos/nuevo',
-        historial: '/admin/recibos'
-      },
-      activo: true,
-      proximamente: false
-    },
-    {
       id: 'documentos',
       titulo: 'Documentos',
-      icono: File,
+      icono: Files,
       color: 'bg-[#154360]', // Deep Navy/Teal
       colorClaro: 'bg-blue-100',
       colorTexto: 'text-[#154360]',
-      descripcion: 'Hojas membretadas y certificaciones',
-      total: totales.documentos,
+      descripcion: 'Presupuestos, remitos, recibos, estados e informes',
+      total: totalDocumentos,
       rutas: {
-        nuevo: '/admin/documentos/nuevo',
         historial: '/admin/documentos'
       },
       activo: true,
-      proximamente: false
+      nuevoDropdown: true,
+      nuevoAccesos: [
+        { label: 'Nuevo Presupuesto', icono: FileText, href: '/admin/presupuestos/nuevo' },
+        { label: 'Nuevo Estado de Cuenta', icono: DollarSign, href: '/admin/estados/nuevo' },
+        { label: 'Nuevo Remito', icono: FileCheck, href: '/admin/remitos/nuevo' },
+        { label: 'Nuevo Recibo', icono: Receipt, href: '/admin/recibos/nuevo' },
+        { label: 'Nuevo Informe', icono: File, href: '/admin/informes/nuevo' }
+      ]
     },
     {
-      id: 'consultas',
-      titulo: 'Consultas',
-      icono: MessageCircle,
-      color: 'bg-[#3498DB]', // Azul info del sitio, dentro de la misma paleta que el resto
-      colorClaro: 'bg-blue-100',
-      colorTexto: 'text-[#3498DB]',
-      descripcion: 'Consultas recibidas desde la web',
-      total: totales.consultas,
-      badge: totales.consultasNoLeidas,
+      id: 'planillas',
+      titulo: 'Planillas',
+      icono: ClipboardList,
+      color: 'bg-teal-700', // Verde azulado, distinto de los tonos ya usados
+      colorClaro: 'bg-teal-100',
+      colorTexto: 'text-teal-700',
+      descripcion: 'Próximamente',
+      total: '-',
       rutas: {
-        historial: '/admin/consultas'
+        historial: '/admin/planillas'
       },
       activo: true,
-      sinNuevo: true
+      sinNuevo: true,
+      textoAcceso: 'Ver planillas',
+      iconoAcceso: ClipboardList
+    },
+    {
+      id: 'finanzas',
+      titulo: 'Finanzas',
+      icono: Wallet,
+      color: 'bg-blue-900', // Azul de la familia del sitio, distinto de los tonos ya usados
+      colorClaro: 'bg-blue-100',
+      colorTexto: 'text-blue-900',
+      descripcion: 'Ingresos, gastos y ganancia real',
+      total: totales.movimientos,
+      rutas: {
+        nuevo: '/admin/finanzas?nuevo=1',
+        historial: '/admin/finanzas'
+      },
+      activo: true
     },
     {
       id: 'lista-precios',
@@ -250,25 +210,26 @@ export default function Dashboard() {
       activo: true
     },
     {
-      id: 'finanzas',
-      titulo: 'Finanzas',
-      icono: Wallet,
-      color: 'bg-blue-900', // Azul de la familia del sitio, distinto de los tonos ya usados
+      id: 'consultas',
+      titulo: 'Consultas',
+      icono: MessageCircle,
+      color: 'bg-[#3498DB]', // Azul info del sitio, dentro de la misma paleta que el resto
       colorClaro: 'bg-blue-100',
-      colorTexto: 'text-blue-900',
-      descripcion: 'Ingresos, gastos y ganancia real',
-      total: totales.movimientos,
+      colorTexto: 'text-[#3498DB]',
+      descripcion: 'Consultas recibidas desde la web',
+      total: totales.consultas,
+      badge: totales.consultasNoLeidas,
       rutas: {
-        nuevo: '/admin/finanzas?nuevo=1',
-        historial: '/admin/finanzas'
+        historial: '/admin/consultas'
       },
-      activo: true
+      activo: true,
+      sinNuevo: true
     },
     {
       id: 'suscripcion',
       titulo: 'Suscripción',
       icono: CreditCard,
-      color: 'bg-[#154360]', // Mismo azul oscuro que Documentos, sin sumar un tono nuevo
+      color: 'bg-[#154360]', // Mismo azul oscuro que usaba antes la tarjeta de Informes
       colorClaro: 'bg-blue-100',
       colorTexto: 'text-[#154360]',
       descripcion: 'Estado de pago y habilitación de la app',
@@ -298,76 +259,11 @@ export default function Dashboard() {
         </div>
 
         {/* Módulos del sistema */}
-        <h3 className="mb-4 text-xl font-bold text-gray-800">Documentos</h3>
+        <h3 className="mb-4 text-xl font-bold text-gray-800">Módulos del sistema</h3>
         <div className="grid grid-cols-2 gap-3 mb-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 md:gap-4">
-          {modulos.map(modulo => {
-            const Icono = modulo.icono;
-            return (
-              <Link
-                key={modulo.id}
-                href={modulo.activo && !modulo.proximamente ? modulo.rutas.historial : '#'}
-                className={`relative block h-full ${modulo.activo && !modulo.proximamente ? 'cursor-pointer' : 'opacity-75 cursor-default'
-                  }`}
-              >
-                {modulo.proximamente && (
-                  <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-black/50">
-                    <span className="px-3 py-1 text-xs font-semibold text-white bg-yellow-500 rounded-full">
-                      Próximamente
-                    </span>
-                  </div>
-                )}
-
-                {/* Tarjeta de módulo: mismo diseño en mobile y escritorio */}
-                <div
-                  className={`flex flex-col overflow-hidden rounded-xl shadow-sm transition-all h-full ${modulo.activo && !modulo.proximamente ? 'hover:shadow-md hover:-translate-y-0.5' : ''}`}
-                  style={{ transition: 'box-shadow 0.2s, transform 0.2s' }}
-                >
-                  <div className={`p-4 md:p-6 ${modulo.activo ? modulo.color : 'bg-gray-300'} text-white h-full flex flex-col`}>
-                    <div className="flex items-start justify-between mb-2 md:mb-4">
-                      <div className="relative p-2.5 rounded-xl bg-white/20 shadow-inner">
-                        <Icono size={26} className="md:w-10 md:h-10" />
-                        {modulo.badge > 0 && (
-                          <span className="absolute flex items-center justify-center min-w-[20px] h-5 px-1 text-[11px] font-bold text-white bg-red-500 border-2 border-white rounded-full -top-2 -right-2">
-                            {modulo.badge}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xl font-bold leading-none md:text-2xl">{modulo.total}</p>
-                        <p className="text-[10px] opacity-80 uppercase font-semibold mt-1">Total</p>
-                      </div>
-                    </div>
-
-                    <h4 className="text-base font-bold leading-tight md:text-lg">{modulo.titulo}</h4>
-                    <p className="mt-1 text-sm opacity-90 line-clamp-2">{modulo.descripcion}</p>
-
-                    {modulo.activo && !modulo.sinNuevo && (
-                      <div className="flex items-center justify-center mt-auto pt-3 md:pt-4 border-t border-white/10">
-                        <span
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = modulo.rutas.nuevo; }}
-                          className="flex items-center text-sm md:text-lg font-bold hover:underline bg-white/20 px-4 py-2 rounded-xl transition-all hover:bg-white/30 hover:scale-105 active:scale-95"
-                        >
-                          <FilePlus size={24} className="mr-2 md:w-7 md:h-7" />
-                          <span>Nuevo</span>
-                        </span>
-                      </div>
-                    )}
-                    {modulo.activo && modulo.sinNuevo && (
-                      <div className="flex items-center justify-center mt-auto pt-3 md:pt-4 border-t border-white/10">
-                        <span className="flex items-center text-sm md:text-lg font-bold bg-white/20 px-4 py-2 rounded-xl">
-                          {(() => {
-                            const IconoAcceso = modulo.iconoAcceso || MessageCircle;
-                            return <IconoAcceso size={24} className="mr-2 md:w-7 md:h-7" />;
-                          })()}
-                          <span>{modulo.textoAcceso || 'Ver consultas'}</span>
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
+          {modulos.map((modulo) => (
+            <ModuloCard key={modulo.id} modulo={modulo} />
+          ))}
         </div>
       </div>
     </div>

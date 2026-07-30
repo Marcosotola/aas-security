@@ -123,7 +123,7 @@ const DocumentoPDF = ({ documento }) => {
         {/* Nueva Fila de Encabezado con Fecha y Título */}
         <View style={styles.headerRow}>
           <Text style={styles.headerRowText}>Fecha: {formatDate(documento.fecha)}</Text>
-          <Text style={styles.title}>{documento.titulo || 'DOCUMENTO'}</Text>
+          <Text style={styles.title}>{documento.titulo || 'INFORME'}</Text>
           <Text style={styles.headerRowText}></Text>
         </View>
 
