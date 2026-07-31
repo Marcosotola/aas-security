@@ -225,23 +225,20 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
   },
   tablaHeaderCellCol: {
-    width: 34,
-    height: 68,
+    width: 38,
+    minHeight: 32,
     borderWidth: 0.5,
     borderColor: '#fff',
     backgroundColor: '#1A5276',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingBottom: 4,
-    overflow: 'hidden',
+    justifyContent: 'center',
+    paddingVertical: 3,
+    paddingHorizontal: 1,
   },
   tablaHeaderCellColTexto: {
     fontSize: 6,
     fontWeight: 'bold',
     color: '#fff',
-    width: 62,
     textAlign: 'center',
-    transform: 'rotate(-90deg)',
   },
   tablaRow: {
     flexDirection: 'row',
@@ -253,7 +250,7 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
   },
   tablaCellValor: {
-    width: 34,
+    width: 38,
     padding: 2,
     fontSize: 6,
     fontWeight: 'bold',
@@ -374,9 +371,9 @@ const OrdenTrabajoPDF = ({ orden }) => {
                 {planilla.tipo === 'tabular' ? (
                   <View style={{ padding: 5 }}>
                     <View style={styles.tablaHeaderRow}>
-                      <View style={[styles.tablaHeaderCellId, { width: 20 }]}><Text>Nº</Text></View>
+                      <View style={[styles.tablaHeaderCellId, { width: 18 }]}><Text>Nº</Text></View>
                       {(planilla.camposTexto || []).map((campo) => (
-                        <View key={campo} style={[styles.tablaHeaderCellId, { width: 60 }]}><Text>{campo}</Text></View>
+                        <View key={campo} style={[styles.tablaHeaderCellId, { width: 50 }]}><Text>{campo}</Text></View>
                       ))}
                       {planilla.columnas.map((col) => (
                         <View key={col} style={styles.tablaHeaderCellCol}>
@@ -386,9 +383,9 @@ const OrdenTrabajoPDF = ({ orden }) => {
                     </View>
                     {(planilla.unidades || []).map((unidad, k) => (
                       <View key={k} style={styles.tablaRow} wrap={false}>
-                        <Text style={[styles.tablaCellId, { width: 20 }]}>{unidad.numero}</Text>
+                        <Text style={[styles.tablaCellId, { width: 18 }]}>{unidad.numero}</Text>
                         {(planilla.camposTexto || []).map((campo) => (
-                          <Text key={campo} style={[styles.tablaCellId, { width: 60 }]}>{unidad.campos?.[campo] || ''}</Text>
+                          <Text key={campo} style={[styles.tablaCellId, { width: 50 }]}>{unidad.campos?.[campo] || ''}</Text>
                         ))}
                         {planilla.columnas.map((col) => {
                           const valor = unidad.valores?.[col];

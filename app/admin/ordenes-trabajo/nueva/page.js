@@ -282,22 +282,6 @@ export default function NuevaOrdenTrabajo() {
             />
           </div>
 
-          {/* Planillas de inspección */}
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="mb-4 text-lg font-semibold text-gray-700">Planillas de Inspección</h3>
-            <PlanillasAdjuntas
-              plantillasDisponibles={plantillasDisponibles}
-              planillasAdjuntas={planillasAdjuntas}
-              onChange={setPlanillasAdjuntas}
-            />
-          </div>
-
-          {/* Fotos */}
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="mb-4 text-lg font-semibold text-gray-700">Fotos</h3>
-            <FotosUploader fotos={fotos} onChange={setFotos} />
-          </div>
-
           {/* Firma del técnico */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <FirmaCanvas
@@ -318,6 +302,22 @@ export default function NuevaOrdenTrabajo() {
               onGuardar={(firma) => setOrden({ ...orden, firmaCliente: firma })}
               onAclaracionChange={(aclaracion) => setOrden({ ...orden, aclaracionFirmaCliente: aclaracion })}
             />
+          </div>
+
+          {/* Planillas de inspección */}
+          <div className="p-6 bg-white rounded-lg shadow-md">
+            <h3 className="mb-4 text-lg font-semibold text-gray-700">Planillas de Inspección</h3>
+            <PlanillasAdjuntas
+              plantillasDisponibles={plantillasDisponibles}
+              planillasAdjuntas={planillasAdjuntas}
+              onChange={setPlanillasAdjuntas}
+            />
+          </div>
+
+          {/* Fotos */}
+          <div className="p-6 bg-white rounded-lg shadow-md">
+            <h3 className="mb-4 text-lg font-semibold text-gray-700">Fotos</h3>
+            <FotosUploader fotos={fotos} onChange={setFotos} />
           </div>
 
           {/* Observaciones */}

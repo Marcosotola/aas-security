@@ -318,6 +318,28 @@ export default function EditarOrdenTrabajo({ params }) {
             />
           </div>
 
+          {/* Firma del técnico */}
+          <div className="p-6 bg-white rounded-lg shadow-md">
+            <FirmaCanvas
+              titulo="Firma del Técnico"
+              firma={orden.firmaTecnico}
+              aclaracion={orden.aclaracionFirmaTecnico}
+              onGuardar={(firma) => setOrden({ ...orden, firmaTecnico: firma })}
+              onAclaracionChange={(aclaracion) => setOrden({ ...orden, aclaracionFirmaTecnico: aclaracion })}
+            />
+          </div>
+
+          {/* Firma de conformidad del cliente */}
+          <div className="p-6 bg-white rounded-lg shadow-md">
+            <FirmaCanvas
+              titulo="Conformidad del Cliente"
+              firma={orden.firmaCliente}
+              aclaracion={orden.aclaracionFirmaCliente}
+              onGuardar={(firma) => setOrden({ ...orden, firmaCliente: firma })}
+              onAclaracionChange={(aclaracion) => setOrden({ ...orden, aclaracionFirmaCliente: aclaracion })}
+            />
+          </div>
+
           {/* Planillas de inspección */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Planillas de Inspección</h3>
@@ -355,28 +377,6 @@ export default function EditarOrdenTrabajo({ params }) {
 
             <p className="mb-2 text-sm text-gray-500">Agregar fotos nuevas</p>
             <FotosUploader fotos={fotosNuevas} onChange={setFotosNuevas} />
-          </div>
-
-          {/* Firma del técnico */}
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <FirmaCanvas
-              titulo="Firma del Técnico"
-              firma={orden.firmaTecnico}
-              aclaracion={orden.aclaracionFirmaTecnico}
-              onGuardar={(firma) => setOrden({ ...orden, firmaTecnico: firma })}
-              onAclaracionChange={(aclaracion) => setOrden({ ...orden, aclaracionFirmaTecnico: aclaracion })}
-            />
-          </div>
-
-          {/* Firma de conformidad del cliente */}
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <FirmaCanvas
-              titulo="Conformidad del Cliente"
-              firma={orden.firmaCliente}
-              aclaracion={orden.aclaracionFirmaCliente}
-              onGuardar={(firma) => setOrden({ ...orden, firmaCliente: firma })}
-              onAclaracionChange={(aclaracion) => setOrden({ ...orden, aclaracionFirmaCliente: aclaracion })}
-            />
           </div>
 
           {/* Observaciones */}
