@@ -363,23 +363,25 @@ const OrdenTrabajoPDF = ({ orden }) => {
           <View style={[styles.section, { marginTop: 20 }]}>
             <Text style={styles.sectionTitle}>Se adjunta la siguiente inspección</Text>
             {orden.planillasAdjuntas.map((planilla, i) => (
-              <View key={i} style={styles.planillaBloque} wrap={false}>
-                <View style={styles.planillaTitulo}>
-                  <Text style={styles.planillaGrupo}>{planilla.grupo}</Text>
-                  <Text style={styles.planillaNombre}>{planilla.titulo}</Text>
-                </View>
+              <View key={i} style={styles.planillaBloque}>
                 {planilla.tipo === 'tabular' ? (
                   <View style={{ padding: 5 }}>
-                    <View style={styles.tablaHeaderRow}>
-                      <View style={[styles.tablaHeaderCellId, { width: 18 }]}><Text>Nº</Text></View>
-                      {(planilla.camposTexto || []).map((campo) => (
-                        <View key={campo} style={[styles.tablaHeaderCellId, { width: 50 }]}><Text>{campo}</Text></View>
-                      ))}
-                      {planilla.columnas.map((col) => (
-                        <View key={col} style={styles.tablaHeaderCellCol}>
-                          <Text style={styles.tablaHeaderCellColTexto}>{col}</Text>
-                        </View>
-                      ))}
+                    <View wrap={false}>
+                      <View style={styles.planillaTitulo}>
+                        <Text style={styles.planillaGrupo}>{planilla.grupo}</Text>
+                        <Text style={styles.planillaNombre}>{planilla.titulo}</Text>
+                      </View>
+                      <View style={styles.tablaHeaderRow}>
+                        <View style={[styles.tablaHeaderCellId, { width: 18 }]}><Text>Nº</Text></View>
+                        {(planilla.camposTexto || []).map((campo) => (
+                          <View key={campo} style={[styles.tablaHeaderCellId, { width: 50 }]}><Text>{campo}</Text></View>
+                        ))}
+                        {planilla.columnas.map((col) => (
+                          <View key={col} style={styles.tablaHeaderCellCol}>
+                            <Text style={styles.tablaHeaderCellColTexto}>{col}</Text>
+                          </View>
+                        ))}
+                      </View>
                     </View>
                     {(planilla.unidades || []).map((unidad, k) => (
                       <View key={k} style={styles.tablaRow} wrap={false}>
@@ -410,13 +412,19 @@ const OrdenTrabajoPDF = ({ orden }) => {
                   </View>
                 ) : (
                   <>
-                    <View style={styles.checklistHeader}>
-                      <Text style={[styles.checklistDescripcion, styles.checklistColHeader]}>Ítem</Text>
-                      <Text style={[styles.checklistEstado, styles.checklistColHeader]}>Estado</Text>
-                      <Text style={[styles.checklistObservacion, styles.checklistColHeader]}>Observación</Text>
+                    <View wrap={false}>
+                      <View style={styles.planillaTitulo}>
+                        <Text style={styles.planillaGrupo}>{planilla.grupo}</Text>
+                        <Text style={styles.planillaNombre}>{planilla.titulo}</Text>
+                      </View>
+                      <View style={styles.checklistHeader}>
+                        <Text style={[styles.checklistDescripcion, styles.checklistColHeader]}>Ítem</Text>
+                        <Text style={[styles.checklistEstado, styles.checklistColHeader]}>Estado</Text>
+                        <Text style={[styles.checklistObservacion, styles.checklistColHeader]}>Observación</Text>
+                      </View>
                     </View>
                     {planilla.items.map((item, j) => (
-                      <React.Fragment key={j}>
+                      <View key={j} wrap={false}>
                         {item.subtitulo && (
                           <Text style={styles.checklistSubtitulo}>{item.subtitulo}</Text>
                         )}
@@ -430,7 +438,7 @@ const OrdenTrabajoPDF = ({ orden }) => {
                             {item.severidad ? ` (${item.severidad})` : ''}
                           </Text>
                         </View>
-                      </React.Fragment>
+                      </View>
                     ))}
                   </>
                 )}
@@ -441,11 +449,11 @@ const OrdenTrabajoPDF = ({ orden }) => {
 
         {/* Fotos (última sección) */}
         {orden.fotos?.length > 0 && (
-          <View style={styles.section} wrap={false}>
+          <View style={styles.section}>
             <Text style={styles.sectionTitle}>Fotos</Text>
             <View style={styles.fotosGrid}>
               {orden.fotos.map((foto, index) => (
-                <View key={foto.path || index} style={styles.fotoItem}>
+                <View key={foto.path || index} style={styles.fotoItem} wrap={false}>
                   <Image src={foto.url} style={styles.foto} />
                 </View>
               ))}
