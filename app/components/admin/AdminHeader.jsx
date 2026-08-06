@@ -57,6 +57,9 @@ export default function AdminHeader() {
   const [documentosMenuAbierto, setDocumentosMenuAbierto] = useState(false);
   const [suscripcionVencida, setSuscripcionVencida] = useState(false);
   const [redirigiendoAPago, setRedirigiendoAPago] = useState(false);
+  const [mostrarModalPago, setMostrarModalPago] = useState(false);
+  const [emailPago, setEmailPago] = useState('');
+  const [errorPago, setErrorPago] = useState('');
   const pathname = usePathname();
   const router = useRouter();
   const documentosBtnRef = useRef(null);
@@ -77,38 +80,51 @@ export default function AdminHeader() {
       .catch(() => {}); // sin permiso (ej. Tecnico) o sin datos todavía: no mostrar banner
   }, [user]);
 
-  // Al Admin (no al SuperAdmin) lo mandamos directo a MercadoPago apenas
-  // detectamos que la suscripción está vencida, en vez de pedirle que
-  // encuentre un link en algún lado. El SuperAdmin nunca se redirige: es
-  // quien administra la app, no quien paga. La pantalla de Suscripción
-  // tampoco redirige, para poder revisar el estado sin que te saque.
+  // Al Admin (no al SuperAdmin) le mostramos un modal apenas detectamos que
+  // la suscripción está vencida, en vez de redirigirlo de una sin avisar.
+  // El modal deja confirmar o cambiar el email antes de ir a MercadoPago,
+  // porque el email con el que inició sesión en el panel no siempre
+  // coincide con el de su cuenta de MercadoPago. El SuperAdmin nunca ve
+  // esto: es quien administra la app, no quien paga. La pantalla de
+  // Suscripción tampoco lo muestra, para poder revisar el estado sin que
+  // te saque.
   useEffect(() => {
     if (!user || !suscripcionVencida) return;
     if (esSuperAdmin(user.email)) return;
     if (pathname === '/admin/suscripcion') return;
 
-    let cancelado = false;
-    (async () => {
-      try {
-        setRedirigiendoAPago(true);
-        const token = await user.getIdToken();
-        const res = await fetch('/api/mercadopago/crear-suscripcion', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!cancelado && res.ok && data.initPoint) {
-          window.location.href = data.initPoint;
-          return;
-        }
-      } catch (error) {
-        console.error('Error al redirigir a MercadoPago:', error);
-      }
-      if (!cancelado) setRedirigiendoAPago(false);
-    })();
-
-    return () => { cancelado = true; };
+    setEmailPago(user.email || '');
+    setErrorPago('');
+    setMostrarModalPago(true);
   }, [user, suscripcionVencida, pathname]);
+
+  const irAMercadoPago = async () => {
+    const email = emailPago.trim();
+    if (!email) return;
+
+    setErrorPago('');
+    setMostrarModalPago(false);
+    setRedirigiendoAPago(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch('/api/mercadopago/crear-suscripcion', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payerEmail: email })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.initPoint) {
+        window.location.href = data.initPoint;
+        return;
+      }
+      setErrorPago(data.error || 'No se pudo generar el link de pago.');
+    } catch (error) {
+      console.error('Error al redirigir a MercadoPago:', error);
+      setErrorPago('No se pudo generar el link de pago.');
+    }
+    setRedirigiendoAPago(false);
+    setMostrarModalPago(true);
+  };
 
   const handleLogout = async () => {
     try {
@@ -128,6 +144,50 @@ export default function AdminHeader() {
         <div className="text-center">
           <div className="w-12 h-12 mx-auto mb-4 border-b-2 rounded-full animate-spin border-primary"></div>
           <p className="text-gray-700">Te estamos llevando a MercadoPago para regularizar el pago...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (mostrarModalPago) {
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
+        <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-xl">
+          <div className="flex items-center gap-2 mb-2 text-danger">
+            <ShieldAlert size={20} />
+            <h2 className="text-lg font-semibold">Suscripción vencida</h2>
+          </div>
+          <p className="mb-4 text-sm text-gray-600">
+            El sitio público está bloqueado. Te vamos a llevar a MercadoPago para autorizar el débito mensual.
+            Revisá el email antes de continuar: es el que va a usarse para iniciar sesión en MercadoPago, y puede
+            no coincidir con el que usás para entrar a este panel.
+          </p>
+
+          <label className="block mb-1 text-sm font-medium text-gray-700">Email de MercadoPago</label>
+          <input
+            type="email"
+            value={emailPago}
+            onChange={(e) => setEmailPago(e.target.value)}
+            placeholder="tu-email@mercadopago.com"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          />
+          {errorPago && <p className="mt-2 text-sm text-danger">{errorPago}</p>}
+
+          <button
+            type="button"
+            onClick={irAMercadoPago}
+            disabled={!emailPago.trim()}
+            className="w-full px-4 py-2 mt-4 font-medium text-white transition-colors rounded-md bg-primary hover:bg-primary-light disabled:opacity-50"
+          >
+            Continuar a MercadoPago
+          </button>
+
+          <Link
+            href="/admin/suscripcion"
+            className="block mt-3 text-sm text-center text-gray-500 hover:underline"
+          >
+            Ver detalles de la suscripción
+          </Link>
         </div>
       </div>
     );

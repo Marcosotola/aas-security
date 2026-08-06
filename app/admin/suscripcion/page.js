@@ -213,9 +213,10 @@ export default function Suscripcion() {
               <div className="pt-4 space-y-2 border-t border-gray-100">
                 <p className="text-sm font-medium text-gray-700">Cobro recurrente con MercadoPago</p>
                 <p className="text-xs text-gray-400">
-                  Totalmente automático: cuando el admin entra al panel con la suscripción vencida, el sistema
-                  lo redirige directo a MercadoPago para autorizar el débito mensual. A partir de ahí,
-                  MercadoPago avisa cada pago solo y esta fecha se actualiza sola. No hay nada que generar ni compartir a mano.
+                  Cuando el admin entra al panel con la suscripción vencida, el sistema le muestra un aviso para
+                  confirmar (o cambiar) el email de MercadoPago y recién ahí lo lleva a autorizar el débito
+                  mensual. A partir de ahí, MercadoPago avisa cada pago solo y esta fecha se actualiza sola. No
+                  hay nada que generar ni compartir a mano.
                 </p>
 
                 {config?.mercadoPago?.initPoint && (

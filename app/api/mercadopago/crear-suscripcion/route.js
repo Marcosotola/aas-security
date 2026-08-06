@@ -42,13 +42,29 @@ export async function POST(request) {
     return NextResponse.json({ error: 'No se pudo verificar el permiso.' }, { status: 500 });
   }
 
+  const body = await request.json().catch(() => ({}));
+  let payerEmail;
+  if (body?.payerEmail) {
+    const email = String(body.payerEmail).trim();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: 'El email no es válido.' }, { status: 400 });
+    }
+    payerEmail = email || undefined;
+  }
+
   try {
     const configSnap = await adminDb.doc('config/suscripcion').get();
     const config = configSnap.exists ? configSnap.data() : {};
 
-    // Ya hay un link vigente (pendiente de autorizar o autorizado): lo
-    // reusamos en vez de crear una suscripción duplicada en MercadoPago.
-    if (config.mercadoPago?.initPoint && config.mercadoPago.estado !== 'cancelled') {
+    // Ya hay un link vigente (pendiente de autorizar o autorizado) generado
+    // con el mismo email: lo reusamos en vez de crear una suscripción
+    // duplicada en MercadoPago. Si el admin cambió el email, generamos un
+    // link nuevo con el email correcto.
+    if (
+      config.mercadoPago?.initPoint &&
+      config.mercadoPago.estado !== 'cancelled' &&
+      (config.mercadoPago.payerEmail || undefined) === payerEmail
+    ) {
       return NextResponse.json({
         initPoint: config.mercadoPago.initPoint,
         estado: config.mercadoPago.estado
@@ -64,13 +80,14 @@ export async function POST(request) {
     }
 
     const backUrl = new URL('/admin/suscripcion', request.url).toString();
-    const preapproval = await crearPreapproval({ monto, backUrl });
+    const preapproval = await crearPreapproval({ monto, backUrl, payerEmail });
 
     await adminDb.doc('config/suscripcion').set({
       mercadoPago: {
         preapprovalId: preapproval.id,
         initPoint: preapproval.init_point,
-        estado: preapproval.status
+        estado: preapproval.status,
+        payerEmail: payerEmail || null
       }
     }, { merge: true });
 
