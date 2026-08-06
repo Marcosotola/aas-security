@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LogOut, Home, Edit, PlusCircle, Trash2, Download, MapPin } from 'lucide-react';
+import { LogOut, Home, Edit, PlusCircle, Trash2, Eye, Download, MapPin } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import {
@@ -12,12 +12,14 @@ import {
   actualizarUsuario,
   obtenerPresupuestosPorCliente,
   obtenerRemitosPorCliente,
-  obtenerRecibosPorCliente
+  obtenerRecibosPorCliente,
+  obtenerOrdenesTrabajoPorCliente
 } from '../lib/firestore';
-import { PDFDownloadLink } from '@react-pdf/renderer';
 import PresupuestoPDF from '../components/pdf/PresupuestoPDF';
 import RemitoPDF from '../components/pdf/RemitoPDF';
 import ReciboPDF from '../components/pdf/ReciboPDF';
+import VerDescargarPDF from '../components/pdf/VerDescargarPDF';
+import DescargarOrdenTrabajoPDF from '../components/pdf/DescargarOrdenTrabajoPDF';
 import { formatearFecha } from '../lib/fecha';
 
 const formatMoney = (amount) => {
@@ -52,6 +54,7 @@ export default function Cuenta() {
   const [presupuestos, setPresupuestos] = useState([]);
   const [remitos, setRemitos] = useState([]);
   const [recibos, setRecibos] = useState([]);
+  const [ordenesTrabajo, setOrdenesTrabajo] = useState([]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -80,14 +83,16 @@ export default function Cuenta() {
         setPerfil(perfilData);
         setDatosPerfil(perfilData);
 
-        const [mispresupuestos, misremitos, misrecibos] = await Promise.all([
+        const [mispresupuestos, misremitos, misrecibos, misordenesTrabajo] = await Promise.all([
           obtenerPresupuestosPorCliente(currentUser.uid),
           obtenerRemitosPorCliente(currentUser.uid),
-          obtenerRecibosPorCliente(currentUser.uid)
+          obtenerRecibosPorCliente(currentUser.uid),
+          obtenerOrdenesTrabajoPorCliente(currentUser.uid)
         ]);
         setPresupuestos(mispresupuestos);
         setRemitos(misremitos);
         setRecibos(misrecibos);
+        setOrdenesTrabajo(misordenesTrabajo);
 
         setLoading(false);
       } catch (error) {
@@ -318,6 +323,7 @@ export default function Cuenta() {
         <ListaDocumentos titulo="Mis Presupuestos" documentos={presupuestos} Documento={PresupuestoPDF} propName="presupuesto" />
         <ListaDocumentos titulo="Mis Remitos" documentos={remitos} Documento={RemitoPDF} propName="remito" />
         <ListaDocumentos titulo="Mis Recibos" documentos={recibos} Documento={ReciboPDF} propName="recibo" />
+        <ListaOrdenesTrabajo ordenes={ordenesTrabajo} />
       </div>
     </div>
   );
@@ -349,14 +355,50 @@ function ListaDocumentos({ titulo, documentos, Documento, propName }) {
                   <td className="px-4 py-2 text-sm text-gray-500 whitespace-nowrap">{d.estado || '-'}</td>
                   <td className="px-4 py-2 text-sm font-medium text-right text-gray-900 whitespace-nowrap">{formatMoney(d.total)}</td>
                   <td className="px-4 py-2 text-right whitespace-nowrap">
-                    <PDFDownloadLink
-                      document={<Documento {...{ [propName]: d }} />}
-                      fileName={`${d.numero}.pdf`}
-                      className="text-primary hover:text-primary-light"
-                      title="Descargar PDF"
-                    >
-                      {({ loading }) => <Download size={16} className={loading ? 'animate-pulse' : ''} />}
-                    </PDFDownloadLink>
+                    <VerDescargarPDF documento={<Documento {...{ [propName]: d }} />} fileName={`${d.numero}.pdf`} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ListaOrdenesTrabajo({ ordenes }) {
+  return (
+    <div className="p-6 bg-white rounded-lg shadow-md">
+      <h3 className="mb-4 text-lg font-semibold text-gray-700">Mis Órdenes de Trabajo</h3>
+      {ordenes.length === 0 ? (
+        <p className="text-sm text-gray-400">No hay documentos todavía.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Número</th>
+                <th className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Fecha</th>
+                <th className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Sede</th>
+                <th className="px-4 py-2"></th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {ordenes.map((orden) => (
+                <tr key={orden.id}>
+                  <td className="px-4 py-2 text-sm font-medium text-gray-900 whitespace-nowrap">{orden.numero}</td>
+                  <td className="px-4 py-2 text-sm text-gray-500 whitespace-nowrap">{formatFecha(orden)}</td>
+                  <td className="px-4 py-2 text-sm text-gray-500 whitespace-nowrap">{orden.cliente?.sedeNombre || '-'}</td>
+                  <td className="px-4 py-2 text-right whitespace-nowrap">
+                    <span className="inline-flex items-center space-x-3">
+                      <DescargarOrdenTrabajoPDF orden={orden} modo="ver" className="text-gray-600 hover:text-primary" >
+                        <Eye size={16} />
+                      </DescargarOrdenTrabajoPDF>
+                      <DescargarOrdenTrabajoPDF orden={orden} modo="descargar" className="text-primary hover:text-primary-light">
+                        <Download size={16} />
+                      </DescargarOrdenTrabajoPDF>
+                    </span>
                   </td>
                 </tr>
               ))}

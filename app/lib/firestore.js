@@ -909,6 +909,7 @@ const obtenerColeccionPorCliente = async (nombreColeccion, clienteId) => {
 export const obtenerPresupuestosPorCliente = (clienteId) => obtenerColeccionPorCliente('presupuestos', clienteId);
 export const obtenerRemitosPorCliente = (clienteId) => obtenerColeccionPorCliente('remitos', clienteId);
 export const obtenerRecibosPorCliente = (clienteId) => obtenerColeccionPorCliente('recibos', clienteId);
+export const obtenerOrdenesTrabajoPorCliente = (clienteId) => obtenerColeccionPorCliente('ordenesTrabajo', clienteId);
 
 // ========== SUSCRIPCIÓN DE LA APP (solo lectura para Admin, edición solo SuperAdmin) ==========
 // Doc único config/suscripcion. Si no existe todavía, se devuelven valores
