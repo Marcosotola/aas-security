@@ -138,7 +138,7 @@ export default function VerOrdenTrabajo({ params }) {
             <div className="text-xs text-right text-gray-700">
               <div>Email: alexalanspitel.security@gmail.com</div>
               <div>Teléfono: (351) 311 2962</div>
-              <div>Web: www.aassecurity.com.ar</div>
+              <div>Web: aas-security.vercel.app</div>
             </div>
           </div>
 
@@ -349,7 +349,7 @@ export default function VerOrdenTrabajo({ params }) {
           {/* Pie de página */}
           <div className="px-8 py-4 text-xs text-center text-gray-600 border-t border-blue-800">
             <div>AAS Security - CUIT: 20-24471842-7</div>
-            <div>Ceferino Namuncura 5400, 5000 - Córdoba - Tel: (351) 311 2962 - www.aassecurity.com.ar</div>
+            <div>Ceferino Namuncura 5400, 5000 - Córdoba - Tel: (351) 311 2962 - aas-security.vercel.app</div>
           </div>
         </div>
       </div>

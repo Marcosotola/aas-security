@@ -166,7 +166,7 @@ const RemitoPDF = ({ remito }) => {
           <View style={styles.headerInfo}>
             <Text>Email: alexalanspitel.security@gmail.com</Text>
             <Text>Teléfono: (351) 311 2962</Text>
-            <Text>Web: www.aassecurity.com.ar</Text>
+            <Text>Web: aas-security.vercel.app</Text>
           </View>
         </View>
 
@@ -277,7 +277,7 @@ const RemitoPDF = ({ remito }) => {
         {/* Pie de página con numeración */}
         <View style={styles.footer} fixed>
           <Text>AAS Security - CUIT: 20-24471842-7</Text>
-          <Text>Ceferino Namuncura 5400, 5000 - Córdoba - Tel: (351) 311 2962 - www.aassecurity.com.ar</Text>
+          <Text>Ceferino Namuncura 5400, 5000 - Córdoba - Tel: (351) 311 2962 - aas-security.vercel.app</Text>
           <Text style={{ marginTop: 5 }} render={({ pageNumber, totalPages }) => (
             `Hoja ${pageNumber} de ${totalPages}`
           )} />

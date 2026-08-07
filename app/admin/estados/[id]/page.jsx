@@ -137,7 +137,7 @@ export default function VerEstado({ params }) {
             <div className="text-sm text-right text-gray-700">
               <p>Email: alexalanspitel.security@gmail.com</p>
               <p>Teléfono: (351) 311 2962</p>
-              <p>Web: www.aassecurity.com.ar</p>
+              <p>Web: aas-security.vercel.app</p>
             </div>
           </div>
 
@@ -246,7 +246,7 @@ export default function VerEstado({ params }) {
           {/* Pie de página */}
           <div className="px-8 py-6 text-sm text-center text-gray-600 border-t-2 border-blue-800">
             <p className="font-medium">AAS Security - CUIT: 20-24471842-7</p>
-            <p>Ceferino Namuncura 5400, 5000 - Córdoba - Tel: (351) 311 2962 - www.aassecurity.com.ar</p>
+            <p>Ceferino Namuncura 5400, 5000 - Córdoba - Tel: (351) 311 2962 - aas-security.vercel.app</p>
           </div>
         </div>
       </div>
