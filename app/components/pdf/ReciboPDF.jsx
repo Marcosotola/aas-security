@@ -164,7 +164,7 @@ const ReciboPDF = ({ recibo }) => {
           <View style={styles.headerInfo}>
             <Text>CUIT: 20-24471842-7</Text>
             <Text>Tel: (351) 311 2962</Text>
-            <Text>contacto@aassecurity.com.ar</Text>
+            <Text>alexalanspitel.security@gmail.com</Text>
           </View>
         </View>
 

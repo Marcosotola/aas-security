@@ -254,8 +254,8 @@ const HeaderBlock = () =>
     ),
     h(View, { style: styles.headerInfo },
       h(Text, null, 'Tel / WhatsApp: (351) 311-2962'),
-      h(Text, null, 'alexalanspitel.security@gmail.com'),
-      h(Text, null, 'aas-security.vercel.app')
+      h(Text, null, 'Email: alexalanspitel.security@gmail.com'),
+      h(Text, null, 'Web: aas-security.vercel.app')
     )
   );
 

@@ -135,7 +135,7 @@ export default function VerEstado({ params }) {
               </div>
             </div>
             <div className="text-sm text-right text-gray-700">
-              <p>Email: contacto@aassecurity.com.ar</p>
+              <p>Email: alexalanspitel.security@gmail.com</p>
               <p>Teléfono: (351) 311 2962</p>
               <p>Web: www.aassecurity.com.ar</p>
             </div>

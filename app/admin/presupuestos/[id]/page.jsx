@@ -169,7 +169,7 @@ export default function VerPresupuesto({ params }) {
               </div>
             </div>
             <div className="text-xs text-right text-gray-700">
-              <div>Email: contacto@aassecurity.com.ar</div>
+              <div>Email: alexalanspitel.security@gmail.com</div>
               <div>Teléfono: (351) 311 2962</div>
               <div>Web: www.aassecurity.com.ar</div>
             </div>

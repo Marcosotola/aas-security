@@ -252,7 +252,7 @@ const EstadoPDF = ({ estado }) => {
             </View>
           </View>
           <View style={styles.headerInfo}>
-            <Text>Email: contacto@aassecurity.com.ar</Text>
+            <Text>Email: alexalanspitel.security@gmail.com</Text>
             <Text>Teléfono: (351) 311 2962</Text>
             <Text>Web: www.aassecurity.com.ar</Text>
           </View>
