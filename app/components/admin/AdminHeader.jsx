@@ -28,6 +28,7 @@ import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 import { obtenerConfigSuscripcion } from '../../lib/firestore';
 import { esSuperAdmin } from '../../lib/superAdmin';
+import { estaBloqueada } from '../../lib/suscripcion';
 import PortalDropdown from '../PortalDropdown';
 
 // Presupuestos, Recibos, Remitos, Estados de cuenta e Informes viven agrupados
@@ -72,12 +73,22 @@ export default function AdminHeader() {
   useEffect(() => {
     if (!user) return;
     obtenerConfigSuscripcion()
-      .then((config) => {
-        const hoy = new Date().toISOString().split('T')[0];
-        const vencida = Boolean(config.fechaVencimiento && config.fechaVencimiento < hoy);
-        setSuscripcionVencida(config.appHabilitada === false || vencida);
-      })
+      .then((config) => setSuscripcionVencida(estaBloqueada(config)))
       .catch(() => {}); // sin permiso (ej. Tecnico) o sin datos todavía: no mostrar banner
+  }, [user]);
+
+  // El SuperAdmin registra la cookie de bypass apenas se loguea, para poder
+  // navegar el sitio público sin que middleware.js lo mande a /mantenimiento
+  // cuando la suscripción está vencida (ver app/lib/superAdminSesion.js).
+  useEffect(() => {
+    if (!user || !esSuperAdmin(user.email)) return;
+    user.getIdToken()
+      .then((token) => fetch('/api/superadmin/sesion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      }))
+      .catch((error) => console.error('Error al registrar la sesión de SuperAdmin:', error));
   }, [user]);
 
   // Al Admin (no al SuperAdmin) le mostramos un modal apenas detectamos que
@@ -128,6 +139,9 @@ export default function AdminHeader() {
 
   const handleLogout = async () => {
     try {
+      if (user && esSuperAdmin(user.email)) {
+        await fetch('/api/superadmin/sesion', { method: 'DELETE' }).catch(() => {});
+      }
       await signOut(auth);
       router.push('/admin');
     } catch (error) {

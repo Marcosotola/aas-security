@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 import { WebhookSignatureValidator } from 'mercadopago';
 import { adminDb, hasAdminConfig } from '../../../lib/firebaseAdmin';
 import { obtenerPago, obtenerPreapproval, hasMercadoPagoConfig } from '../../../lib/mercadopago';
+import { fechaHoy, sumarMeses } from '../../../lib/suscripcion';
 
 export async function POST(request) {
   if (!hasAdminConfig || !hasMercadoPagoConfig) {
@@ -49,23 +50,22 @@ export async function POST(request) {
       if (pago.status === 'approved') {
         const configSnap = await adminDb.doc('config/suscripcion').get();
         const actual = configSnap.exists ? configSnap.data() : {};
-        const hoy = new Date();
-        const hoyStr = hoy.toISOString().split('T')[0];
+        const hoyStr = fechaHoy();
         // Si todavía no venció, extiende desde el vencimiento actual (no
         // "pierde" los días que quedaban); si ya venció o no había fecha,
         // extiende desde hoy.
-        const baseFecha = actual.fechaVencimiento && actual.fechaVencimiento > hoyStr
-          ? new Date(actual.fechaVencimiento)
-          : hoy;
-        baseFecha.setMonth(baseFecha.getMonth() + 1);
-        const nuevaFecha = baseFecha.toISOString().split('T')[0];
+        const fechaBase = actual.fechaVencimiento && actual.fechaVencimiento > hoyStr
+          ? actual.fechaVencimiento
+          : hoyStr;
+        const nuevaFecha = sumarMeses(fechaBase, 1);
 
         await adminDb.doc('config/suscripcion').set({
           fechaVencimiento: nuevaFecha,
+          appHabilitada: true,
           ultimoPago: {
             id: pago.id,
             monto: pago.transaction_amount,
-            fecha: hoy.toISOString()
+            fecha: new Date().toISOString()
           }
         }, { merge: true });
       }

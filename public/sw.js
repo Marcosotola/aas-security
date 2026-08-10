@@ -1,5 +1,5 @@
 // Service Worker AAS Security PWA - con soporte offline
-const CACHE_NAME = 'aas-security-v2';
+const CACHE_NAME = 'aas-security-v3';
 const STATIC_ASSETS = [
     '/',
     '/manifest.json',
@@ -67,13 +67,22 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // Rutas /admin y respuestas de la pantalla de mantenimiento → nunca
+    // cachear: /admin siempre necesita datos frescos (sesión, suscripción) y
+    // una respuesta marcada x-mantenimiento no debe quedar servible offline
+    // una vez que el sitio se vuelve a habilitar.
+    const esAdmin = new URL(request.url).pathname.startsWith('/admin');
+
     // Páginas de navegación → network-first con fallback a cache
     event.respondWith(
         fetch(request)
             .then((response) => {
-                if (response.ok) {
+                const esMantenimiento = response.headers.get('x-mantenimiento') === '1';
+                if (response.ok && !esAdmin && !esMantenimiento) {
                     const clone = response.clone();
                     caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+                } else if (esMantenimiento) {
+                    caches.open(CACHE_NAME).then((cache) => cache.delete(request));
                 }
                 return response;
             })

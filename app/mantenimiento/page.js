@@ -1,4 +1,5 @@
 // app/mantenimiento/page.js
+import Link from 'next/link';
 import { Wrench } from 'lucide-react';
 
 export const metadata = {
@@ -19,6 +20,9 @@ export default function Mantenimiento() {
           Estamos realizando tareas de mantenimiento. Volvé a intentarlo en un rato.
           Si necesitás contactarnos con urgencia, escribinos por WhatsApp.
         </p>
+        <Link href="/admin" className="inline-block mt-6 text-sm text-primary hover:underline">
+          Ingresar al panel de administración
+        </Link>
       </div>
     </div>
   );

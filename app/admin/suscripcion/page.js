@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Home, CreditCard, ShieldCheck, ShieldAlert, Save, ExternalLink, Power } from 'lucide-react';
 import { obtenerConfigSuscripcion, actualizarConfigSuscripcion } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
+import { estaVencida, estaBloqueada } from '../../lib/suscripcion';
 
 const formatMoney = (amount) => {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -17,12 +18,15 @@ const formatMoney = (amount) => {
 };
 
 export default function Suscripcion() {
-  const { usuario, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, usuario, loading: loadingAuth } = useStaffAuth(['Admin']);
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [cambiandoEstado, setCambiandoEstado] = useState(false);
   const [config, setConfig] = useState(null);
   const [form, setForm] = useState({ monto: '', fechaVencimiento: '' });
+  const [emailPago, setEmailPago] = useState('');
+  const [procesandoPago, setProcesandoPago] = useState(false);
+  const [errorPago, setErrorPago] = useState('');
 
   const loading = loadingAuth || loadingData;
   const esSuperAdmin = usuario?.esSuperAdmin;
@@ -41,10 +45,39 @@ export default function Suscripcion() {
       .finally(() => setLoadingData(false));
   }, [usuario]);
 
-  const hoy = new Date().toISOString().split('T')[0];
-  const vencida = Boolean(config?.fechaVencimiento && config.fechaVencimiento < hoy);
+  useEffect(() => {
+    if (user?.email) setEmailPago((prev) => prev || user.email);
+  }, [user]);
+
+  const vencida = estaVencida(config);
   const appHabilitada = config?.appHabilitada !== false;
-  const bloqueada = config ? (!appHabilitada || vencida) : false;
+  const bloqueada = config ? estaBloqueada(config) : false;
+
+  const irAMercadoPago = async () => {
+    const email = emailPago.trim();
+    if (!email) return;
+
+    setErrorPago('');
+    setProcesandoPago(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch('/api/mercadopago/crear-suscripcion', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payerEmail: email })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.initPoint) {
+        window.location.href = data.initPoint;
+        return;
+      }
+      setErrorPago(data.error || 'No se pudo generar el link de pago.');
+    } catch (error) {
+      console.error('Error al redirigir a MercadoPago:', error);
+      setErrorPago('No se pudo generar el link de pago.');
+    }
+    setProcesandoPago(false);
+  };
 
   const handleGuardar = async (e) => {
     e.preventDefault();
@@ -131,6 +164,41 @@ export default function Suscripcion() {
               )}
             </div>
           </div>
+
+          {/* Regularizar el pago: solo cuando está bloqueada y no es el SuperAdmin (quien administra la app, no quien paga) */}
+          {bloqueada && !esSuperAdmin && (
+            <div className="p-6 space-y-4 bg-white rounded-lg shadow-md">
+              <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-700">
+                <CreditCard size={18} /> Regularizar el pago
+              </h3>
+              <p className="text-sm text-gray-600">
+                Confirmá o cambiá el email de MercadoPago antes de continuar: es el que se usa para iniciar sesión
+                ahí, y puede no coincidir con el que usás para entrar a este panel.
+              </p>
+
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Email de MercadoPago</label>
+                <input
+                  type="email"
+                  value={emailPago}
+                  onChange={(e) => setEmailPago(e.target.value)}
+                  placeholder="tu-email@mercadopago.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              {errorPago && <p className="text-sm text-danger">{errorPago}</p>}
+
+              <button
+                type="button"
+                onClick={irAMercadoPago}
+                disabled={!emailPago.trim() || procesandoPago}
+                className="flex items-center gap-2 px-4 py-2 font-medium text-white transition-colors rounded-md bg-primary hover:bg-primary-light disabled:opacity-50"
+              >
+                <ExternalLink size={18} />
+                {procesandoPago ? 'Generando link...' : 'Continuar a MercadoPago'}
+              </button>
+            </div>
+          )}
 
           {/* Interruptor manual: solo SuperAdmin, con efecto inmediato */}
           {esSuperAdmin && (

@@ -21,6 +21,7 @@ import { collection, query, where, getCountFromServer } from 'firebase/firestore
 import { db } from '../../lib/firebase';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { obtenerConfigSuscripcion } from '../../lib/firestore';
+import { estaBloqueada } from '../../lib/suscripcion';
 import ModuloCard from '../../components/admin/ModuloCard';
 
 // Único módulo visible para el Técnico por ahora: el resto de las
@@ -62,10 +63,7 @@ export default function Dashboard() {
       ]);
 
       setTotales({ consultas, consultasNoLeidas });
-
-      const hoy = new Date().toISOString().split('T')[0];
-      const vencida = Boolean(config.fechaVencimiento && config.fechaVencimiento < hoy);
-      setSuscripcionVencida(config.appHabilitada === false || vencida);
+      setSuscripcionVencida(estaBloqueada(config));
     } catch (error) {
       console.error('Error al cargar totales:', error);
     }
