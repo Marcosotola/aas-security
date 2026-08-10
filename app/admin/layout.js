@@ -4,8 +4,6 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import { obtenerConfigSuscripcion } from '../lib/firestore';
-import { estaBloqueada } from '../lib/suscripcion';
 import { esSuperAdmin } from '../lib/superAdmin';
 import { resolverPerfilStaff } from '../lib/useStaffAuth';
 import AdminHeader from '../components/admin/AdminHeader';
@@ -44,10 +42,15 @@ export default function AdminLayout({ children }) {
       .catch(() => setRol(null));
   }, [user]);
 
+  // Vía /api/estado-app (Admin SDK, sin auth) en vez de leer
+  // config/suscripcion directo desde el cliente: firestore.rules solo deja
+  // leer ese doc a Admin, así que un Técnico nunca podría enterarse de que
+  // está vencida y el bloqueo de abajo no se activaría nunca.
   useEffect(() => {
     if (!user) return;
-    obtenerConfigSuscripcion()
-      .then((config) => setSuscripcionVencida(estaBloqueada(config)))
+    fetch('/api/estado-app', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then(({ habilitada }) => setSuscripcionVencida(!habilitada))
       .catch(() => {});
   }, [user]);
 
