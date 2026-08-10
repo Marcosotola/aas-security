@@ -24,11 +24,9 @@ import {
   ListChecks,
   ShieldAlert
 } from 'lucide-react';
-import { signOut, onAuthStateChanged } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
-import { obtenerConfigSuscripcion } from '../../lib/firestore';
 import { esSuperAdmin } from '../../lib/superAdmin';
-import { estaBloqueada } from '../../lib/suscripcion';
 import PortalDropdown from '../PortalDropdown';
 
 // Presupuestos, Recibos, Remitos, Estados de cuenta e Informes viven agrupados
@@ -52,11 +50,9 @@ const MODULOS_NAV = [
   { id: 'suscripcion', label: 'Suscripción', icono: CreditCard, href: '/admin/suscripcion' },
 ];
 
-export default function AdminHeader() {
-  const [user, setUser] = useState(null);
+export default function AdminHeader({ user, suscripcionVencida }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [documentosMenuAbierto, setDocumentosMenuAbierto] = useState(false);
-  const [suscripcionVencida, setSuscripcionVencida] = useState(false);
   const [redirigiendoAPago, setRedirigiendoAPago] = useState(false);
   const [mostrarModalPago, setMostrarModalPago] = useState(false);
   const [emailPago, setEmailPago] = useState('');
@@ -64,18 +60,6 @@ export default function AdminHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const documentosBtnRef = useRef(null);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (!user) return;
-    obtenerConfigSuscripcion()
-      .then((config) => setSuscripcionVencida(estaBloqueada(config)))
-      .catch(() => {}); // sin permiso (ej. Tecnico) o sin datos todavía: no mostrar banner
-  }, [user]);
 
   // El SuperAdmin registra la cookie de bypass apenas se loguea, para poder
   // navegar el sitio público sin que middleware.js lo mande a /mantenimiento

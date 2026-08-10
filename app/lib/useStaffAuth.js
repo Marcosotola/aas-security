@@ -13,6 +13,21 @@ import { esSuperAdmin } from './superAdmin';
 // entran (coincide con la excepción de firestore.rules).
 const CUENTAS_ADMIN_HISTORICAS = ['marcosotola@gmail.com', 'spitelalan@gmail.com'];
 
+// Resuelve el perfil (y por lo tanto el rol) de una cuenta de staff. Vive
+// acá afuera del hook porque también lo usa app/admin/layout.js para decidir
+// si, con la suscripción vencida, un Técnico (o cualquier rol no-Admin) ve
+// el panel o la pantalla de mantenimiento.
+export async function resolverPerfilStaff(uid, email) {
+  let perfil = await obtenerUsuarioPorId(uid);
+
+  if (!perfil && CUENTAS_ADMIN_HISTORICAS.includes(email)) {
+    await crearUsuarioStaffHistorico(uid, email);
+    perfil = { id: uid, email, role: 'Admin', sedes: [] };
+  }
+
+  return perfil;
+}
+
 // Guard de acceso al panel: exige que el usuario esté logueado y que su rol
 // (leído desde /usuarios/{uid}) esté entre los permitidos. Redirige a /admin
 // si no hay sesión, o a la ruta que corresponda a su rol si no tiene permiso.
@@ -30,12 +45,7 @@ export function useStaffAuth(rolesPermitidos = ['Admin']) {
       }
 
       try {
-        let perfil = await obtenerUsuarioPorId(currentUser.uid);
-
-        if (!perfil && CUENTAS_ADMIN_HISTORICAS.includes(currentUser.email)) {
-          await crearUsuarioStaffHistorico(currentUser.uid, currentUser.email);
-          perfil = { id: currentUser.uid, email: currentUser.email, role: 'Admin', sedes: [] };
-        }
+        const perfil = await resolverPerfilStaff(currentUser.uid, currentUser.email);
 
         if (!perfil || !rolesPermitidos.includes(perfil.role)) {
           if (perfil?.role === 'Cliente') {

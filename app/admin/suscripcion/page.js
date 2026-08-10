@@ -7,6 +7,7 @@ import { Home, CreditCard, ShieldCheck, ShieldAlert, Save, ExternalLink, Power }
 import { obtenerConfigSuscripcion, actualizarConfigSuscripcion } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { estaVencida, estaBloqueada } from '../../lib/suscripcion';
+import { formatearFecha } from '../../lib/fecha';
 
 const formatMoney = (amount) => {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -155,7 +156,7 @@ export default function Suscripcion() {
                 {bloqueada ? 'Sitio bloqueado' : 'Sitio activo'}
               </p>
               <p className="text-sm text-gray-600">
-                Monto: {formatMoney(config?.monto)} · Vencimiento: {config?.fechaVencimiento || 'sin definir'}
+                Monto: {formatMoney(config?.monto)} · Vencimiento: {config?.fechaVencimiento ? formatearFecha(config.fechaVencimiento) : 'sin definir'}
               </p>
               {vencida && !esSuperAdmin && (
                 <p className="mt-2 text-sm text-danger">
