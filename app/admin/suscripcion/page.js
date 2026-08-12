@@ -25,6 +25,7 @@ export default function Suscripcion() {
   const [cambiandoEstado, setCambiandoEstado] = useState(false);
   const [config, setConfig] = useState(null);
   const [form, setForm] = useState({ monto: '', fechaVencimiento: '' });
+  const [emailPago, setEmailPago] = useState('');
   const [procesandoPago, setProcesandoPago] = useState(false);
   const [errorPago, setErrorPago] = useState('');
 
@@ -50,13 +51,17 @@ export default function Suscripcion() {
   const bloqueada = config ? estaBloqueada(config) : false;
 
   const irAMercadoPago = async () => {
+    const email = emailPago.trim();
+    if (!email) return;
+
     setErrorPago('');
     setProcesandoPago(true);
     try {
       const token = await user.getIdToken();
       const res = await fetch('/api/mercadopago/crear-suscripcion', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payerEmail: email })
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.initPoint) {
@@ -164,15 +169,26 @@ export default function Suscripcion() {
                 <CreditCard size={18} /> Regularizar el pago
               </h3>
               <p className="text-sm text-gray-600">
-                Te vamos a llevar a MercadoPago para autorizar el débito mensual.
+                Cargá el email de tu cuenta de MercadoPago (no el que usás para entrar a este panel) para autorizar
+                el débito mensual.
               </p>
 
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Email de MercadoPago</label>
+                <input
+                  type="email"
+                  value={emailPago}
+                  onChange={(e) => setEmailPago(e.target.value)}
+                  placeholder="tu-email@mercadopago.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
               {errorPago && <p className="text-sm text-danger">{errorPago}</p>}
 
               <button
                 type="button"
                 onClick={irAMercadoPago}
-                disabled={procesandoPago}
+                disabled={!emailPago.trim() || procesandoPago}
                 className="flex items-center gap-2 px-4 py-2 font-medium text-white transition-colors rounded-md bg-primary hover:bg-primary-light disabled:opacity-50"
               >
                 <ExternalLink size={18} />
@@ -262,9 +278,10 @@ export default function Suscripcion() {
               <div className="pt-4 space-y-2 border-t border-gray-100">
                 <p className="text-sm font-medium text-gray-700">Cobro recurrente con MercadoPago</p>
                 <p className="text-xs text-gray-400">
-                  Cuando el admin entra al panel con la suscripción vencida, el sistema le muestra un aviso y lo
-                  lleva a autorizar el débito mensual en MercadoPago. A partir de ahí, MercadoPago avisa cada pago
-                  solo y esta fecha se actualiza sola. No hay nada que generar ni compartir a mano.
+                  Cuando el admin entra al panel con la suscripción vencida, el sistema le pide el email de su
+                  cuenta de MercadoPago y recién ahí lo lleva a autorizar el débito mensual. A partir de ahí,
+                  MercadoPago avisa cada pago solo y esta fecha se actualiza sola. No hay nada que generar ni
+                  compartir a mano.
                 </p>
 
                 {config?.mercadoPago?.initPoint && (

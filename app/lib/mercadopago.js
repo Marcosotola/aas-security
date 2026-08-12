@@ -12,13 +12,12 @@ if (hasMercadoPagoConfig) {
   console.warn('MercadoPago no está configurado. Definí MERCADOPAGO_ACCESS_TOKEN para habilitar el cobro recurrente.');
 }
 
-// Crea una suscripción (preapproval) mensual. Nunca mandamos payer_email:
-// si se manda, MercadoPago exige que el checkout se autorice con esa cuenta
-// puntual y, si el navegador ya tiene otra cuenta logueada en MercadoPago,
-// rechaza el pago con un error de "la cuenta no coincide" sin dar forma de
-// resolverlo desde acá. Sin payer_email, el link lo puede autorizar
-// cualquier cuenta que esté logueada (o se loguee) en MercadoPago al abrirlo.
-export const crearPreapproval = async ({ monto, backUrl, reason }) => {
+// Crea una suscripción (preapproval) mensual. payer_email es obligatorio
+// para la API de MercadoPago (sin plan asociado, rechaza la creación con
+// "payer_email is required" si no se manda). Por eso el admin lo carga a
+// mano antes de ser redirigido (ver AdminHeader.jsx): tiene que ser el
+// email de su cuenta de MercadoPago, no el que usa para entrar al panel.
+export const crearPreapproval = async ({ monto, backUrl, reason, payerEmail }) => {
   const preapproval = new PreApproval(client);
   return preapproval.create({
     body: {
@@ -30,7 +29,8 @@ export const crearPreapproval = async ({ monto, backUrl, reason }) => {
         currency_id: 'ARS'
       },
       back_url: backUrl,
-      external_reference: 'aas-security-suscripcion'
+      external_reference: 'aas-security-suscripcion',
+      payer_email: payerEmail
     }
   });
 };
@@ -40,10 +40,10 @@ export const obtenerPreapproval = async (id) => {
   return preapproval.get({ id });
 };
 
-// Cancela una preapproval existente en MercadoPago. Se usa para dar de baja
-// links viejos creados con payer_email (de antes de este arreglo), que
-// quedan rechazando pagos por "cuenta no coincide" y hay que reemplazar por
-// uno sin esa restricción.
+// Cancela una preapproval existente en MercadoPago. Se usa cuando el admin
+// cambia el email de pago o cuando el link guardado quedó desincronizado
+// (p. ej. MercadoPago lo canceló solo y el webhook no llegó a avisarnos),
+// para no dejar suscripciones huérfanas dando vueltas.
 export const cancelarPreapproval = async (id) => {
   const preapproval = new PreApproval(client);
   return preapproval.update({ id, body: { status: 'cancelled' } });

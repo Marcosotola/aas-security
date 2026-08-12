@@ -55,6 +55,7 @@ export default function AdminHeader({ user, suscripcionVencida }) {
   const [documentosMenuAbierto, setDocumentosMenuAbierto] = useState(false);
   const [redirigiendoAPago, setRedirigiendoAPago] = useState(false);
   const [mostrarModalPago, setMostrarModalPago] = useState(false);
+  const [emailPago, setEmailPago] = useState('');
   const [errorPago, setErrorPago] = useState('');
   const pathname = usePathname();
   const router = useRouter();
@@ -76,23 +77,28 @@ export default function AdminHeader({ user, suscripcionVencida }) {
 
   // Al Admin (no al SuperAdmin) le mostramos un modal apenas detectamos que
   // la suscripción está vencida, en vez de redirigirlo de una sin avisar.
-  // No le pedimos el email de MercadoPago: si se lo pasamos a MercadoPago
-  // como payer_email y el navegador ya tiene otra cuenta logueada ahí,
-  // rechaza el pago con un error de cuenta que no coincide. Dejamos que
-  // MercadoPago maneje el login/cambio de cuenta con su propia UI. El
-  // SuperAdmin nunca ve esto: es quien administra la app, no quien paga.
-  // La pantalla de Suscripción tampoco lo muestra, para poder revisar el
-  // estado sin que te saque.
+  // El modal le pide el email de su cuenta de MercadoPago: es obligatorio
+  // para la API (crearPreapproval en app/lib/mercadopago.js) y casi nunca
+  // coincide con el que usa para entrar a este panel. A propósito no lo
+  // prellenamos con user.email: si lo hiciéramos, el admin podría no darse
+  // cuenta de que tiene que cambiarlo y terminar mandando el email
+  // equivocado. El SuperAdmin nunca ve esto: es quien administra la app, no
+  // quien paga. La pantalla de Suscripción tampoco lo muestra, para poder
+  // revisar el estado sin que te saque.
   useEffect(() => {
     if (!user || !suscripcionVencida) return;
     if (esSuperAdmin(user.email)) return;
     if (pathname === '/admin/suscripcion') return;
 
+    setEmailPago('');
     setErrorPago('');
     setMostrarModalPago(true);
   }, [user, suscripcionVencida, pathname]);
 
   const irAMercadoPago = async () => {
+    const email = emailPago.trim();
+    if (!email) return;
+
     setErrorPago('');
     setMostrarModalPago(false);
     setRedirigiendoAPago(true);
@@ -100,7 +106,8 @@ export default function AdminHeader({ user, suscripcionVencida }) {
       const token = await user.getIdToken();
       const res = await fetch('/api/mercadopago/crear-suscripcion', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payerEmail: email })
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.initPoint) {
@@ -151,14 +158,25 @@ export default function AdminHeader({ user, suscripcionVencida }) {
             <h2 className="text-lg font-semibold">Suscripción vencida</h2>
           </div>
           <p className="mb-4 text-sm text-gray-600">
-            El sitio público está bloqueado. Te vamos a llevar a MercadoPago para autorizar el débito mensual.
+            El sitio público está bloqueado. Para autorizar el débito mensual necesitamos el email de tu cuenta de
+            MercadoPago (no el que usás para entrar a este panel).
           </p>
 
+          <label className="block mb-1 text-sm font-medium text-gray-700">Email de MercadoPago</label>
+          <input
+            type="email"
+            value={emailPago}
+            onChange={(e) => setEmailPago(e.target.value)}
+            placeholder="tu-email@mercadopago.com"
+            autoFocus
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          />
           {errorPago && <p className="mt-2 text-sm text-danger">{errorPago}</p>}
 
           <button
             type="button"
             onClick={irAMercadoPago}
+            disabled={!emailPago.trim()}
             className="w-full px-4 py-2 mt-4 font-medium text-white transition-colors rounded-md bg-primary hover:bg-primary-light disabled:opacity-50"
           >
             Continuar a MercadoPago

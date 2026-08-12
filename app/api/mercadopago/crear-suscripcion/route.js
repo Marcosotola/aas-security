@@ -1,13 +1,18 @@
 // app/api/mercadopago/crear-suscripcion/route.js
 // Consigue el link de suscripción mensual de MercadoPago: si ya existe uno
-// vigente (no cancelado) lo devuelve tal cual, si no lo crea. Lo llama el
-// propio panel automáticamente cuando el Admin entra con la suscripción
-// vencida, para mandarlo directo a pagar sin que nadie tenga que generarlo
-// ni compartirlo a mano.
+// vigente con el mismo email lo devuelve tal cual, si cambió el email o no
+// hay ninguno lo crea (cancelando el anterior si hacía falta). Lo llama el
+// propio panel cuando el Admin confirma su email de MercadoPago en el
+// modal/pantalla de Suscripción, para mandarlo directo a pagar sin que
+// nadie tenga que generarlo ni compartirlo a mano.
 import { NextResponse } from 'next/server';
-import { FieldValue } from 'firebase-admin/firestore';
 import { adminAuth, adminDb, hasAdminConfig } from '../../../lib/firebaseAdmin';
-import { cancelarPreapproval, crearPreapproval, hasMercadoPagoConfig } from '../../../lib/mercadopago';
+import {
+  cancelarPreapproval,
+  crearPreapproval,
+  hasMercadoPagoConfig,
+  obtenerPreapproval
+} from '../../../lib/mercadopago';
 
 export async function POST(request) {
   if (!hasAdminConfig || !hasMercadoPagoConfig) {
@@ -43,25 +48,45 @@ export async function POST(request) {
     return NextResponse.json({ error: 'No se pudo verificar el permiso.' }, { status: 500 });
   }
 
+  const body = await request.json().catch(() => ({}));
+  const payerEmail = String(body?.payerEmail || '').trim();
+  if (!payerEmail) {
+    return NextResponse.json({ error: 'Falta el email de tu cuenta de MercadoPago.' }, { status: 400 });
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payerEmail)) {
+    return NextResponse.json({ error: 'El email no es válido.' }, { status: 400 });
+  }
+
   try {
     const configSnap = await adminDb.doc('config/suscripcion').get();
     const config = configSnap.exists ? configSnap.data() : {};
 
-    // Ya hay un link vigente (pendiente de autorizar o autorizado): lo
-    // reusamos en vez de crear una suscripción duplicada en MercadoPago.
-    // Excepción: si quedó guardado un payerEmail (de antes de que
-    // dejáramos de restringir por email), ese link fuerza una cuenta
-    // puntual y rechaza el pago con "el email no coincide" si el admin usa
-    // otra. Lo cancelamos y generamos uno nuevo sin esa restricción.
-    if (config.mercadoPago?.initPoint && config.mercadoPago.estado !== 'cancelled') {
-      if (!config.mercadoPago.payerEmail) {
+    // Si hay una preapproval guardada, consultamos su estado real en
+    // MercadoPago en vez de confiar en lo que quedó cacheado en Firestore:
+    // MercadoPago puede cancelarla sola (p. ej. tras varios intentos
+    // fallidos) sin que el webhook llegue a avisarnos, y quedaría
+    // desincronizado.
+    let preapprovalPrevia = null;
+    if (config.mercadoPago?.preapprovalId) {
+      try {
+        preapprovalPrevia = await obtenerPreapproval(config.mercadoPago.preapprovalId);
+      } catch (error) {
+        console.error('Error al consultar la suscripción previa de MercadoPago:', error);
+      }
+    }
+
+    if (preapprovalPrevia && preapprovalPrevia.status !== 'cancelled') {
+      // Mismo email que la última vez y sigue vigente: reusamos el link en
+      // vez de crear una suscripción duplicada.
+      if (config.mercadoPago.payerEmail === payerEmail) {
         return NextResponse.json({
-          initPoint: config.mercadoPago.initPoint,
-          estado: config.mercadoPago.estado
+          initPoint: preapprovalPrevia.init_point,
+          estado: preapprovalPrevia.status
         });
       }
+      // Cambió el email: cancelamos la anterior para no dejarla huérfana.
       try {
-        await cancelarPreapproval(config.mercadoPago.preapprovalId);
+        await cancelarPreapproval(preapprovalPrevia.id);
       } catch (error) {
         console.error('Error al cancelar la suscripción anterior de MercadoPago:', error);
       }
@@ -76,14 +101,14 @@ export async function POST(request) {
     }
 
     const backUrl = new URL('/admin/suscripcion', request.url).toString();
-    const preapproval = await crearPreapproval({ monto, backUrl });
+    const preapproval = await crearPreapproval({ monto, backUrl, payerEmail });
 
     await adminDb.doc('config/suscripcion').set({
       mercadoPago: {
         preapprovalId: preapproval.id,
         initPoint: preapproval.init_point,
         estado: preapproval.status,
-        payerEmail: FieldValue.delete()
+        payerEmail
       }
     }, { merge: true });
 
