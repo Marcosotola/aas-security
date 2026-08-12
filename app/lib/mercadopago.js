@@ -12,12 +12,13 @@ if (hasMercadoPagoConfig) {
   console.warn('MercadoPago no está configurado. Definí MERCADOPAGO_ACCESS_TOKEN para habilitar el cobro recurrente.');
 }
 
-// Crea una suscripción (preapproval) mensual. payer_email es opcional: si se
-// pasa, MercadoPago exige que el checkout se autorice con esa cuenta
-// puntual (el admin lo confirma/edita antes de ser redirigido, ver
-// AdminHeader.jsx). Si no se pasa, el link sirve para que lo abra quien
-// tenga que pagar, sin depender de un email específico.
-export const crearPreapproval = async ({ monto, backUrl, reason, payerEmail }) => {
+// Crea una suscripción (preapproval) mensual. Nunca mandamos payer_email:
+// si se manda, MercadoPago exige que el checkout se autorice con esa cuenta
+// puntual y, si el navegador ya tiene otra cuenta logueada en MercadoPago,
+// rechaza el pago con un error de "la cuenta no coincide" sin dar forma de
+// resolverlo desde acá. Sin payer_email, el link lo puede autorizar
+// cualquier cuenta que esté logueada (o se loguee) en MercadoPago al abrirlo.
+export const crearPreapproval = async ({ monto, backUrl, reason }) => {
   const preapproval = new PreApproval(client);
   return preapproval.create({
     body: {
@@ -29,8 +30,7 @@ export const crearPreapproval = async ({ monto, backUrl, reason, payerEmail }) =
         currency_id: 'ARS'
       },
       back_url: backUrl,
-      external_reference: 'aas-security-suscripcion',
-      ...(payerEmail ? { payer_email: payerEmail } : {})
+      external_reference: 'aas-security-suscripcion'
     }
   });
 };
