@@ -5,8 +5,9 @@
 // vencida, para mandarlo directo a pagar sin que nadie tenga que generarlo
 // ni compartirlo a mano.
 import { NextResponse } from 'next/server';
+import { FieldValue } from 'firebase-admin/firestore';
 import { adminAuth, adminDb, hasAdminConfig } from '../../../lib/firebaseAdmin';
-import { crearPreapproval, hasMercadoPagoConfig } from '../../../lib/mercadopago';
+import { cancelarPreapproval, crearPreapproval, hasMercadoPagoConfig } from '../../../lib/mercadopago';
 
 export async function POST(request) {
   if (!hasAdminConfig || !hasMercadoPagoConfig) {
@@ -48,11 +49,22 @@ export async function POST(request) {
 
     // Ya hay un link vigente (pendiente de autorizar o autorizado): lo
     // reusamos en vez de crear una suscripción duplicada en MercadoPago.
+    // Excepción: si quedó guardado un payerEmail (de antes de que
+    // dejáramos de restringir por email), ese link fuerza una cuenta
+    // puntual y rechaza el pago con "el email no coincide" si el admin usa
+    // otra. Lo cancelamos y generamos uno nuevo sin esa restricción.
     if (config.mercadoPago?.initPoint && config.mercadoPago.estado !== 'cancelled') {
-      return NextResponse.json({
-        initPoint: config.mercadoPago.initPoint,
-        estado: config.mercadoPago.estado
-      });
+      if (!config.mercadoPago.payerEmail) {
+        return NextResponse.json({
+          initPoint: config.mercadoPago.initPoint,
+          estado: config.mercadoPago.estado
+        });
+      }
+      try {
+        await cancelarPreapproval(config.mercadoPago.preapprovalId);
+      } catch (error) {
+        console.error('Error al cancelar la suscripción anterior de MercadoPago:', error);
+      }
     }
 
     const monto = config.monto;
@@ -70,7 +82,8 @@ export async function POST(request) {
       mercadoPago: {
         preapprovalId: preapproval.id,
         initPoint: preapproval.init_point,
-        estado: preapproval.status
+        estado: preapproval.status,
+        payerEmail: FieldValue.delete()
       }
     }, { merge: true });
 

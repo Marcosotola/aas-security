@@ -40,6 +40,15 @@ export const obtenerPreapproval = async (id) => {
   return preapproval.get({ id });
 };
 
+// Cancela una preapproval existente en MercadoPago. Se usa para dar de baja
+// links viejos creados con payer_email (de antes de este arreglo), que
+// quedan rechazando pagos por "cuenta no coincide" y hay que reemplazar por
+// uno sin esa restricción.
+export const cancelarPreapproval = async (id) => {
+  const preapproval = new PreApproval(client);
+  return preapproval.update({ id, body: { status: 'cancelled' } });
+};
+
 export const obtenerPago = async (id) => {
   const payment = new Payment(client);
   return payment.get({ id });
