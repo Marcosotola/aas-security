@@ -13,10 +13,26 @@ service firebase.storage {
       return request.auth != null && rolDe(request.auth.uid) in ['Admin', 'Tecnico'];
     }
 
+    function esAdmin() {
+      return request.auth != null && rolDe(request.auth.uid) == 'Admin';
+    }
+
     // Fotos de las órdenes de trabajo: solo el staff (Admin/Tecnico) puede
     // subirlas, leerlas o borrarlas.
     match /ordenes-trabajo/{otId}/{fileName} {
       allow read, write: if esStaff();
+    }
+
+    // PDFs de facturas: solo el Admin sube/borra (igual que firestore.rules
+    // en /facturas). El Cliente dueño de la factura puede descargar su PDF;
+    // para eso se lee el clienteId directo del documento de Firestore
+    // correspondiente a este facturaId.
+    match /facturas/{facturaId}/{fileName} {
+      allow read: if esAdmin() || (
+        request.auth != null &&
+        firestore.get(/databases/(default)/documents/facturas/$(facturaId)).data.clienteId == request.auth.uid
+      );
+      allow write: if esAdmin();
     }
 
     // Todo lo demás, denegado por defecto.

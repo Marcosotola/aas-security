@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Home, FileText, DollarSign, FileCheck, Receipt, File } from 'lucide-react';
+import { Home, FileText, DollarSign, FileCheck, Receipt, File, Banknote } from 'lucide-react';
 import { collection, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useStaffAuth } from '../../lib/useStaffAuth';
@@ -21,7 +21,8 @@ export default function DocumentosHub() {
     estados: 0,
     remitos: 0,
     recibos: 0,
-    documentos: 0
+    documentos: 0,
+    facturas: 0
   });
   const loading = loadingAuth || loadingData;
 
@@ -31,14 +32,15 @@ export default function DocumentosHub() {
     (async () => {
       try {
         const contar = async (ref) => (await getCountFromServer(ref)).data().count;
-        const [presupuestos, estados, remitos, recibos, documentos] = await Promise.all([
+        const [presupuestos, estados, remitos, recibos, documentos, facturas] = await Promise.all([
           contar(collection(db, 'presupuestos')),
           contar(collection(db, 'estados')),
           contar(collection(db, 'remitos')),
           contar(collection(db, 'recibos')),
-          contar(collection(db, 'documentos'))
+          contar(collection(db, 'documentos')),
+          contar(collection(db, 'facturas'))
         ]);
-        setTotales({ presupuestos, estados, remitos, recibos, documentos });
+        setTotales({ presupuestos, estados, remitos, recibos, documentos, facturas });
       } catch (error) {
         console.error('Error al cargar totales de documentos:', error);
       } finally {
@@ -133,6 +135,21 @@ export default function DocumentosHub() {
         historial: '/admin/informes'
       },
       activo: true
+    },
+    {
+      id: 'facturas',
+      titulo: 'Facturación',
+      icono: Banknote,
+      color: 'bg-emerald-700',
+      colorClaro: 'bg-emerald-100',
+      colorTexto: 'text-emerald-700',
+      descripcion: 'Facturas emitidas, PDF y estado de pago',
+      total: totales.facturas,
+      rutas: {
+        nuevo: '/admin/facturas/nueva',
+        historial: '/admin/facturas'
+      },
+      activo: true
     }
   ];
 
@@ -151,7 +168,7 @@ export default function DocumentosHub() {
           Documentos
         </h2>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 md:gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 md:gap-4">
           {modulos.map((modulo) => (
             <ModuloCard key={modulo.id} modulo={modulo} />
           ))}

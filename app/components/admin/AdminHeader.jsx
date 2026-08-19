@@ -14,6 +14,7 @@ import {
   FileCheck,
   Receipt,
   File,
+  Banknote,
   ChevronDown,
   MessageCircle,
   Tag,
@@ -38,6 +39,7 @@ const DOCUMENTOS_SUBMENU = [
   { id: 'remitos', label: 'Remitos', icono: FileCheck, href: '/admin/remitos' },
   { id: 'recibos', label: 'Recibos', icono: Receipt, href: '/admin/recibos' },
   { id: 'informes', label: 'Informes', icono: File, href: '/admin/informes' },
+  { id: 'facturas', label: 'Facturación', icono: Banknote, href: '/admin/facturas' },
 ];
 
 const MODULOS_NAV = [

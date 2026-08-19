@@ -33,6 +33,7 @@ const listaPreciosCollection = db ? collection(db, 'listaPrecios') : null;
 const usuariosCollection = db ? collection(db, 'usuarios') : null;
 const ordenesTrabajoCollection = db ? collection(db, 'ordenesTrabajo') : null;
 const plantillasCollection = db ? collection(db, 'plantillas') : null;
+const facturasCollection = db ? collection(db, 'facturas') : null;
 
 // ========== FUNCIONES PARA PRESUPUESTOS ==========
 
@@ -587,6 +588,83 @@ export const eliminarPlantilla = async (id) => {
   }
 };
 
+// ========== FUNCIONES PARA FACTURAS (facturación: PDFs de facturas ya emitidas) ==========
+// A diferencia de presupuestos/remitos/recibos (que generan su PDF al vuelo),
+// acá se sube el PDF real de la factura a Storage, y puede haber más de uno
+// por factura. Mismo patrón de reserva de id que Órdenes de Trabajo, para
+// poder nombrar la carpeta de Storage antes de escribir el documento.
+
+export const generarIdFactura = () => doc(facturasCollection).id;
+
+export const crearFactura = async (id, facturaData) => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    await setDoc(doc(db, 'facturas', id), {
+      ...facturaData,
+      fechaCreacion: serverTimestamp()
+    });
+    return { id };
+  } catch (error) {
+    console.error('Error al crear la factura:', error);
+    throw error;
+  }
+};
+
+export const obtenerFacturas = async () => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const q = query(facturasCollection, orderBy('fechaCreacion', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error al obtener las facturas:', error);
+    throw error;
+  }
+};
+
+export const obtenerFacturaPorId = async (id) => {
+  try {
+    const docRef = doc(db, 'facturas', id);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    } else {
+      throw new Error('Factura no encontrada');
+    }
+  } catch (error) {
+    console.error('Error al obtener la factura:', error);
+    throw error;
+  }
+};
+
+export const actualizarFactura = async (id, facturaData) => {
+  try {
+    const docRef = doc(db, 'facturas', id);
+    await updateDoc(docRef, {
+      ...facturaData,
+      fechaActualizacion: serverTimestamp()
+    });
+    return { id };
+  } catch (error) {
+    console.error('Error al actualizar la factura:', error);
+    throw error;
+  }
+};
+
+// Eliminar una factura, incluidos sus PDFs en Storage
+export const eliminarFactura = async (id) => {
+  try {
+    const factura = await obtenerFacturaPorId(id).catch(() => null);
+    await eliminarFotosStorage(factura?.archivos);
+    await deleteDoc(doc(db, 'facturas', id));
+    return { id };
+  } catch (error) {
+    console.error('Error al eliminar la factura:', error);
+    throw error;
+  }
+};
+
 // ========== FUNCIONES PARA MOVIMIENTOS (finanzas: ingresos y gastos manuales) ==========
 // Los recibos ya representan el ingreso real cobrado a un cliente, así que no
 // se duplican acá: esta colección es solo para gastos y para ingresos que no
@@ -910,6 +988,7 @@ export const obtenerPresupuestosPorCliente = (clienteId) => obtenerColeccionPorC
 export const obtenerRemitosPorCliente = (clienteId) => obtenerColeccionPorCliente('remitos', clienteId);
 export const obtenerRecibosPorCliente = (clienteId) => obtenerColeccionPorCliente('recibos', clienteId);
 export const obtenerOrdenesTrabajoPorCliente = (clienteId) => obtenerColeccionPorCliente('ordenesTrabajo', clienteId);
+export const obtenerFacturasPorCliente = (clienteId) => obtenerColeccionPorCliente('facturas', clienteId);
 
 // ========== SUSCRIPCIÓN DE LA APP (solo lectura para Admin, edición solo SuperAdmin) ==========
 // Doc único config/suscripcion. Si no existe todavía, se devuelven valores

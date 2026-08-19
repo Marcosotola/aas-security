@@ -1,10 +1,10 @@
 // app/cuenta/page.js
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LogOut, Home, Edit, PlusCircle, Trash2, Eye, Download, MapPin } from 'lucide-react';
+import { LogOut, Home, Edit, PlusCircle, Trash2, Eye, Download, MapPin, FileText } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import {
@@ -13,13 +13,15 @@ import {
   obtenerPresupuestosPorCliente,
   obtenerRemitosPorCliente,
   obtenerRecibosPorCliente,
-  obtenerOrdenesTrabajoPorCliente
+  obtenerOrdenesTrabajoPorCliente,
+  obtenerFacturasPorCliente
 } from '../lib/firestore';
 import PresupuestoPDF from '../components/pdf/PresupuestoPDF';
 import RemitoPDF from '../components/pdf/RemitoPDF';
 import ReciboPDF from '../components/pdf/ReciboPDF';
 import VerDescargarPDF from '../components/pdf/VerDescargarPDF';
 import DescargarOrdenTrabajoPDF from '../components/pdf/DescargarOrdenTrabajoPDF';
+import { EstadoFacturaBadge } from '../components/ui/EstadoFactura';
 import { formatearFecha } from '../lib/fecha';
 
 const formatMoney = (amount) => {
@@ -55,6 +57,7 @@ export default function Cuenta() {
   const [remitos, setRemitos] = useState([]);
   const [recibos, setRecibos] = useState([]);
   const [ordenesTrabajo, setOrdenesTrabajo] = useState([]);
+  const [facturas, setFacturas] = useState([]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -83,16 +86,18 @@ export default function Cuenta() {
         setPerfil(perfilData);
         setDatosPerfil(perfilData);
 
-        const [mispresupuestos, misremitos, misrecibos, misordenesTrabajo] = await Promise.all([
+        const [mispresupuestos, misremitos, misrecibos, misordenesTrabajo, misfacturas] = await Promise.all([
           obtenerPresupuestosPorCliente(currentUser.uid),
           obtenerRemitosPorCliente(currentUser.uid),
           obtenerRecibosPorCliente(currentUser.uid),
-          obtenerOrdenesTrabajoPorCliente(currentUser.uid)
+          obtenerOrdenesTrabajoPorCliente(currentUser.uid),
+          obtenerFacturasPorCliente(currentUser.uid)
         ]);
         setPresupuestos(mispresupuestos);
         setRemitos(misremitos);
         setRecibos(misrecibos);
         setOrdenesTrabajo(misordenesTrabajo);
+        setFacturas(misfacturas);
 
         setLoading(false);
       } catch (error) {
@@ -324,6 +329,7 @@ export default function Cuenta() {
         <ListaDocumentos titulo="Mis Remitos" documentos={remitos} Documento={RemitoPDF} propName="remito" />
         <ListaDocumentos titulo="Mis Recibos" documentos={recibos} Documento={ReciboPDF} propName="recibo" />
         <ListaOrdenesTrabajo ordenes={ordenesTrabajo} />
+        <ListaFacturas facturas={facturas} />
       </div>
     </div>
   );
@@ -362,6 +368,117 @@ function ListaDocumentos({ titulo, documentos, Documento, propName }) {
             </tbody>
           </table>
         </div>
+      )}
+    </div>
+  );
+}
+
+function ListaFacturas({ facturas }) {
+  const [sede, setSede] = useState('todas');
+  const [desde, setDesde] = useState('');
+  const [hasta, setHasta] = useState('');
+
+  const sedes = useMemo(() => {
+    const nombres = new Set(facturas.map((f) => f.sedeNombre).filter(Boolean));
+    return Array.from(nombres).sort();
+  }, [facturas]);
+
+  const facturasFiltradas = useMemo(() => {
+    return facturas.filter((f) => {
+      if (sede !== 'todas' && f.sedeNombre !== sede) return false;
+      if (desde && f.fecha && f.fecha < desde) return false;
+      if (hasta && f.fecha && f.fecha > hasta) return false;
+      return true;
+    });
+  }, [facturas, sede, desde, hasta]);
+
+  return (
+    <div className="p-6 bg-white rounded-lg shadow-md">
+      <h3 className="mb-4 text-lg font-semibold text-gray-700">Mis Facturas</h3>
+
+      {facturas.length === 0 ? (
+        <p className="text-sm text-gray-400">No hay facturas todavía.</p>
+      ) : (
+        <>
+          <div className="flex flex-wrap items-end gap-3 mb-4">
+            {sedes.length > 1 && (
+              <div>
+                <label className="block mb-1 text-xs font-medium text-gray-500">Sede</label>
+                <select value={sede} onChange={(e) => setSede(e.target.value)} className="px-3 py-2 text-sm border border-gray-300 rounded-md">
+                  <option value="todas">Todas</option>
+                  {sedes.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            )}
+            <div>
+              <label className="block mb-1 text-xs font-medium text-gray-500">Desde</label>
+              <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="px-3 py-2 text-sm border border-gray-300 rounded-md" />
+            </div>
+            <div>
+              <label className="block mb-1 text-xs font-medium text-gray-500">Hasta</label>
+              <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="px-3 py-2 text-sm border border-gray-300 rounded-md" />
+            </div>
+          </div>
+
+          {facturasFiltradas.length === 0 ? (
+            <p className="text-sm text-gray-400">No hay facturas que coincidan con los filtros.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Número</th>
+                    <th className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Fecha</th>
+                    <th className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Sede</th>
+                    <th className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Estado</th>
+                    <th className="px-4 py-2 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Monto</th>
+                    <th className="px-4 py-2"></th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {facturasFiltradas.map((f) => (
+                    <tr key={f.id}>
+                      <td className="px-4 py-2 text-sm font-medium text-gray-900 whitespace-nowrap">{f.numero}</td>
+                      <td className="px-4 py-2 text-sm text-gray-500 whitespace-nowrap">{formatFecha(f)}</td>
+                      <td className="px-4 py-2 text-sm whitespace-nowrap">
+                        {f.sedeNombre ? (
+                          <div className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
+                            <MapPin size={11} />
+                            {f.sedeNombre}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2 text-sm whitespace-nowrap"><EstadoFacturaBadge estado={f.estado} /></td>
+                      <td className="px-4 py-2 text-sm font-medium text-right text-gray-900 whitespace-nowrap">{formatMoney(f.monto)}</td>
+                      <td className="px-4 py-2 text-right whitespace-nowrap">
+                        {(f.archivos || []).length > 0 ? (
+                          <span className="inline-flex items-center gap-3">
+                            {f.archivos.map((archivo, index) => (
+                              <a
+                                key={archivo.path || index}
+                                href={archivo.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={archivo.nombre || `Descargar PDF ${index + 1}`}
+                                className="text-primary hover:text-primary-light"
+                              >
+                                <Download size={16} />
+                              </a>
+                            ))}
+                          </span>
+                        ) : (
+                          <FileText size={16} className="ml-auto text-gray-300" />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

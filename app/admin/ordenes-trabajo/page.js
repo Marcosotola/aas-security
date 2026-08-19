@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FilePlus, ClipboardList, Home, Search, Download, Eye, Edit, Trash } from 'lucide-react';
+import { FilePlus, ClipboardList, Home, Search, Download, Eye, Edit, Trash, MapPin } from 'lucide-react';
 import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { eliminarOrdenTrabajo } from '../../lib/firestore';
@@ -140,10 +140,13 @@ export default function HistorialOrdenesTrabajo() {
                       </div>
                     </div>
                     <div className="mt-1 text-sm text-gray-900">{orden.cliente?.nombre || 'N/A'}</div>
-                    <div className="text-sm text-gray-500">{orden.cliente?.empresa || 'N/A'}</div>
                     {orden.cliente?.sedeNombre && (
-                      <div className="text-xs text-gray-400">Sede: {orden.cliente.sedeNombre}</div>
+                      <div className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
+                        <MapPin size={11} />
+                        {orden.cliente.sedeNombre}
+                      </div>
                     )}
+                    <div className="mt-1 text-sm text-gray-500">{orden.cliente?.empresa || 'N/A'}</div>
                     {!esTecnico && orden.usuarioCreador && (
                       <div className="text-xs text-gray-400">Técnico: {orden.usuarioCreador}</div>
                     )}
@@ -220,7 +223,14 @@ export default function HistorialOrdenesTrabajo() {
                           <div className="text-xs text-gray-400">{orden.cliente?.empresa || ''}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{orden.cliente?.sedeNombre || '-'}</div>
+                          {orden.cliente?.sedeNombre ? (
+                            <div className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
+                              <MapPin size={11} />
+                              {orden.cliente.sedeNombre}
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-400">-</span>
+                          )}
                         </td>
                         {!esTecnico && (
                           <td className="px-6 py-4 whitespace-nowrap">

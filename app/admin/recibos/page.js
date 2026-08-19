@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye } from 'lucide-react';
+import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye, MapPin } from 'lucide-react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { eliminarRecibo } from '../../lib/firestore';
@@ -147,7 +147,10 @@ export default function HistorialRecibos() {
                     </div>
                     <div className="mt-1 text-sm text-gray-900">{recibo.recibiDe || 'N/A'}</div>
                     {recibo.sedeNombre && (
-                      <div className="text-xs text-gray-400">Sede: {recibo.sedeNombre}</div>
+                      <div className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
+                        <MapPin size={11} />
+                        {recibo.sedeNombre}
+                      </div>
                     )}
                     <div className="mt-1 text-sm text-gray-500 line-clamp-2" title={recibo.concepto}>
                       {recibo.concepto || 'N/A'}

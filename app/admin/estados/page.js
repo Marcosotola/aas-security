@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye } from 'lucide-react';
+import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye, MapPin } from 'lucide-react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { eliminarEstado } from '../../lib/firestore';
@@ -152,10 +152,13 @@ export default function HistorialEstados() {
                       </div>
                     </div>
                     <div className="mt-1 text-sm text-gray-900">{estado.cliente?.nombre || 'N/A'}</div>
-                    <div className="text-sm text-gray-500">{estado.cliente?.empresa || 'N/A'}</div>
                     {estado.cliente?.sedeNombre && (
-                      <div className="text-xs text-gray-400">Sede: {estado.cliente.sedeNombre}</div>
+                      <div className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
+                        <MapPin size={11} />
+                        {estado.cliente.sedeNombre}
+                      </div>
                     )}
+                    <div className="mt-1 text-sm text-gray-500">{estado.cliente?.empresa || 'N/A'}</div>
                     <div className="mt-2 text-sm font-medium text-gray-900">
                       {formatMoney(estado.total)}
                     </div>
@@ -245,7 +248,10 @@ export default function HistorialEstados() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{estado.cliente?.nombre || 'N/A'}</div>
                         {estado.cliente?.sedeNombre && (
-                          <div className="text-xs text-gray-400">Sede: {estado.cliente.sedeNombre}</div>
+                          <div className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
+                            <MapPin size={11} />
+                            {estado.cliente.sedeNombre}
+                          </div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

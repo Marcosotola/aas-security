@@ -117,6 +117,14 @@ service cloud.firestore {
       allow read, write: if esAdmin();
     }
 
+    // Facturas emitidas (PDF real subido a Storage + estado pendiente/pagado):
+    // dato de dinero, igual que Movimientos, solo para Admin (ni siquiera
+    // Tecnico). El Cliente solo puede leer las suyas, nunca escribirlas.
+    match /facturas/{id} {
+      allow read: if esAdmin() || esPropietario(resource.data.clienteId);
+      allow write: if esAdmin();
+    }
+
     // Suscripción de la app: cualquier Admin (incluido el SuperAdmin) puede
     // leer monto y vencimiento, pero solo el SuperAdmin puede modificarlos o
     // habilitar/deshabilitar la app.
