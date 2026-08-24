@@ -8,6 +8,7 @@ import { obtenerConsultas, marcarConsultaLeida, eliminarConsulta } from '../../l
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { construirLinkWhatsApp } from '../../lib/whatsapp';
 import ViewToggle from '../../components/admin/ViewToggle';
+import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/accionIcono';
 
 const formatearFecha = (fechaCreacion) => {
   if (!fechaCreacion) return 'No disponible';
@@ -256,13 +257,13 @@ export default function Consultas() {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
-                            <div className="flex justify-end space-x-4">
+                            <div className="flex justify-end gap-1">
                               <button
                                 onClick={() => abrirConsulta(consulta)}
                                 title="Ver consulta completa"
-                                className="text-gray-600 hover:text-primary"
+                                className={accionIconoClase('gray')}
                               >
-                                <Eye size={18} />
+                                <Eye size={ACCION_ICONO_TAMANO} />
                               </button>
                               {linkWhatsApp && (
                                 <a
@@ -270,24 +271,24 @@ export default function Consultas() {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   title="Abrir WhatsApp"
-                                  className="text-green-600 hover:text-green-700"
+                                  className={accionIconoClase('green')}
                                 >
-                                  <MessageCircle size={18} />
+                                  <MessageCircle size={ACCION_ICONO_TAMANO} />
                                 </a>
                               )}
                               <button
                                 onClick={() => handleToggleLeida(consulta)}
                                 title={consulta.leida ? 'Marcar como no leída' : 'Marcar como leída'}
-                                className="text-secondary hover:text-secondary-light"
+                                className={accionIconoClase('secondary')}
                               >
-                                {consulta.leida ? <Mail size={18} /> : <MailOpen size={18} />}
+                                {consulta.leida ? <Mail size={ACCION_ICONO_TAMANO} /> : <MailOpen size={ACCION_ICONO_TAMANO} />}
                               </button>
                               <button
                                 onClick={() => handleEliminar(consulta.id)}
                                 title="Eliminar"
-                                className="text-red-500 cursor-pointer hover:text-red-700"
+                                className={accionIconoClase('red')}
                               >
-                                <Trash size={18} />
+                                <Trash size={ACCION_ICONO_TAMANO} />
                               </button>
                             </div>
                           </td>

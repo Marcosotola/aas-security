@@ -125,6 +125,14 @@ service cloud.firestore {
       allow write: if esAdmin();
     }
 
+    // Certificados (fotos o PDF por cliente y sede, sin monto ni estado):
+    // mismo criterio de acceso que Facturas, solo para Admin. El Cliente solo
+    // puede leer los suyos, nunca escribirlos.
+    match /certificados/{id} {
+      allow read: if esAdmin() || esPropietario(resource.data.clienteId);
+      allow write: if esAdmin();
+    }
+
     // Suscripción de la app: cualquier Admin (incluido el SuperAdmin) puede
     // leer monto y vencimiento, pero solo el SuperAdmin puede modificarlos o
     // habilitar/deshabilitar la app.

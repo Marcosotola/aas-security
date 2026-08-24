@@ -35,6 +35,15 @@ service firebase.storage {
       allow write: if esAdmin();
     }
 
+    // Fotos/PDFs de certificados: mismo criterio que facturas.
+    match /certificados/{certificadoId}/{fileName} {
+      allow read: if esAdmin() || (
+        request.auth != null &&
+        firestore.get(/databases/(default)/documents/certificados/$(certificadoId)).data.clienteId == request.auth.uid
+      );
+      allow write: if esAdmin();
+    }
+
     // Todo lo demás, denegado por defecto.
     match /{allPaths=**} {
       allow read, write: if false;

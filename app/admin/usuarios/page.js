@@ -9,6 +9,7 @@ import { auth } from '../../lib/firebase';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import PortalDropdown from '../../components/PortalDropdown';
 import ViewToggle from '../../components/admin/ViewToggle';
+import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/accionIcono';
 
 const ROLES = ['Cliente', 'Tecnico', 'Admin'];
 
@@ -225,30 +226,30 @@ export default function GestionUsuarios() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-gray-100">
+                    <div className="flex items-center justify-end gap-1 pt-3 mt-3 border-t border-gray-100">
                       <button
                         type="button"
                         onClick={() => setUsuarioViendo(u)}
                         title="Ver datos"
-                        className="text-gray-500 cursor-pointer hover:text-primary"
+                        className={accionIconoClase('gray')}
                       >
-                        <Eye size={18} />
+                        <Eye size={ACCION_ICONO_TAMANO} />
                       </button>
                       <Link
                         href={`/admin/usuarios/completar?uid=${u.id}`}
                         title="Editar datos"
-                        className="text-secondary hover:text-secondary-light"
+                        className={accionIconoClase('secondary')}
                       >
-                        <Edit size={18} />
+                        <Edit size={ACCION_ICONO_TAMANO} />
                       </Link>
                       <button
                         type="button"
                         onClick={() => handleEliminarUsuario(u)}
                         disabled={eliminandoUsuario === u.id}
                         title="Eliminar"
-                        className="text-red-500 cursor-pointer hover:text-red-700 disabled:opacity-50"
+                        className={accionIconoClase('red')}
                       >
-                        <Trash size={18} />
+                        <Trash size={ACCION_ICONO_TAMANO} />
                       </button>
                     </div>
                   </div>
@@ -340,30 +341,30 @@ export default function GestionUsuarios() {
                         </PortalDropdown>
                       </td>
                       <td className="px-4 py-3 text-sm text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-3">
+                        <div className="flex items-center justify-end gap-1">
                           <button
                             type="button"
                             onClick={() => setUsuarioViendo(u)}
                             title="Ver datos"
-                            className="text-gray-500 cursor-pointer hover:text-primary"
+                            className={accionIconoClase('gray')}
                           >
-                            <Eye size={18} />
+                            <Eye size={ACCION_ICONO_TAMANO} />
                           </button>
                           <Link
                             href={`/admin/usuarios/completar?uid=${u.id}`}
                             title="Editar datos"
-                            className="text-secondary hover:text-secondary-light"
+                            className={accionIconoClase('secondary')}
                           >
-                            <Edit size={18} />
+                            <Edit size={ACCION_ICONO_TAMANO} />
                           </Link>
                           <button
                             type="button"
                             onClick={() => handleEliminarUsuario(u)}
                             disabled={eliminandoUsuario === u.id}
                             title="Eliminar"
-                            className="text-red-500 cursor-pointer hover:text-red-700 disabled:opacity-50"
+                            className={accionIconoClase('red')}
                           >
-                            <Trash size={18} />
+                            <Trash size={ACCION_ICONO_TAMANO} />
                           </button>
                         </div>
                       </td>

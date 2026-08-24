@@ -10,6 +10,7 @@ import { useStaffAuth } from '../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import RemitoPDF from '../../components/pdf/RemitoPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
+import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/accionIcono';
 import { formatearFecha } from '../../lib/fecha';
 
 export default function HistorialRemitos() {
@@ -146,36 +147,36 @@ export default function HistorialRemitos() {
                     <div className="mt-1 text-sm text-gray-500">{remito.cliente?.empresa || 'N/A'}</div>
                     <div className="mt-2 text-sm text-gray-500">{remito.items?.length || 0} items</div>
 
-                    <div className="flex justify-end pt-3 mt-3 space-x-4 border-t border-gray-100">
+                    <div className="flex justify-end pt-3 mt-3 gap-1 border-t border-gray-100">
                       <Link
                         href={`/admin/remitos/${remito.id}`}
                         title="Ver detalles"
-                        className="text-gray-600 hover:text-primary"
+                        className={accionIconoClase('gray')}
                       >
-                        <Eye size={18} />
+                        <Eye size={ACCION_ICONO_TAMANO} />
                       </Link>
                       <PDFDownloadLink
                         document={<RemitoPDF remito={remito} />}
                         fileName={`${remito.numero}.pdf`}
-                        className="text-primary hover:text-primary-light"
+                        className={accionIconoClase('primary')}
                       >
                         {({ blob, url, loading, error }) =>
-                          <Download size={18} className={loading ? "animate-pulse" : ""} />
+                          <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
                         }
                       </PDFDownloadLink>
                       <Link
                         href={`/admin/remitos/editar/${remito.id}`}
                         title="Editar"
-                        className="text-secondary hover:text-secondary-light"
+                        className={accionIconoClase('secondary')}
                       >
-                        <Edit size={18} />
+                        <Edit size={ACCION_ICONO_TAMANO} />
                       </Link>
                       <button
                         onClick={() => handleDeleteRemito(remito.id)}
                         title="Eliminar"
-                        className="text-red-500 cursor-pointer hover:text-red-700"
+                        className={accionIconoClase('red')}
                       >
-                        <Trash size={18} />
+                        <Trash size={ACCION_ICONO_TAMANO} />
                       </button>
                     </div>
                   </div>
@@ -244,36 +245,36 @@ export default function HistorialRemitos() {
                         <div className="text-sm text-gray-500">{remito.items?.length || 0} items</div>
                       </td>
                       <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
-                        <div className="flex justify-end space-x-4">
+                        <div className="flex justify-end gap-1">
                           <Link
                             href={`/admin/remitos/${remito.id}`}
                             title="Ver detalles"
-                            className="text-gray-600 hover:text-primary"
+                            className={accionIconoClase('gray')}
                           >
-                            <Eye size={18} />
+                            <Eye size={ACCION_ICONO_TAMANO} />
                           </Link>
                           <PDFDownloadLink
                             document={<RemitoPDF remito={remito} />}
                             fileName={`${remito.numero}.pdf`}
-                            className="text-primary hover:text-primary-light"
+                            className={accionIconoClase('primary')}
                           >
                             {({ blob, url, loading, error }) =>
-                              <Download size={18} className={loading ? "animate-pulse" : ""} />
+                              <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
                             }
                           </PDFDownloadLink>
                           <Link
                             href={`/admin/remitos/editar/${remito.id}`}
                             title="Editar"
-                            className="text-secondary hover:text-secondary-light"
+                            className={accionIconoClase('secondary')}
                           >
-                            <Edit size={18} />
+                            <Edit size={ACCION_ICONO_TAMANO} />
                           </Link>
                           <button
                             onClick={() => handleDeleteRemito(remito.id)}
                             title="Eliminar"
-                            className="text-red-500 cursor-pointer hover:text-red-700"
+                            className={accionIconoClase('red')}
                           >
-                            <Trash size={18} />
+                            <Trash size={ACCION_ICONO_TAMANO} />
                           </button>
                         </div>
                       </td>

@@ -23,23 +23,26 @@ import {
   CreditCard,
   ClipboardList,
   ListChecks,
-  ShieldAlert
+  ShieldAlert,
+  Award
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 import { esSuperAdmin } from '../../lib/superAdmin';
 import PortalDropdown from '../PortalDropdown';
 
-// Presupuestos, Recibos, Remitos, Estados de cuenta e Informes viven agrupados
-// bajo el menú "Documentos" (nav de escritorio como dropdown, mobile como
-// sublista) para no saturar la barra de navegación con tantos ítems sueltos.
+// Presupuestos, Recibos, Remitos, Estados de cuenta, Informes, Facturas y
+// Certificados viven agrupados bajo el menú "Documentos" (nav de escritorio
+// como dropdown, mobile como sublista) para no saturar la barra de
+// navegación con tantos ítems sueltos.
 const DOCUMENTOS_SUBMENU = [
   { id: 'presupuestos', label: 'Presupuestos', icono: FileText, href: '/admin/presupuestos' },
   { id: 'estados', label: 'Estados de cuenta', icono: DollarSign, href: '/admin/estados' },
   { id: 'remitos', label: 'Remitos', icono: FileCheck, href: '/admin/remitos' },
   { id: 'recibos', label: 'Recibos', icono: Receipt, href: '/admin/recibos' },
   { id: 'informes', label: 'Informes', icono: File, href: '/admin/informes' },
-  { id: 'facturas', label: 'Facturación', icono: Banknote, href: '/admin/facturas' },
+  { id: 'facturas', label: 'Facturas', icono: Banknote, href: '/admin/facturas' },
+  { id: 'certificados', label: 'Certificados', icono: Award, href: '/admin/certificados' },
 ];
 
 const MODULOS_NAV = [

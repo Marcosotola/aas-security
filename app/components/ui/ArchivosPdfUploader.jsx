@@ -4,7 +4,7 @@
 import { useRef } from 'react';
 import { FileUp, FileText, X } from 'lucide-react';
 
-// Selector de PDFs para Facturación: permite elegir uno o varios archivos a
+// Selector de PDFs para Facturas: permite elegir uno o varios archivos a
 // la vez. No sube nada a Storage acá: solo mantiene los File en memoria y
 // avisa al padre vía onChange. La subida real ocurre al guardar la factura
 // (mismo criterio que FotosUploader con las fotos de Órdenes de Trabajo).

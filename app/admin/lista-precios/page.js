@@ -13,6 +13,7 @@ import {
 } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import ViewToggle from '../../components/admin/ViewToggle';
+import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/accionIcono';
 
 // Función para formatear montos con separador de miles (punto) y decimal (coma)
 const formatMoney = (amount) => {
@@ -192,20 +193,20 @@ function ListaPrecios() {
                                     <div key={item.id} className="flex flex-col p-4 border border-gray-200 rounded-lg">
                                         <div className="mb-3 text-sm font-medium text-gray-900">{item.descripcion}</div>
                                         <div className="mt-auto text-lg font-semibold text-primary">{formatMoney(item.precioUnitario)}</div>
-                                        <div className="flex justify-end pt-3 mt-3 space-x-4 border-t border-gray-100">
+                                        <div className="flex justify-end pt-3 mt-3 gap-1 border-t border-gray-100">
                                             <button
                                                 onClick={() => abrirModalEditar(item)}
                                                 title="Editar"
-                                                className="text-secondary hover:text-secondary-light"
+                                                className={accionIconoClase('secondary')}
                                             >
-                                                <Edit size={18} />
+                                                <Edit size={ACCION_ICONO_TAMANO} />
                                             </button>
                                             <button
                                                 onClick={() => handleEliminarItem(item.id)}
                                                 title="Eliminar"
-                                                className="text-red-500 cursor-pointer hover:text-red-700"
+                                                className={accionIconoClase('red')}
                                             >
-                                                <Trash size={18} />
+                                                <Trash size={ACCION_ICONO_TAMANO} />
                                             </button>
                                         </div>
                                     </div>
@@ -245,20 +246,20 @@ function ListaPrecios() {
                                                 {formatMoney(item.precioUnitario)}
                                             </td>
                                             <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
-                                                <div className="flex justify-end space-x-4">
+                                                <div className="flex justify-end gap-1">
                                                     <button
                                                         onClick={() => abrirModalEditar(item)}
                                                         title="Editar"
-                                                        className="text-secondary hover:text-secondary-light"
+                                                        className={accionIconoClase('secondary')}
                                                     >
-                                                        <Edit size={18} />
+                                                        <Edit size={ACCION_ICONO_TAMANO} />
                                                     </button>
                                                     <button
                                                         onClick={() => handleEliminarItem(item.id)}
                                                         title="Eliminar"
-                                                        className="text-red-500 cursor-pointer hover:text-red-700"
+                                                        className={accionIconoClase('red')}
                                                     >
-                                                        <Trash size={18} />
+                                                        <Trash size={ACCION_ICONO_TAMANO} />
                                                     </button>
                                                 </div>
                                             </td>

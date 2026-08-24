@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Home, ListChecks, FilePlus, Edit, Trash, ClipboardList } from 'lucide-react';
 import { obtenerPlantillas, eliminarPlantilla } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
+import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/accionIcono';
 
 const GRUPOS = ['Relevamiento', 'Detección', 'Extinción'];
 
@@ -111,20 +112,20 @@ export default function Planillas() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex justify-end gap-4 pt-3 mt-3 border-t border-gray-100">
+                        <div className="flex justify-end gap-1 pt-3 mt-3 border-t border-gray-100">
                           <Link
                             href={`/admin/planillas/editar/${plantilla.id}`}
                             title="Editar"
-                            className="text-secondary hover:text-secondary-light"
+                            className={accionIconoClase('secondary')}
                           >
-                            <Edit size={18} />
+                            <Edit size={ACCION_ICONO_TAMANO} />
                           </Link>
                           <button
                             onClick={() => handleEliminar(plantilla.id)}
                             title="Eliminar"
-                            className="text-red-500 cursor-pointer hover:text-red-700"
+                            className={accionIconoClase('red')}
                           >
-                            <Trash size={18} />
+                            <Trash size={ACCION_ICONO_TAMANO} />
                           </button>
                         </div>
                       </div>

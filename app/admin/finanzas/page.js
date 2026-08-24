@@ -17,6 +17,7 @@ import {
 } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import ClienteSelector from '../../components/ClienteSelector';
+import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/accionIcono';
 
 const formatMoney = (amount) => {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -427,17 +428,17 @@ function Finanzas() {
                       </td>
                       <td className="px-4 py-2 text-sm text-right whitespace-nowrap">
                         {item.origen === 'manual' ? (
-                          <div className="flex items-center justify-end gap-3">
-                            <button onClick={() => abrirModalEditar(item)} title="Editar" className="text-secondary hover:text-secondary-light">
-                              <Edit size={16} />
+                          <div className="flex items-center justify-end gap-1">
+                            <button onClick={() => abrirModalEditar(item)} title="Editar" className={accionIconoClase('secondary')}>
+                              <Edit size={ACCION_ICONO_TAMANO} />
                             </button>
                             <button
                               onClick={() => handleEliminarMovimiento(item.id)}
                               disabled={eliminandoId === item.id}
                               title="Eliminar"
-                              className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                              className={accionIconoClase('red')}
                             >
-                              <Trash size={16} />
+                              <Trash size={ACCION_ICONO_TAMANO} />
                             </button>
                           </div>
                         ) : (

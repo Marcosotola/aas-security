@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Home, FileText, DollarSign, FileCheck, Receipt, File, Banknote } from 'lucide-react';
+import { Home, FileText, DollarSign, FileCheck, Receipt, File, Banknote, Award } from 'lucide-react';
 import { collection, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useStaffAuth } from '../../lib/useStaffAuth';
@@ -22,7 +22,8 @@ export default function DocumentosHub() {
     remitos: 0,
     recibos: 0,
     documentos: 0,
-    facturas: 0
+    facturas: 0,
+    certificados: 0
   });
   const loading = loadingAuth || loadingData;
 
@@ -32,15 +33,16 @@ export default function DocumentosHub() {
     (async () => {
       try {
         const contar = async (ref) => (await getCountFromServer(ref)).data().count;
-        const [presupuestos, estados, remitos, recibos, documentos, facturas] = await Promise.all([
+        const [presupuestos, estados, remitos, recibos, documentos, facturas, certificados] = await Promise.all([
           contar(collection(db, 'presupuestos')),
           contar(collection(db, 'estados')),
           contar(collection(db, 'remitos')),
           contar(collection(db, 'recibos')),
           contar(collection(db, 'documentos')),
-          contar(collection(db, 'facturas'))
+          contar(collection(db, 'facturas')),
+          contar(collection(db, 'certificados'))
         ]);
-        setTotales({ presupuestos, estados, remitos, recibos, documentos, facturas });
+        setTotales({ presupuestos, estados, remitos, recibos, documentos, facturas, certificados });
       } catch (error) {
         console.error('Error al cargar totales de documentos:', error);
       } finally {
@@ -138,7 +140,7 @@ export default function DocumentosHub() {
     },
     {
       id: 'facturas',
-      titulo: 'Facturación',
+      titulo: 'Facturas',
       icono: Banknote,
       color: 'bg-emerald-700',
       colorClaro: 'bg-emerald-100',
@@ -148,6 +150,21 @@ export default function DocumentosHub() {
       rutas: {
         nuevo: '/admin/facturas/nueva',
         historial: '/admin/facturas'
+      },
+      activo: true
+    },
+    {
+      id: 'certificados',
+      titulo: 'Certificados',
+      icono: Award,
+      color: 'bg-amber-700',
+      colorClaro: 'bg-amber-100',
+      colorTexto: 'text-amber-700',
+      descripcion: 'Certificados por cliente y sede',
+      total: totales.certificados,
+      rutas: {
+        nuevo: '/admin/certificados/nuevo',
+        historial: '/admin/certificados'
       },
       activo: true
     }

@@ -34,6 +34,7 @@ const usuariosCollection = db ? collection(db, 'usuarios') : null;
 const ordenesTrabajoCollection = db ? collection(db, 'ordenesTrabajo') : null;
 const plantillasCollection = db ? collection(db, 'plantillas') : null;
 const facturasCollection = db ? collection(db, 'facturas') : null;
+const certificadosCollection = db ? collection(db, 'certificados') : null;
 
 // ========== FUNCIONES PARA PRESUPUESTOS ==========
 
@@ -661,6 +662,83 @@ export const eliminarFactura = async (id) => {
     return { id };
   } catch (error) {
     console.error('Error al eliminar la factura:', error);
+    throw error;
+  }
+};
+
+// ========== FUNCIONES PARA CERTIFICADOS (fotos o PDF por cliente y sede) ==========
+// Mismo patrón que Facturas: se reserva el id antes de subir archivos, para
+// poder nombrar la carpeta de Storage antes de escribir el documento. Sin
+// estado pendiente/pagado ni monto: acá solo se archivan certificados
+// (matafuegos, fumigación, etc.) asociados a un cliente y su sede.
+
+export const generarIdCertificado = () => doc(certificadosCollection).id;
+
+export const crearCertificado = async (id, certificadoData) => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    await setDoc(doc(db, 'certificados', id), {
+      ...certificadoData,
+      fechaCreacion: serverTimestamp()
+    });
+    return { id };
+  } catch (error) {
+    console.error('Error al crear el certificado:', error);
+    throw error;
+  }
+};
+
+export const obtenerCertificados = async () => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const q = query(certificadosCollection, orderBy('fechaCreacion', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error al obtener los certificados:', error);
+    throw error;
+  }
+};
+
+export const obtenerCertificadoPorId = async (id) => {
+  try {
+    const docRef = doc(db, 'certificados', id);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    } else {
+      throw new Error('Certificado no encontrado');
+    }
+  } catch (error) {
+    console.error('Error al obtener el certificado:', error);
+    throw error;
+  }
+};
+
+export const actualizarCertificado = async (id, certificadoData) => {
+  try {
+    const docRef = doc(db, 'certificados', id);
+    await updateDoc(docRef, {
+      ...certificadoData,
+      fechaActualizacion: serverTimestamp()
+    });
+    return { id };
+  } catch (error) {
+    console.error('Error al actualizar el certificado:', error);
+    throw error;
+  }
+};
+
+// Eliminar un certificado, incluidos sus archivos en Storage
+export const eliminarCertificado = async (id) => {
+  try {
+    const certificado = await obtenerCertificadoPorId(id).catch(() => null);
+    await eliminarFotosStorage(certificado?.archivos);
+    await deleteDoc(doc(db, 'certificados', id));
+    return { id };
+  } catch (error) {
+    console.error('Error al eliminar el certificado:', error);
     throw error;
   }
 };

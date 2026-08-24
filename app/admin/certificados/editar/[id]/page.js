@@ -7,17 +7,16 @@ import { Home, Save, X, FileText } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../../../lib/firebase';
 import {
-  obtenerFacturaPorId,
-  actualizarFactura,
+  obtenerCertificadoPorId,
+  actualizarCertificado,
   eliminarFotosStorage,
   obtenerClientes
 } from '../../../../lib/firestore';
 import { useStaffAuth } from '../../../../lib/useStaffAuth';
 import ClienteSelector from '../../../../components/ClienteSelector';
-import ArchivosPdfUploader from '../../../../components/ui/ArchivosPdfUploader';
-import EstadoFacturaToggle from '../../../../components/ui/EstadoFactura';
+import ArchivosCertificadoUploader from '../../../../components/ui/ArchivosCertificadoUploader';
 
-export default function EditarFactura({ params }) {
+export default function EditarCertificado({ params }) {
   const { id } = use(params);
 
   const router = useRouter();
@@ -27,16 +26,14 @@ export default function EditarFactura({ params }) {
   const [clientes, setClientes] = useState([]);
   const loading = loadingAuth || loadingData;
 
-  const [factura, setFactura] = useState({
-    numero: '',
+  const [certificado, setCertificado] = useState({
+    nombre: '',
     fecha: '',
     clienteId: null,
     sedeId: null,
     sedeNombre: '',
     clienteNombre: '',
-    descripcion: '',
-    monto: '',
-    estado: 'pendiente'
+    descripcion: ''
   });
 
   // Archivos ya subidos a Storage (vienen del documento original)
@@ -51,19 +48,17 @@ export default function EditarFactura({ params }) {
 
     (async () => {
       try {
-        const facturaData = await obtenerFacturaPorId(id);
-        setFactura({
-          numero: facturaData.numero || '',
-          fecha: facturaData.fecha || '',
-          clienteId: facturaData.clienteId || null,
-          sedeId: facturaData.sedeId || null,
-          sedeNombre: facturaData.sedeNombre || '',
-          clienteNombre: facturaData.clienteNombre || '',
-          descripcion: facturaData.descripcion || '',
-          monto: facturaData.monto ?? '',
-          estado: facturaData.estado || 'pendiente'
+        const certificadoData = await obtenerCertificadoPorId(id);
+        setCertificado({
+          nombre: certificadoData.nombre || '',
+          fecha: certificadoData.fecha || '',
+          clienteId: certificadoData.clienteId || null,
+          sedeId: certificadoData.sedeId || null,
+          sedeNombre: certificadoData.sedeNombre || '',
+          clienteNombre: certificadoData.clienteNombre || '',
+          descripcion: certificadoData.descripcion || ''
         });
-        setArchivosActuales(facturaData.archivos || []);
+        setArchivosActuales(certificadoData.archivos || []);
 
         try {
           setClientes(await obtenerClientes());
@@ -73,9 +68,9 @@ export default function EditarFactura({ params }) {
 
         setLoadingData(false);
       } catch (error) {
-        console.error('Error al cargar factura:', error);
-        alert('Error al cargar los datos de la factura.');
-        router.push('/admin/facturas');
+        console.error('Error al cargar certificado:', error);
+        alert('Error al cargar los datos del certificado.');
+        router.push('/admin/certificados');
       }
     })();
   }, [id, user, router]);
@@ -86,12 +81,16 @@ export default function EditarFactura({ params }) {
   };
 
   const handleGuardarCambios = async () => {
-    if (!factura.clienteNombre.trim()) {
+    if (!certificado.nombre.trim()) {
+      alert('Ingresá un nombre para el certificado.');
+      return;
+    }
+    if (!certificado.clienteNombre.trim()) {
       alert('Ingresá o seleccioná un cliente.');
       return;
     }
     if (archivosActuales.length === 0 && archivosNuevos.length === 0) {
-      alert('La factura necesita al menos un PDF adjunto.');
+      alert('El certificado necesita al menos un archivo adjunto.');
       return;
     }
 
@@ -99,7 +98,7 @@ export default function EditarFactura({ params }) {
     try {
       const archivosSubidos = await Promise.all(
         archivosNuevos.map(async (archivo, index) => {
-          const path = `facturas/${id}/${Date.now()}-${index}-${archivo.file.name}`;
+          const path = `certificados/${id}/${Date.now()}-${index}-${archivo.file.name}`;
           const storageRef = ref(storage, path);
           await uploadBytes(storageRef, archivo.file);
           const url = await getDownloadURL(storageRef);
@@ -109,17 +108,16 @@ export default function EditarFactura({ params }) {
 
       await eliminarFotosStorage(archivosAEliminar);
 
-      const facturaData = {
-        ...factura,
-        monto: parseFloat(factura.monto) || 0,
+      const certificadoData = {
+        ...certificado,
         archivos: [...archivosActuales, ...archivosSubidos]
       };
 
-      await actualizarFactura(id, facturaData);
-      router.push(`/admin/facturas/${id}`);
+      await actualizarCertificado(id, certificadoData);
+      router.push(`/admin/certificados/${id}`);
     } catch (error) {
-      console.error('Error al actualizar la factura:', error);
-      alert('Error al actualizar la factura. Inténtelo de nuevo más tarde.');
+      console.error('Error al actualizar el certificado:', error);
+      alert('Error al actualizar el certificado. Inténtelo de nuevo más tarde.');
     } finally {
       setGuardando(false);
     }
@@ -145,8 +143,8 @@ export default function EditarFactura({ params }) {
               <Home size={16} className="mr-1" /> Panel
             </Link>
             <span className="mx-2 text-gray-500">/</span>
-            <Link href="/admin/facturas" className="flex items-center mr-4 text-primary hover:underline">
-              Facturas
+            <Link href="/admin/certificados" className="flex items-center mr-4 text-primary hover:underline">
+              Certificados
             </Link>
             <span className="mx-2 text-gray-500">/</span>
             <span className="text-gray-700">Editar</span>
@@ -165,36 +163,33 @@ export default function EditarFactura({ params }) {
         </div>
 
         <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
-          Editar Factura {factura.numero}
+          Editar Certificado {certificado.nombre}
         </h2>
 
         <div className="grid grid-cols-1 gap-6">
-          {/* Información de la factura */}
+          {/* Información del certificado */}
           <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="mb-4 text-lg font-semibold text-gray-700">Información de la Factura</h3>
+            <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Certificado</h3>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">Número</label>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Nombre</label>
                 <input
                   type="text"
-                  value={factura.numero}
-                  onChange={(e) => setFactura({ ...factura, numero: e.target.value })}
+                  value={certificado.nombre}
+                  onChange={(e) => setCertificado({ ...certificado, nombre: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="Ej: Certificado de matafuegos"
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Fecha</label>
                 <input
                   type="date"
-                  value={factura.fecha}
-                  onChange={(e) => setFactura({ ...factura, fecha: e.target.value })}
+                  value={certificado.fecha}
+                  onChange={(e) => setCertificado({ ...certificado, fecha: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
-            </div>
-            <div className="mt-4">
-              <label className="block mb-1 text-sm font-medium text-gray-700">Estado</label>
-              <EstadoFacturaToggle estado={factura.estado} onChange={(estado) => setFactura({ ...factura, estado })} />
             </div>
           </div>
 
@@ -207,14 +202,14 @@ export default function EditarFactura({ params }) {
                 <ClienteSelector
                   clientes={clientes}
                   onSelect={({ clienteId, nombre, empresa, sedeId, sedeNombre }) => {
-                    setFactura({ ...factura, clienteId, sedeId, sedeNombre, clienteNombre: empresa ? `${nombre} - ${empresa}` : nombre });
+                    setCertificado({ ...certificado, clienteId, sedeId, sedeNombre, clienteNombre: empresa ? `${nombre} - ${empresa}` : nombre });
                   }}
                   placeholder="Buscar cliente registrado (opcional)..."
                 />
                 <input
                   type="text"
-                  value={factura.clienteNombre}
-                  onChange={(e) => setFactura({ ...factura, clienteNombre: e.target.value })}
+                  value={certificado.clienteNombre}
+                  onChange={(e) => setCertificado({ ...certificado, clienteNombre: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="Nombre completo o razón social"
                 />
@@ -223,8 +218,8 @@ export default function EditarFactura({ params }) {
                 <label className="block mb-1 text-sm font-medium text-gray-700">Sede</label>
                 <input
                   type="text"
-                  value={factura.sedeNombre}
-                  onChange={(e) => setFactura({ ...factura, sedeNombre: e.target.value })}
+                  value={certificado.sedeNombre}
+                  onChange={(e) => setCertificado({ ...certificado, sedeNombre: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="Ej: Edificio Torre Norte"
                 />
@@ -232,35 +227,23 @@ export default function EditarFactura({ params }) {
             </div>
           </div>
 
-          {/* Descripción y monto */}
+          {/* Descripción */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Detalle</h3>
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">Descripción</label>
-                <textarea
-                  value={factura.descripcion}
-                  onChange={(e) => setFactura({ ...factura, descripcion: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md min-h-[80px] resize-y"
-                  rows={3}
-                />
-              </div>
-              <div className="md:w-1/2">
-                <label className="block mb-1 text-sm font-medium text-gray-700">Monto ($)</label>
-                <input
-                  type="number"
-                  value={factura.monto}
-                  onChange={(e) => setFactura({ ...factura, monto: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  step="0.01"
-                />
-              </div>
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700">Descripción</label>
+              <textarea
+                value={certificado.descripcion}
+                onChange={(e) => setCertificado({ ...certificado, descripcion: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md min-h-[80px] resize-y"
+                rows={3}
+              />
             </div>
           </div>
 
-          {/* PDFs de la factura */}
+          {/* Archivos del certificado */}
           <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="mb-4 text-lg font-semibold text-gray-700">Factura (PDF)</h3>
+            <h3 className="mb-4 text-lg font-semibold text-gray-700">Archivos (fotos o PDF)</h3>
 
             {archivosActuales.length > 0 && (
               <div className="mb-4">
@@ -288,14 +271,14 @@ export default function EditarFactura({ params }) {
               </div>
             )}
 
-            <p className="mb-2 text-sm text-gray-500">Agregar PDF nuevo</p>
-            <ArchivosPdfUploader archivos={archivosNuevos} onChange={setArchivosNuevos} />
+            <p className="mb-2 text-sm text-gray-500">Agregar archivo nuevo</p>
+            <ArchivosCertificadoUploader archivos={archivosNuevos} onChange={setArchivosNuevos} />
           </div>
 
           {/* Botones de acción */}
           <div className="flex justify-end space-x-2">
             <button
-              onClick={() => router.push(`/admin/facturas/${id}`)}
+              onClick={() => router.push(`/admin/certificados/${id}`)}
               className="px-4 py-2 text-gray-700 transition-colors border border-gray-300 rounded-md hover:bg-gray-100"
             >
               Cancelar

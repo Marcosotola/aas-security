@@ -6,29 +6,27 @@ import Link from 'next/link';
 import { Home, Save } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../../lib/firebase';
-import { crearFactura, generarIdFactura, obtenerClientes } from '../../../lib/firestore';
+import { crearCertificado, generarIdCertificado, obtenerClientes } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import ClienteSelector from '../../../components/ClienteSelector';
-import ArchivosPdfUploader from '../../../components/ui/ArchivosPdfUploader';
+import ArchivosCertificadoUploader from '../../../components/ui/ArchivosCertificadoUploader';
 import { fechaHoyLocal } from '../../../lib/fecha';
 
-export default function NuevaFactura() {
+export default function NuevoCertificado() {
   const router = useRouter();
   const { user, loading } = useStaffAuth(['Admin']);
   const [guardando, setGuardando] = useState(false);
   const [clientes, setClientes] = useState([]);
   const [archivosNuevos, setArchivosNuevos] = useState([]);
 
-  const [factura, setFactura] = useState({
-    numero: `FAC-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
+  const [certificado, setCertificado] = useState({
+    nombre: '',
     fecha: fechaHoyLocal(),
     clienteId: null,
     sedeId: null,
     sedeNombre: '',
     clienteNombre: '',
-    descripcion: '',
-    monto: '',
-    estado: 'pendiente'
+    descripcion: ''
   });
 
   useEffect(() => {
@@ -38,23 +36,27 @@ export default function NuevaFactura() {
       .catch((error) => console.error('Error al cargar los clientes:', error));
   }, [user]);
 
-  const handleGuardarFactura = async () => {
-    if (!factura.clienteNombre.trim()) {
+  const handleGuardarCertificado = async () => {
+    if (!certificado.nombre.trim()) {
+      alert('Ingresá un nombre para el certificado.');
+      return;
+    }
+    if (!certificado.clienteNombre.trim()) {
       alert('Ingresá o seleccioná un cliente.');
       return;
     }
     if (archivosNuevos.length === 0) {
-      alert('Adjuntá al menos un PDF de la factura.');
+      alert('Adjuntá al menos un archivo (foto o PDF).');
       return;
     }
 
     setGuardando(true);
     try {
-      const id = generarIdFactura();
+      const id = generarIdCertificado();
 
       const archivosSubidos = await Promise.all(
         archivosNuevos.map(async (archivo, index) => {
-          const path = `facturas/${id}/${Date.now()}-${index}-${archivo.file.name}`;
+          const path = `certificados/${id}/${Date.now()}-${index}-${archivo.file.name}`;
           const storageRef = ref(storage, path);
           await uploadBytes(storageRef, archivo.file);
           const url = await getDownloadURL(storageRef);
@@ -62,18 +64,17 @@ export default function NuevaFactura() {
         })
       );
 
-      const facturaData = {
-        ...factura,
-        monto: parseFloat(factura.monto) || 0,
+      const certificadoData = {
+        ...certificado,
         archivos: archivosSubidos,
         usuarioCreador: user.email
       };
 
-      await crearFactura(id, facturaData);
-      router.push('/admin/facturas');
+      await crearCertificado(id, certificadoData);
+      router.push('/admin/certificados');
     } catch (error) {
-      console.error('Error al guardar la factura:', error);
-      alert('Error al guardar la factura. Inténtelo de nuevo más tarde.');
+      console.error('Error al guardar el certificado:', error);
+      alert('Error al guardar el certificado. Inténtelo de nuevo más tarde.');
     } finally {
       setGuardando(false);
     }
@@ -99,16 +100,16 @@ export default function NuevaFactura() {
               <Home size={16} className="mr-1" /> Panel
             </Link>
             <span className="mx-2 text-gray-500">/</span>
-            <Link href="/admin/facturas" className="flex items-center mr-4 text-primary hover:underline">
-              Facturas
+            <Link href="/admin/certificados" className="flex items-center mr-4 text-primary hover:underline">
+              Certificados
             </Link>
             <span className="mx-2 text-gray-500">/</span>
-            <span className="text-gray-700">Nueva</span>
+            <span className="text-gray-700">Nuevo</span>
           </div>
 
           <div className="flex mb-4 space-x-2">
             <button
-              onClick={handleGuardarFactura}
+              onClick={handleGuardarCertificado}
               disabled={guardando}
               className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-success hover:bg-green-700 disabled:opacity-50"
             >
@@ -119,29 +120,31 @@ export default function NuevaFactura() {
         </div>
 
         <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
-          Nueva Factura
+          Nuevo Certificado
         </h2>
 
         <div className="grid grid-cols-1 gap-6">
-          {/* Información de la factura */}
+          {/* Información del certificado */}
           <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="mb-4 text-lg font-semibold text-gray-700">Información de la Factura</h3>
+            <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Certificado</h3>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">Número</label>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Nombre</label>
                 <input
                   type="text"
-                  value={factura.numero}
-                  onChange={(e) => setFactura({ ...factura, numero: e.target.value })}
+                  value={certificado.nombre}
+                  onChange={(e) => setCertificado({ ...certificado, nombre: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="Ej: Certificado de matafuegos"
+                  required
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Fecha</label>
                 <input
                   type="date"
-                  value={factura.fecha}
-                  onChange={(e) => setFactura({ ...factura, fecha: e.target.value })}
+                  value={certificado.fecha}
+                  onChange={(e) => setCertificado({ ...certificado, fecha: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   required
                 />
@@ -158,14 +161,14 @@ export default function NuevaFactura() {
                 <ClienteSelector
                   clientes={clientes}
                   onSelect={({ clienteId, nombre, empresa, sedeId, sedeNombre }) => {
-                    setFactura({ ...factura, clienteId, sedeId, sedeNombre, clienteNombre: empresa ? `${nombre} - ${empresa}` : nombre });
+                    setCertificado({ ...certificado, clienteId, sedeId, sedeNombre, clienteNombre: empresa ? `${nombre} - ${empresa}` : nombre });
                   }}
                   placeholder="Buscar cliente registrado (opcional)..."
                 />
                 <input
                   type="text"
-                  value={factura.clienteNombre}
-                  onChange={(e) => setFactura({ ...factura, clienteNombre: e.target.value })}
+                  value={certificado.clienteNombre}
+                  onChange={(e) => setCertificado({ ...certificado, clienteNombre: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="Nombre completo o razón social"
                   required
@@ -175,8 +178,8 @@ export default function NuevaFactura() {
                 <label className="block mb-1 text-sm font-medium text-gray-700">Sede</label>
                 <input
                   type="text"
-                  value={factura.sedeNombre}
-                  onChange={(e) => setFactura({ ...factura, sedeNombre: e.target.value })}
+                  value={certificado.sedeNombre}
+                  onChange={(e) => setCertificado({ ...certificado, sedeNombre: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="Ej: Edificio Torre Norte"
                 />
@@ -184,55 +187,42 @@ export default function NuevaFactura() {
             </div>
           </div>
 
-          {/* Descripción y monto */}
+          {/* Descripción */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Detalle</h3>
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">Descripción</label>
-                <textarea
-                  value={factura.descripcion}
-                  onChange={(e) => setFactura({ ...factura, descripcion: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md min-h-[80px] resize-y"
-                  placeholder="Descripción de la factura"
-                  rows={3}
-                />
-              </div>
-              <div className="md:w-1/2">
-                <label className="block mb-1 text-sm font-medium text-gray-700">Monto ($)</label>
-                <input
-                  type="number"
-                  value={factura.monto}
-                  onChange={(e) => setFactura({ ...factura, monto: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  placeholder="0.00"
-                  step="0.01"
-                />
-              </div>
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700">Descripción</label>
+              <textarea
+                value={certificado.descripcion}
+                onChange={(e) => setCertificado({ ...certificado, descripcion: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md min-h-[80px] resize-y"
+                placeholder="Descripción del certificado (opcional)"
+                rows={3}
+              />
             </div>
           </div>
 
-          {/* PDF de la factura */}
+          {/* Archivos del certificado */}
           <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="mb-4 text-lg font-semibold text-gray-700">Factura (PDF)</h3>
-            <ArchivosPdfUploader archivos={archivosNuevos} onChange={setArchivosNuevos} />
+            <h3 className="mb-4 text-lg font-semibold text-gray-700">Archivos (fotos o PDF)</h3>
+            <ArchivosCertificadoUploader archivos={archivosNuevos} onChange={setArchivosNuevos} />
           </div>
 
           {/* Botones de acción */}
           <div className="flex justify-end space-x-2">
             <button
-              onClick={() => router.push('/admin/facturas')}
+              onClick={() => router.push('/admin/certificados')}
               className="px-4 py-2 text-gray-700 transition-colors border border-gray-300 rounded-md hover:bg-gray-100"
             >
               Cancelar
             </button>
             <button
-              onClick={handleGuardarFactura}
+              onClick={handleGuardarCertificado}
               disabled={guardando}
               className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-success hover:bg-green-700 disabled:opacity-50"
             >
               <Save size={18} className="mr-2" />
-              {guardando ? 'Guardando...' : 'Guardar Factura'}
+              {guardando ? 'Guardando...' : 'Guardar Certificado'}
             </button>
           </div>
         </div>
