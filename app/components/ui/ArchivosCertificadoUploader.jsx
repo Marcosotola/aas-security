@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { FileUp, Camera, FileText, X } from 'lucide-react';
+import { FileUp, FileText, X } from 'lucide-react';
 
 const esImagen = (file) => file.type.startsWith('image/');
 const esAceptado = (file) => esImagen(file) || file.type === 'application/pdf';
@@ -11,9 +11,10 @@ const esAceptado = (file) => esImagen(file) || file.type === 'application/pdf';
 // fotos e ícono de archivo para los PDF. No sube nada a Storage acá: solo
 // mantiene los File en memoria y avisa al padre vía onChange (mismo criterio
 // que FotosUploader/ArchivosPdfUploader: la subida real ocurre al guardar).
+// Un solo input (sin botón aparte de cámara): en mobile, el selector nativo
+// ya ofrece elegir entre cámara o archivos/galería.
 export default function ArchivosCertificadoUploader({ archivos, onChange }) {
-  const galeriaInputRef = useRef(null);
-  const camaraInputRef = useRef(null);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -44,36 +45,19 @@ export default function ArchivosCertificadoUploader({ archivos, onChange }) {
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => galeriaInputRef.current?.click()}
-          className="flex items-center px-4 py-2 text-sm text-white transition-colors rounded-md bg-secondary hover:bg-secondary-light"
-        >
-          <FileUp size={18} className="mr-2" /> Elegir archivo
-        </button>
-        <button
-          type="button"
-          onClick={() => camaraInputRef.current?.click()}
-          className="flex items-center px-4 py-2 text-sm text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
-        >
-          <Camera size={18} className="mr-2" /> Usar cámara
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        className="flex items-center px-4 py-2 text-sm text-white transition-colors rounded-md bg-secondary hover:bg-secondary-light"
+      >
+        <FileUp size={18} className="mr-2" /> Elegir archivo
+      </button>
 
       <input
-        ref={galeriaInputRef}
+        ref={inputRef}
         type="file"
         accept="image/*,application/pdf"
         multiple
-        onChange={handleInputChange}
-        className="hidden"
-      />
-      <input
-        ref={camaraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
         onChange={handleInputChange}
         className="hidden"
       />
