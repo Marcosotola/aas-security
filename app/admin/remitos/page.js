@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye, MapPin } from 'lucide-react';
+import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye } from 'lucide-react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { eliminarRemito } from '../../lib/firestore';
@@ -10,6 +10,7 @@ import { useStaffAuth } from '../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import RemitoPDF from '../../components/pdf/RemitoPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
+import SedeLink from '../../components/admin/SedeLink';
 import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/accionIcono';
 import { formatearFecha } from '../../lib/fecha';
 
@@ -126,6 +127,9 @@ export default function HistorialRemitos() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {remitosFiltrados.map((remito) => (
                   <div key={remito.id} className="p-4 border border-gray-200 rounded-lg">
+                    <div className="mb-1">
+                      <SedeLink clienteId={remito.clienteId} sede={remito.cliente?.sedeNombre} />
+                    </div>
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-medium text-gray-900">{remito.numero}</div>
                       <div className="text-xs text-gray-500 whitespace-nowrap">
@@ -138,12 +142,6 @@ export default function HistorialRemitos() {
                       </div>
                     </div>
                     <div className="mt-1 text-sm text-gray-900">{remito.cliente?.nombre || 'N/A'}</div>
-                    {remito.cliente?.sedeNombre && (
-                      <div className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
-                        <MapPin size={11} />
-                        {remito.cliente.sedeNombre}
-                      </div>
-                    )}
                     <div className="mt-1 text-sm text-gray-500">{remito.cliente?.empresa || 'N/A'}</div>
                     <div className="mt-2 text-sm text-gray-500">{remito.items?.length || 0} items</div>
 
@@ -193,6 +191,9 @@ export default function HistorialRemitos() {
               <thead className="bg-gray-50">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                    Sede
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                     Número
                   </th>
                   <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
@@ -217,6 +218,9 @@ export default function HistorialRemitos() {
                   remitosFiltrados.map((remito) => (
                     <tr key={remito.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <SedeLink clienteId={remito.clienteId} sede={remito.cliente?.sedeNombre} />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{remito.numero}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -231,12 +235,6 @@ export default function HistorialRemitos() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{remito.cliente?.nombre || 'N/A'}</div>
-                        {remito.cliente?.sedeNombre && (
-                          <div className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
-                            <MapPin size={11} />
-                            {remito.cliente.sedeNombre}
-                          </div>
-                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500">{remito.cliente?.empresa || 'N/A'}</div>
@@ -282,7 +280,7 @@ export default function HistorialRemitos() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
                       No hay remitos que coincidan con su búsqueda
                     </td>
                   </tr>

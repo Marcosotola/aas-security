@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye, MapPin } from 'lucide-react';
+import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye } from 'lucide-react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { eliminarRecibo } from '../../lib/firestore';
@@ -10,6 +10,7 @@ import { useStaffAuth } from '../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import ReciboPDF from '../../components/pdf/ReciboPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
+import SedeLink from '../../components/admin/SedeLink';
 import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/accionIcono';
 import { formatearFecha } from '../../lib/fecha';
 
@@ -135,6 +136,9 @@ export default function HistorialRecibos() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {recibosFiltrados.map((recibo) => (
                   <div key={recibo.id} className="p-4 border border-gray-200 rounded-lg">
+                    <div className="mb-1">
+                      <SedeLink clienteId={recibo.clienteId} sede={recibo.sedeNombre} />
+                    </div>
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-medium text-gray-900">{recibo.numero}</div>
                       <div className="text-xs text-gray-500 whitespace-nowrap">
@@ -147,12 +151,6 @@ export default function HistorialRecibos() {
                       </div>
                     </div>
                     <div className="mt-1 text-sm text-gray-900">{recibo.recibiDe || 'N/A'}</div>
-                    {recibo.sedeNombre && (
-                      <div className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
-                        <MapPin size={11} />
-                        {recibo.sedeNombre}
-                      </div>
-                    )}
                     <div className="mt-1 text-sm text-gray-500 line-clamp-2" title={recibo.concepto}>
                       {recibo.concepto || 'N/A'}
                     </div>
@@ -206,6 +204,9 @@ export default function HistorialRecibos() {
               <thead className="bg-gray-50">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                    Sede
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                     Número
                   </th>
                   <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
@@ -230,6 +231,9 @@ export default function HistorialRecibos() {
                   recibosFiltrados.map((recibo) => (
                     <tr key={recibo.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <SedeLink clienteId={recibo.clienteId} sede={recibo.sedeNombre} />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{recibo.numero}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -244,9 +248,6 @@ export default function HistorialRecibos() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{recibo.recibiDe || 'N/A'}</div>
-                        {recibo.sedeNombre && (
-                          <div className="text-xs text-gray-400">Sede: {recibo.sedeNombre}</div>
-                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="max-w-xs text-sm text-gray-500 truncate" title={recibo.concepto}>
@@ -296,7 +297,7 @@ export default function HistorialRecibos() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
                       No hay recibos que coincidan con su búsqueda
                     </td>
                   </tr>

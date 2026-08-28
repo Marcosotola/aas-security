@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { FilePlus, FileText, Home, Search, Edit, Trash, Eye, MapPin, Download } from 'lucide-react';
+import { FilePlus, FileText, Home, Search, Edit, Trash, Eye, Download } from 'lucide-react';
 import { obtenerFacturas, actualizarFactura, eliminarFactura } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import ViewToggle from '../../components/admin/ViewToggle';
 import EstadoFacturaToggle from '../../components/ui/EstadoFactura';
 import PortalDropdown from '../../components/PortalDropdown';
+import SedeLink from '../../components/admin/SedeLink';
 import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/accionIcono';
 import { formatearFecha } from '../../lib/fecha';
 
@@ -173,17 +174,14 @@ export default function HistorialFacturas() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {facturasFiltradas.map((factura) => (
                   <div key={factura.id} className="p-4 border border-gray-200 rounded-lg">
+                    <div className="mb-1">
+                      <SedeLink clienteId={factura.clienteId} sede={factura.sedeNombre} />
+                    </div>
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-medium text-gray-900">{factura.numero}</div>
                       <div className="text-xs text-gray-500 whitespace-nowrap">{formatearFecha(factura.fecha)}</div>
                     </div>
                     <div className="mt-1 text-sm text-gray-900">{factura.clienteNombre || 'N/A'}</div>
-                    {factura.sedeNombre && (
-                      <div className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
-                        <MapPin size={11} />
-                        {factura.sedeNombre}
-                      </div>
-                    )}
                     <div className="mt-1 text-sm text-gray-500 line-clamp-2" title={factura.descripcion}>{factura.descripcion || '-'}</div>
                     <div className="mt-2 text-sm font-medium text-gray-900">{formatCurrency(factura.monto)}</div>
                     <div className="mt-2">
@@ -218,6 +216,7 @@ export default function HistorialFacturas() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Sede</th>
                     <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Número</th>
                     <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Fecha</th>
                     <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Cliente</th>
@@ -231,6 +230,9 @@ export default function HistorialFacturas() {
                     facturasFiltradas.map((factura) => (
                       <tr key={factura.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
+                          <SedeLink clienteId={factura.clienteId} sede={factura.sedeNombre} />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">{factura.numero}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -238,12 +240,6 @@ export default function HistorialFacturas() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">{factura.clienteNombre || 'N/A'}</div>
-                          {factura.sedeNombre && (
-                      <div className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
-                        <MapPin size={11} />
-                        {factura.sedeNombre}
-                      </div>
-                    )}
                         </td>
                         <td className="px-6 py-4 text-right whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">{formatCurrency(factura.monto)}</div>
@@ -274,7 +270,7 @@ export default function HistorialFacturas() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="6" className="px-6 py-4 text-center text-gray-500">No hay facturas que coincidan con los filtros</td>
+                      <td colSpan="7" className="px-6 py-4 text-center text-gray-500">No hay facturas que coincidan con los filtros</td>
                     </tr>
                   )}
                 </tbody>

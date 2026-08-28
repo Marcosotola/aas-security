@@ -3,7 +3,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye, ChevronDown, MapPin } from 'lucide-react';
+import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye, ChevronDown } from 'lucide-react';
+import SedeLink from '../../components/admin/SedeLink';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { actualizarPresupuesto, eliminarPresupuesto } from '../../lib/firestore';
@@ -180,6 +181,9 @@ export default function HistorialPresupuestos() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {presupuestosFiltrados.map((presupuesto) => (
                   <div key={presupuesto.id} className="p-4 border border-gray-200 rounded-lg">
+                    <div className="mb-1">
+                      <SedeLink clienteId={presupuesto.clienteId} sede={presupuesto.cliente?.sedeNombre} />
+                    </div>
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-medium text-gray-900">{presupuesto.numero}</div>
                       <div className="text-xs text-gray-500 whitespace-nowrap">
@@ -192,12 +196,6 @@ export default function HistorialPresupuestos() {
                       </div>
                     </div>
                     <div className="mt-1 text-sm text-gray-900">{presupuesto.cliente?.nombre || 'N/A'}</div>
-                    {presupuesto.cliente?.sedeNombre && (
-                      <div className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
-                        <MapPin size={11} />
-                        {presupuesto.cliente.sedeNombre}
-                      </div>
-                    )}
                     <div className="mt-1 text-sm text-gray-500">{presupuesto.cliente?.empresa || ''}</div>
                     <div className="mt-2 text-sm font-medium text-gray-900">
                       ${presupuesto.total ? presupuesto.total.toLocaleString() : '0.00'}
@@ -287,6 +285,9 @@ export default function HistorialPresupuestos() {
               <thead className="bg-gray-50">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                    Sede
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                     Número
                   </th>
                   <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
@@ -311,6 +312,9 @@ export default function HistorialPresupuestos() {
                   presupuestosFiltrados.map((presupuesto) => (
                     <tr key={presupuesto.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <SedeLink clienteId={presupuesto.clienteId} sede={presupuesto.cliente?.sedeNombre} />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{presupuesto.numero}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -325,12 +329,6 @@ export default function HistorialPresupuestos() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{presupuesto.cliente?.nombre || 'N/A'}</div>
-                        {presupuesto.cliente?.sedeNombre && (
-                          <div className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
-                            <MapPin size={11} />
-                            {presupuesto.cliente.sedeNombre}
-                          </div>
-                        )}
                         <div className="mt-1 text-sm text-gray-500">{presupuesto.cliente?.empresa || ''}</div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
@@ -411,7 +409,7 @@ export default function HistorialPresupuestos() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
                       No hay presupuestos que coincidan con su búsqueda
                     </td>
                   </tr>

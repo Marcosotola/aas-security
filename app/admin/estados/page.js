@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye, MapPin } from 'lucide-react';
+import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye } from 'lucide-react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { eliminarEstado } from '../../lib/firestore';
@@ -11,6 +11,7 @@ import { useStaffAuth } from '../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import EstadoPDF from '../../components/pdf/EstadoPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
+import SedeLink from '../../components/admin/SedeLink';
 import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/accionIcono';
 import { formatearFecha } from '../../lib/fecha';
 
@@ -141,6 +142,9 @@ export default function HistorialEstados() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {estadosFiltrados.map((estado) => (
                   <div key={estado.id} className="p-4 border border-gray-200 rounded-lg">
+                    <div className="mb-1">
+                      <SedeLink clienteId={estado.clienteId} sede={estado.cliente?.sedeNombre} />
+                    </div>
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-medium text-gray-900">{estado.numero}</div>
                       <div className="text-xs text-gray-500 whitespace-nowrap">
@@ -153,12 +157,6 @@ export default function HistorialEstados() {
                       </div>
                     </div>
                     <div className="mt-1 text-sm text-gray-900">{estado.cliente?.nombre || 'N/A'}</div>
-                    {estado.cliente?.sedeNombre && (
-                      <div className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
-                        <MapPin size={11} />
-                        {estado.cliente.sedeNombre}
-                      </div>
-                    )}
                     <div className="mt-1 text-sm text-gray-500">{estado.cliente?.empresa || 'N/A'}</div>
                     <div className="mt-2 text-sm font-medium text-gray-900">
                       {formatMoney(estado.total)}
@@ -210,6 +208,9 @@ export default function HistorialEstados() {
               <thead className="bg-gray-50">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                    Sede
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                     Número
                   </th>
                   <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
@@ -234,6 +235,9 @@ export default function HistorialEstados() {
                   estadosFiltrados.map((estado) => (
                     <tr key={estado.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <SedeLink clienteId={estado.clienteId} sede={estado.cliente?.sedeNombre} />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{estado.numero}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -248,12 +252,6 @@ export default function HistorialEstados() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{estado.cliente?.nombre || 'N/A'}</div>
-                        {estado.cliente?.sedeNombre && (
-                          <div className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
-                            <MapPin size={11} />
-                            {estado.cliente.sedeNombre}
-                          </div>
-                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500">{estado.cliente?.empresa || 'N/A'}</div>
@@ -299,7 +297,7 @@ export default function HistorialEstados() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
                       No hay estados que coincidan con su búsqueda
                     </td>
                   </tr>

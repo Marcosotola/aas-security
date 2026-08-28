@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Home, Search, ChevronDown, Users as UsersIcon, MapPin, UserPlus, Edit, Trash, Eye, X, Phone, Building2, IdCard } from 'lucide-react';
+import { Home, Search, ChevronDown, Users as UsersIcon, MapPin, UserPlus, Edit, Trash, Eye, X, Phone, Building2, IdCard, Files } from 'lucide-react';
 import { obtenerUsuarios, actualizarUsuario } from '../../lib/firestore';
 import { auth } from '../../lib/firebase';
 import { useStaffAuth } from '../../lib/useStaffAuth';
@@ -227,6 +227,13 @@ export default function GestionUsuarios() {
                     </div>
 
                     <div className="flex items-center justify-end gap-1 pt-3 mt-3 border-t border-gray-100">
+                      <Link
+                        href={`/admin/usuarios/${u.id}`}
+                        title="Ver documentos"
+                        className={accionIconoClase('primary')}
+                      >
+                        <Files size={ACCION_ICONO_TAMANO} />
+                      </Link>
                       <button
                         type="button"
                         onClick={() => setUsuarioViendo(u)}
@@ -342,6 +349,13 @@ export default function GestionUsuarios() {
                       </td>
                       <td className="px-4 py-3 text-sm text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1">
+                          <Link
+                            href={`/admin/usuarios/${u.id}`}
+                            title="Ver documentos"
+                            className={accionIconoClase('primary')}
+                          >
+                            <Files size={ACCION_ICONO_TAMANO} />
+                          </Link>
                           <button
                             type="button"
                             onClick={() => setUsuarioViendo(u)}

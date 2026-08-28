@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FilePlus, ClipboardList, Home, Search, Download, Eye, Edit, Trash, MapPin } from 'lucide-react';
+import { FilePlus, ClipboardList, Home, Search, Download, Eye, Edit, Trash } from 'lucide-react';
 import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { eliminarOrdenTrabajo } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import DescargarOrdenTrabajoPDF from '../../components/pdf/DescargarOrdenTrabajoPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
+import SedeLink from '../../components/admin/SedeLink';
 import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/accionIcono';
 import { formatearFecha } from '../../lib/fecha';
 
@@ -130,6 +131,9 @@ export default function HistorialOrdenesTrabajo() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {ordenesFiltradas.map((orden) => (
                   <div key={orden.id} className="p-4 border border-gray-200 rounded-lg">
+                    <div className="mb-1">
+                      <SedeLink clienteId={orden.clienteId} sede={orden.cliente?.sedeNombre} />
+                    </div>
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-medium text-gray-900">{orden.numero}</div>
                       <div className="text-xs text-gray-500 whitespace-nowrap">
@@ -141,12 +145,6 @@ export default function HistorialOrdenesTrabajo() {
                       </div>
                     </div>
                     <div className="mt-1 text-sm text-gray-900">{orden.cliente?.nombre || 'N/A'}</div>
-                    {orden.cliente?.sedeNombre && (
-                      <div className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
-                        <MapPin size={11} />
-                        {orden.cliente.sedeNombre}
-                      </div>
-                    )}
                     <div className="mt-1 text-sm text-gray-500">{orden.cliente?.empresa || 'N/A'}</div>
                     {!esTecnico && orden.usuarioCreador && (
                       <div className="text-xs text-gray-400">Técnico: {orden.usuarioCreador}</div>
@@ -192,10 +190,10 @@ export default function HistorialOrdenesTrabajo() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Sede</th>
                     <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Número</th>
                     <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Fecha</th>
                     <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Cliente</th>
-                    <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Sede</th>
                     {!esTecnico && (
                       <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Técnico</th>
                     )}
@@ -207,6 +205,9 @@ export default function HistorialOrdenesTrabajo() {
                   {ordenesFiltradas.length > 0 ? (
                     ordenesFiltradas.map((orden) => (
                       <tr key={orden.id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <SedeLink clienteId={orden.clienteId} sede={orden.cliente?.sedeNombre} />
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">{orden.numero}</div>
                         </td>
@@ -222,16 +223,6 @@ export default function HistorialOrdenesTrabajo() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">{orden.cliente?.nombre || 'N/A'}</div>
                           <div className="text-xs text-gray-400">{orden.cliente?.empresa || ''}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {orden.cliente?.sedeNombre ? (
-                            <div className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
-                              <MapPin size={11} />
-                              {orden.cliente.sedeNombre}
-                            </div>
-                          ) : (
-                            <span className="text-sm text-gray-400">-</span>
-                          )}
                         </td>
                         {!esTecnico && (
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -273,7 +264,7 @@ export default function HistorialOrdenesTrabajo() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={esTecnico ? 5 : 6} className="px-6 py-4 text-center text-gray-500">
+                      <td colSpan={esTecnico ? 6 : 7} className="px-6 py-4 text-center text-gray-500">
                         No hay órdenes de trabajo que coincidan con su búsqueda
                       </td>
                     </tr>

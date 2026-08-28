@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { FilePlus, Award, Home, Search, Edit, Trash, Eye, MapPin, Download } from 'lucide-react';
+import { FilePlus, Award, Home, Search, Edit, Trash, Eye, Download } from 'lucide-react';
 import { obtenerCertificados, eliminarCertificado } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import ViewToggle from '../../components/admin/ViewToggle';
 import PortalDropdown from '../../components/PortalDropdown';
+import SedeLink from '../../components/admin/SedeLink';
 import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/accionIcono';
 import { formatearFecha } from '../../lib/fecha';
 
@@ -144,17 +145,14 @@ export default function HistorialCertificados() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {certificadosFiltrados.map((certificado) => (
                   <div key={certificado.id} className="p-4 border border-gray-200 rounded-lg">
+                    <div className="mb-1">
+                      <SedeLink clienteId={certificado.clienteId} sede={certificado.sedeNombre} />
+                    </div>
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-medium text-gray-900">{certificado.nombre}</div>
                       <div className="text-xs text-gray-500 whitespace-nowrap">{formatearFecha(certificado.fecha)}</div>
                     </div>
                     <div className="mt-1 text-sm text-gray-900">{certificado.clienteNombre || 'N/A'}</div>
-                    {certificado.sedeNombre && (
-                      <div className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
-                        <MapPin size={11} />
-                        {certificado.sedeNombre}
-                      </div>
-                    )}
                     <div className="mt-1 text-sm text-gray-500 line-clamp-2" title={certificado.descripcion}>{certificado.descripcion || '-'}</div>
 
                     <div className="flex justify-end pt-3 mt-3 gap-1 border-t border-gray-100">
@@ -185,6 +183,7 @@ export default function HistorialCertificados() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Sede</th>
                     <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Nombre</th>
                     <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Fecha</th>
                     <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Cliente</th>
@@ -197,6 +196,9 @@ export default function HistorialCertificados() {
                     certificadosFiltrados.map((certificado) => (
                       <tr key={certificado.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
+                          <SedeLink clienteId={certificado.clienteId} sede={certificado.sedeNombre} />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">{certificado.nombre}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -204,12 +206,6 @@ export default function HistorialCertificados() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">{certificado.clienteNombre || 'N/A'}</div>
-                          {certificado.sedeNombre && (
-                            <div className="inline-flex items-center gap-1 px-2 py-0.5 mt-1 text-xs font-semibold text-blue-700 border border-blue-200 rounded-full bg-blue-50">
-                              <MapPin size={11} />
-                              {certificado.sedeNombre}
-                            </div>
-                          )}
                         </td>
                         <td className="px-6 py-4">
                           <div className="max-w-xs text-sm text-gray-500 truncate" title={certificado.descripcion}>{certificado.descripcion || '-'}</div>
@@ -237,7 +233,7 @@ export default function HistorialCertificados() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className="px-6 py-4 text-center text-gray-500">No hay certificados que coincidan con los filtros</td>
+                      <td colSpan="6" className="px-6 py-4 text-center text-gray-500">No hay certificados que coincidan con los filtros</td>
                     </tr>
                   )}
                 </tbody>
