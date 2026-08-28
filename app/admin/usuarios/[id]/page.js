@@ -27,6 +27,7 @@ import {
   eliminarOrdenTrabajo
 } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
+import ViewToggle from '../../../components/admin/ViewToggle';
 import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../../components/admin/accionIcono';
 import { formatearFecha } from '../../../lib/fecha';
 import PresupuestoPDF from '../../../components/pdf/PresupuestoPDF';
@@ -79,7 +80,36 @@ const TIPOS = [
 // Tabla genérica para documentos generados con @react-pdf/renderer
 // (presupuesto/remito/recibo/estado/orden), que comparten forma: numero,
 // fecha, sede + acciones Ver/Descargar/Editar/Eliminar.
-function SeccionPDF({ titulo, Icono, items, rutaBase, PDFDoc, propName, montoField, badge, extraCol, sedeDe, tipo, onEliminar, eliminando, renderDescarga }) {
+function SeccionPDF({ titulo, Icono, items, rutaBase, PDFDoc, propName, montoField, badge, extraCol, sedeDe, tipo, onEliminar, eliminando, renderDescarga, vista }) {
+  const Acciones = ({ item }) => (
+    <>
+      <Link href={`${rutaBase}/${item.id}`} title="Ver detalles" className={accionIconoClase('gray')}>
+        <Eye size={ACCION_ICONO_TAMANO} />
+      </Link>
+      {renderDescarga ? renderDescarga(item) : (
+        <PDFDownloadLink
+          document={<PDFDoc {...{ [propName]: item }} />}
+          fileName={`${item.numero}.pdf`}
+          title="Descargar PDF"
+          className={accionIconoClase('primary')}
+        >
+          {({ loading }) => <Download size={ACCION_ICONO_TAMANO} className={loading ? 'animate-pulse' : ''} />}
+        </PDFDownloadLink>
+      )}
+      <Link href={`${rutaBase}/editar/${item.id}`} title="Editar" className={accionIconoClase('secondary')}>
+        <Edit size={ACCION_ICONO_TAMANO} />
+      </Link>
+      <button
+        onClick={() => onEliminar(item.id)}
+        disabled={eliminando === `${tipo}:${item.id}`}
+        title="Eliminar"
+        className={accionIconoClase('red')}
+      >
+        <Trash size={ACCION_ICONO_TAMANO} />
+      </button>
+    </>
+  );
+
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       <h3 className="flex items-center gap-2 mb-4 text-lg font-semibold text-gray-700">
@@ -88,6 +118,33 @@ function SeccionPDF({ titulo, Icono, items, rutaBase, PDFDoc, propName, montoFie
       </h3>
       {items.length === 0 ? (
         <p className="text-sm text-gray-400">No hay {titulo.toLowerCase()} para este cliente con el filtro actual.</p>
+      ) : vista === 'cards' ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map((item) => (
+            <div key={item.id} className="p-4 border border-gray-200 rounded-lg">
+              <div className="mb-1">
+                <BadgeSede nombre={sedeDe(item)} />
+              </div>
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-sm font-medium text-gray-900">{item.numero}</div>
+                <div className="text-xs text-gray-500 whitespace-nowrap">{formatFecha(item)}</div>
+              </div>
+              {extraCol && (
+                <div className="mt-1 text-sm text-gray-500 line-clamp-2" title={extraCol.render(item)}>{extraCol.render(item)}</div>
+              )}
+              {(montoField || badge) && (
+                <div className="flex items-center justify-between mt-1">
+                  {montoField && <div className="text-sm font-medium text-gray-900">{formatMoney(item[montoField])}</div>}
+                  {badge && badge(item)}
+                </div>
+              )}
+
+              <div className="flex justify-end pt-3 mt-3 gap-1 border-t border-gray-100">
+                <Acciones item={item} />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -113,30 +170,7 @@ function SeccionPDF({ titulo, Icono, items, rutaBase, PDFDoc, propName, montoFie
                   {badge && <td className="px-4 py-2 whitespace-nowrap">{badge(item)}</td>}
                   <td className="px-4 py-2 text-right whitespace-nowrap">
                     <div className="flex items-center justify-end gap-1">
-                      <Link href={`${rutaBase}/${item.id}`} title="Ver detalles" className={accionIconoClase('gray')}>
-                        <Eye size={ACCION_ICONO_TAMANO} />
-                      </Link>
-                      {renderDescarga ? renderDescarga(item) : (
-                        <PDFDownloadLink
-                          document={<PDFDoc {...{ [propName]: item }} />}
-                          fileName={`${item.numero}.pdf`}
-                          title="Descargar PDF"
-                          className={accionIconoClase('primary')}
-                        >
-                          {({ loading }) => <Download size={ACCION_ICONO_TAMANO} className={loading ? 'animate-pulse' : ''} />}
-                        </PDFDownloadLink>
-                      )}
-                      <Link href={`${rutaBase}/editar/${item.id}`} title="Editar" className={accionIconoClase('secondary')}>
-                        <Edit size={ACCION_ICONO_TAMANO} />
-                      </Link>
-                      <button
-                        onClick={() => onEliminar(item.id)}
-                        disabled={eliminando === `${tipo}:${item.id}`}
-                        title="Eliminar"
-                        className={accionIconoClase('red')}
-                      >
-                        <Trash size={ACCION_ICONO_TAMANO} />
-                      </button>
+                      <Acciones item={item} />
                     </div>
                   </td>
                 </tr>
@@ -151,7 +185,38 @@ function SeccionPDF({ titulo, Icono, items, rutaBase, PDFDoc, propName, montoFie
 
 // Tabla para documentos basados en archivos subidos (factura/certificado):
 // no se generan con react-pdf, se descarga el archivo adjunto directamente.
-function SeccionArchivos({ titulo, Icono, items, rutaBase, nombreField, montoField, badge, extraCol, sedeDe, tipo, onEliminar, eliminando }) {
+function SeccionArchivos({ titulo, Icono, items, rutaBase, nombreField, montoField, badge, extraCol, sedeDe, tipo, onEliminar, eliminando, vista }) {
+  const Acciones = ({ item }) => {
+    const archivos = item.archivos || [];
+    return (
+      <>
+        <Link href={`${rutaBase}/${item.id}`} title="Ver detalles" className={accionIconoClase('gray')}>
+          <Eye size={ACCION_ICONO_TAMANO} />
+        </Link>
+        {archivos.length > 0 ? (
+          <a href={archivos[0].url} target="_blank" rel="noopener noreferrer" title="Descargar" className={accionIconoClase('primary')}>
+            <Download size={ACCION_ICONO_TAMANO} />
+          </a>
+        ) : (
+          <span className={`${accionIconoClase('gray')} text-gray-300 hover:bg-transparent`}>
+            <Download size={ACCION_ICONO_TAMANO} />
+          </span>
+        )}
+        <Link href={`${rutaBase}/editar/${item.id}`} title="Editar" className={accionIconoClase('secondary')}>
+          <Edit size={ACCION_ICONO_TAMANO} />
+        </Link>
+        <button
+          onClick={() => onEliminar(item.id)}
+          disabled={eliminando === `${tipo}:${item.id}`}
+          title="Eliminar"
+          className={accionIconoClase('red')}
+        >
+          <Trash size={ACCION_ICONO_TAMANO} />
+        </button>
+      </>
+    );
+  };
+
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       <h3 className="flex items-center gap-2 mb-4 text-lg font-semibold text-gray-700">
@@ -160,6 +225,33 @@ function SeccionArchivos({ titulo, Icono, items, rutaBase, nombreField, montoFie
       </h3>
       {items.length === 0 ? (
         <p className="text-sm text-gray-400">No hay {titulo.toLowerCase()} para este cliente con el filtro actual.</p>
+      ) : vista === 'cards' ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map((item) => (
+            <div key={item.id} className="p-4 border border-gray-200 rounded-lg">
+              <div className="mb-1">
+                <BadgeSede nombre={sedeDe(item)} />
+              </div>
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-sm font-medium text-gray-900">{item[nombreField]}</div>
+                <div className="text-xs text-gray-500 whitespace-nowrap">{formatFecha(item)}</div>
+              </div>
+              {extraCol && (
+                <div className="mt-1 text-sm text-gray-500 line-clamp-2" title={extraCol.render(item)}>{extraCol.render(item)}</div>
+              )}
+              {(montoField || badge) && (
+                <div className="flex items-center justify-between mt-1">
+                  {montoField && <div className="text-sm font-medium text-gray-900">{formatMoney(item[montoField])}</div>}
+                  {badge && badge(item)}
+                </div>
+              )}
+
+              <div className="flex justify-end pt-3 mt-3 gap-1 border-t border-gray-100">
+                <Acciones item={item} />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -175,46 +267,21 @@ function SeccionArchivos({ titulo, Icono, items, rutaBase, nombreField, montoFie
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {items.map((item) => {
-                const archivos = item.archivos || [];
-                return (
-                  <tr key={item.id}>
-                    <td className="px-4 py-2 text-sm font-medium text-gray-900 whitespace-nowrap">{item[nombreField]}</td>
-                    <td className="px-4 py-2 text-sm text-gray-500 whitespace-nowrap">{formatFecha(item)}</td>
-                    <td className="px-4 py-2 text-sm whitespace-nowrap"><BadgeSede nombre={sedeDe(item)} /></td>
-                    {extraCol && <td className="max-w-xs px-4 py-2 text-sm text-gray-500 truncate">{extraCol.render(item)}</td>}
-                    {montoField && <td className="px-4 py-2 text-sm font-medium text-right text-gray-900 whitespace-nowrap">{formatMoney(item[montoField])}</td>}
-                    {badge && <td className="px-4 py-2 whitespace-nowrap">{badge(item)}</td>}
-                    <td className="px-4 py-2 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1">
-                        <Link href={`${rutaBase}/${item.id}`} title="Ver detalles" className={accionIconoClase('gray')}>
-                          <Eye size={ACCION_ICONO_TAMANO} />
-                        </Link>
-                        {archivos.length > 0 ? (
-                          <a href={archivos[0].url} target="_blank" rel="noopener noreferrer" title="Descargar" className={accionIconoClase('primary')}>
-                            <Download size={ACCION_ICONO_TAMANO} />
-                          </a>
-                        ) : (
-                          <span className={`${accionIconoClase('gray')} text-gray-300 hover:bg-transparent`}>
-                            <Download size={ACCION_ICONO_TAMANO} />
-                          </span>
-                        )}
-                        <Link href={`${rutaBase}/editar/${item.id}`} title="Editar" className={accionIconoClase('secondary')}>
-                          <Edit size={ACCION_ICONO_TAMANO} />
-                        </Link>
-                        <button
-                          onClick={() => onEliminar(item.id)}
-                          disabled={eliminando === `${tipo}:${item.id}`}
-                          title="Eliminar"
-                          className={accionIconoClase('red')}
-                        >
-                          <Trash size={ACCION_ICONO_TAMANO} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+              {items.map((item) => (
+                <tr key={item.id}>
+                  <td className="px-4 py-2 text-sm font-medium text-gray-900 whitespace-nowrap">{item[nombreField]}</td>
+                  <td className="px-4 py-2 text-sm text-gray-500 whitespace-nowrap">{formatFecha(item)}</td>
+                  <td className="px-4 py-2 text-sm whitespace-nowrap"><BadgeSede nombre={sedeDe(item)} /></td>
+                  {extraCol && <td className="max-w-xs px-4 py-2 text-sm text-gray-500 truncate">{extraCol.render(item)}</td>}
+                  {montoField && <td className="px-4 py-2 text-sm font-medium text-right text-gray-900 whitespace-nowrap">{formatMoney(item[montoField])}</td>}
+                  {badge && <td className="px-4 py-2 whitespace-nowrap">{badge(item)}</td>}
+                  <td className="px-4 py-2 text-right whitespace-nowrap">
+                    <div className="flex items-center justify-end gap-1">
+                      <Acciones item={item} />
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -233,6 +300,7 @@ function DocumentosCliente({ params }) {
   const [sedeFiltro, setSedeFiltro] = useState(searchParams.get('sede') || 'todas');
   const [tiposVisibles, setTiposVisibles] = useState(() => Object.fromEntries(TIPOS.map((t) => [t.key, true])));
   const [eliminando, setEliminando] = useState(null);
+  const [vista, setVista] = useState('tabla');
 
   const [presupuestos, setPresupuestos] = useState([]);
   const [remitos, setRemitos] = useState([]);
@@ -379,7 +447,10 @@ function DocumentosCliente({ params }) {
                 {sedesDisponibles.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
-            <p className="text-sm text-gray-400">{totalDocumentos} documentos en total</p>
+            <div className="flex items-end gap-4">
+              <p className="text-sm text-gray-400">{totalDocumentos} documentos en total</p>
+              <ViewToggle vista={vista} onChange={setVista} />
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -405,7 +476,7 @@ function DocumentosCliente({ params }) {
               titulo="Presupuestos" Icono={FileText} items={presupuestosFiltrados}
               rutaBase="/admin/presupuestos" PDFDoc={PresupuestoPDF} propName="presupuesto"
               montoField="total" badge={(d) => <BadgePresupuesto estado={d.estado} />}
-              sedeDe={(d) => d.cliente?.sedeNombre} tipo="presupuestos" eliminando={eliminando}
+              sedeDe={(d) => d.cliente?.sedeNombre} tipo="presupuestos" eliminando={eliminando} vista={vista}
               onEliminar={(docId) => handleEliminar('presupuestos', eliminarPresupuesto, docId, setPresupuestos, presupuestos)}
             />
           )}
@@ -413,7 +484,7 @@ function DocumentosCliente({ params }) {
             <SeccionPDF
               titulo="Remitos" Icono={FileCheck} items={remitosFiltrados}
               rutaBase="/admin/remitos" PDFDoc={RemitoPDF} propName="remito"
-              sedeDe={(d) => d.cliente?.sedeNombre} tipo="remitos" eliminando={eliminando}
+              sedeDe={(d) => d.cliente?.sedeNombre} tipo="remitos" eliminando={eliminando} vista={vista}
               onEliminar={(docId) => handleEliminar('remitos', eliminarRemito, docId, setRemitos, remitos)}
             />
           )}
@@ -422,7 +493,7 @@ function DocumentosCliente({ params }) {
               titulo="Recibos" Icono={Receipt} items={recibosFiltrados}
               rutaBase="/admin/recibos" PDFDoc={ReciboPDF} propName="recibo"
               montoField="monto" extraCol={{ header: 'Concepto', render: (d) => d.concepto || '-' }}
-              sedeDe={(d) => d.sedeNombre} tipo="recibos" eliminando={eliminando}
+              sedeDe={(d) => d.sedeNombre} tipo="recibos" eliminando={eliminando} vista={vista}
               onEliminar={(docId) => handleEliminar('recibos', eliminarRecibo, docId, setRecibos, recibos)}
             />
           )}
@@ -431,7 +502,7 @@ function DocumentosCliente({ params }) {
               titulo="Facturas" Icono={Banknote} items={facturasFiltradas}
               rutaBase="/admin/facturas" nombreField="numero" montoField="monto"
               badge={(d) => <EstadoFacturaBadge estado={d.estado} />}
-              sedeDe={(d) => d.sedeNombre} tipo="facturas" eliminando={eliminando}
+              sedeDe={(d) => d.sedeNombre} tipo="facturas" eliminando={eliminando} vista={vista}
               onEliminar={(docId) => handleEliminar('facturas', eliminarFactura, docId, setFacturas, facturas)}
             />
           )}
@@ -440,7 +511,7 @@ function DocumentosCliente({ params }) {
               titulo="Certificados" Icono={Award} items={certificadosFiltrados}
               rutaBase="/admin/certificados" nombreField="nombre"
               extraCol={{ header: 'Descripción', render: (d) => d.descripcion || '-' }}
-              sedeDe={(d) => d.sedeNombre} tipo="certificados" eliminando={eliminando}
+              sedeDe={(d) => d.sedeNombre} tipo="certificados" eliminando={eliminando} vista={vista}
               onEliminar={(docId) => handleEliminar('certificados', eliminarCertificado, docId, setCertificados, certificados)}
             />
           )}
@@ -449,7 +520,7 @@ function DocumentosCliente({ params }) {
               titulo="Estados de Cuenta" Icono={DollarSign} items={estadosFiltrados}
               rutaBase="/admin/estados" PDFDoc={EstadoPDF} propName="estado"
               montoField="total"
-              sedeDe={(d) => d.cliente?.sedeNombre} tipo="estados" eliminando={eliminando}
+              sedeDe={(d) => d.cliente?.sedeNombre} tipo="estados" eliminando={eliminando} vista={vista}
               onEliminar={(docId) => handleEliminar('estados', eliminarEstado, docId, setEstados, estados)}
             />
           )}
@@ -457,7 +528,7 @@ function DocumentosCliente({ params }) {
             <SeccionPDF
               titulo="Órdenes de Trabajo" Icono={ClipboardList} items={ordenesFiltradas}
               rutaBase="/admin/ordenes-trabajo"
-              sedeDe={(d) => d.cliente?.sedeNombre} tipo="ordenes" eliminando={eliminando}
+              sedeDe={(d) => d.cliente?.sedeNombre} tipo="ordenes" eliminando={eliminando} vista={vista}
               onEliminar={(docId) => handleEliminar('ordenes', eliminarOrdenTrabajo, docId, setOrdenes, ordenes)}
               renderDescarga={(item) => (
                 <DescargarOrdenTrabajoPDF orden={item} className={accionIconoClase('primary')}>
