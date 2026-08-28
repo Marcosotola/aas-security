@@ -1,6 +1,6 @@
 import './globals.css';
-import Header from './components/layout/Header';
-import Footer from './components/layout/Footer';
+import ConditionalHeader from './components/layout/ConditionalHeader';
+import ConditionalFooter from './components/layout/ConditionalFooter';
 import WhatsAppBadge from './components/ui/WhatsAppBadge';
 import RegisterSW from './components/ui/RegisterSW';
 import InstallPrompt from './components/ui/InstallPrompt';
@@ -21,11 +21,11 @@ export default function RootLayout({ children }) {
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body className="flex flex-col min-h-screen">
-        <Header />
+        <ConditionalHeader />
         <main className="flex-grow">
           {children}
         </main>
-        <Footer />
+        <ConditionalFooter />
         <WhatsAppBadge phoneNumber="+5493513112962" />
         <RegisterSW />
         <InstallPrompt />
