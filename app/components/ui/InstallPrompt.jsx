@@ -1,8 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { Download, X } from 'lucide-react';
 
 export default function InstallPrompt() {
+    const pathname = usePathname();
     const [deferredPrompt, setDeferredPrompt] = useState(null);
     const [showBanner, setShowBanner] = useState(false);
 
@@ -41,7 +43,9 @@ export default function InstallPrompt() {
         localStorage.setItem('pwa-install-dismissed', 'true');
     };
 
-    if (!showBanner) return null;
+    // En /admin ese lugar ya lo ocupa la barra inferior del panel (ver
+    // AdminHeader.jsx); mismo criterio que WhatsAppBadge.
+    if (!showBanner || pathname?.startsWith('/admin')) return null;
 
     return (
         <div

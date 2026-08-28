@@ -55,6 +55,17 @@ const MODULOS_NAV = [
   { id: 'suscripcion', label: 'Suscripción', icono: CreditCard, href: '/admin/suscripcion' },
 ];
 
+// Accesos rápidos de la barra inferior (solo mobile): los 4 destinos de uso
+// diario, para no depender del hamburguesa para todo. "Documentos" apunta al
+// hub (ver app/admin/documentos/page.js); se marca activo también con
+// cualquier submódulo de DOCUMENTOS_SUBMENU (documentosActivo).
+const BOTTOM_NAV_ITEMS = [
+  { id: 'inicio', label: 'Inicio', icono: Home, href: '/admin/dashboard' },
+  { id: 'documentos', label: 'Documentos', icono: FileText, href: '/admin/documentos' },
+  { id: 'ordenes-trabajo', label: 'Órdenes', icono: ClipboardList, href: '/admin/ordenes-trabajo' },
+  { id: 'usuarios', label: 'Usuarios', icono: UserCog, href: '/admin/usuarios' },
+];
+
 export default function AdminHeader({ user, suscripcionVencida }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [documentosMenuAbierto, setDocumentosMenuAbierto] = useState(false);
@@ -328,7 +339,7 @@ export default function AdminHeader({ user, suscripcionVencida }) {
 
       {/* Menú móvil: mismos accesos, en formato lista */}
       {mobileMenuOpen && (
-        <div className="absolute w-full bg-white shadow-lg top-full md:hidden">
+        <div className="absolute w-full overflow-y-auto bg-white shadow-lg top-full max-h-[calc(100vh-4rem)] md:hidden">
           <nav className="flex flex-col p-4">
             <Link
               href="/"
@@ -387,6 +398,41 @@ export default function AdminHeader({ user, suscripcionVencida }) {
           </nav>
         </div>
       )}
+
+      {/* Barra inferior: accesos rápidos en mobile a lo que se usa a diario,
+          sin depender solo del hamburguesa. "Más" reutiliza el mismo menú de
+          arriba (mismo estado mobileMenuOpen) en vez de duplicar la lista. */}
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 flex bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.08)] md:hidden"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        {BOTTOM_NAV_ITEMS.map((item) => {
+          const Icono = item.icono;
+          const activo = item.id === 'documentos' ? (esActivo(item.href) || documentosActivo) : esActivo(item.href);
+          return (
+            <Link
+              key={item.id}
+              href={item.href}
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex flex-col items-center justify-center flex-1 gap-0.5 py-2 text-[11px] font-medium ${activo ? 'text-primary' : 'text-gray-500'
+                }`}
+            >
+              <Icono size={20} />
+              {item.label}
+            </Link>
+          );
+        })}
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen((abierto) => !abierto)}
+          aria-label="Más opciones"
+          className={`flex flex-col items-center justify-center flex-1 gap-0.5 py-2 text-[11px] font-medium ${mobileMenuOpen ? 'text-primary' : 'text-gray-500'
+            }`}
+        >
+          {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          Más
+        </button>
+      </nav>
     </header>
   );
 }
