@@ -39,7 +39,7 @@ export const formatFecha = (doc) => {
   return '-';
 };
 
-const fechaOrdenDe = (doc) => {
+export const fechaOrdenDe = (doc) => {
   if (doc.fechaCreacion?.toDate) return doc.fechaCreacion.toDate();
   if (doc.fecha) {
     const [year, month, day] = doc.fecha.split('-').map(Number);

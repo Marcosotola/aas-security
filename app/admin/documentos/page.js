@@ -1,13 +1,21 @@
 // app/admin/documentos/page.js
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { Home, FileText, DollarSign, FileCheck, Receipt, File, Banknote, Award } from 'lucide-react';
+import { Home, FileText, DollarSign, FileCheck, Receipt, File, Banknote, Award, Search, X } from 'lucide-react';
 import { collection, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import {
+  obtenerPresupuestos, obtenerEstados, obtenerRemitos, obtenerRecibos,
+  obtenerOrdenesTrabajo, obtenerFacturas, obtenerCertificados
+} from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import ModuloCard from '../../components/admin/ModuloCard';
+import ViewToggle from '../../components/admin/ViewToggle';
+import ListaDocumentosAdmin from '../../components/admin/ListaDocumentosAdmin';
+import { normalizarDocumentosAdmin } from '../../lib/documentosAdmin';
+import { filtrarDocumentos, TIPOS_DOC } from '../../lib/documentosCliente';
 
 // Hub de "Documentos": agrupa los 5 tipos de documento (Presupuestos, Estados
 // de Cuenta, Remitos, Recibos, Informes) con las mismas tarjetas que el panel
@@ -50,6 +58,67 @@ export default function DocumentosHub() {
       }
     })();
   }, [user]);
+
+  // Buscador general: cruza los 7 tipos de documento de todos los clientes
+  // (no incluye "Informes" — colección `documentos` de las tarjetas de
+  // arriba — que son plantillas internas, no documentos de un cliente).
+  // Fetch aparte del conteo de arriba: trae los documentos completos, no
+  // solo la cantidad, así que carga en su propio estado para no demorar las
+  // tarjetas (que ya se ven con el conteo liviano de getCountFromServer).
+  const [loadingBusqueda, setLoadingBusqueda] = useState(true);
+  const [todosDocumentos, setTodosDocumentos] = useState([]);
+  const [busqueda, setBusqueda] = useState('');
+  const [sedeFiltro, setSedeFiltro] = useState('todas');
+  const [desde, setDesde] = useState('');
+  const [hasta, setHasta] = useState('');
+  const [tiposActivos, setTiposActivos] = useState(() => new Set(Object.keys(TIPOS_DOC)));
+  const [vista, setVista] = useState('tabla');
+
+  useEffect(() => {
+    if (!user) return;
+
+    (async () => {
+      try {
+        const [presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo] = await Promise.all([
+          obtenerPresupuestos(),
+          obtenerRemitos(),
+          obtenerRecibos(),
+          obtenerFacturas(),
+          obtenerCertificados(),
+          obtenerEstados(),
+          obtenerOrdenesTrabajo()
+        ]);
+        setTodosDocumentos(normalizarDocumentosAdmin({ presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo }));
+      } catch (error) {
+        console.error('Error al cargar los documentos para el buscador:', error);
+      } finally {
+        setLoadingBusqueda(false);
+      }
+    })();
+  }, [user]);
+
+  const tiposPresentes = useMemo(() => {
+    const set = new Set(todosDocumentos.map((d) => d.tipo));
+    return Object.keys(TIPOS_DOC).filter((t) => set.has(t));
+  }, [todosDocumentos]);
+
+  const sedesDisponibles = useMemo(() => {
+    const set = new Set(todosDocumentos.map((d) => d.sede).filter(Boolean));
+    return Array.from(set).sort();
+  }, [todosDocumentos]);
+
+  const toggleTipo = (tipo) => {
+    setTiposActivos((prev) => {
+      const next = new Set(prev);
+      if (next.has(tipo)) next.delete(tipo); else next.add(tipo);
+      return next;
+    });
+  };
+
+  const documentosFiltrados = useMemo(() => {
+    const porTipo = todosDocumentos.filter((d) => tiposActivos.has(d.tipo));
+    return filtrarDocumentos(porTipo, { busqueda, sede: sedeFiltro, desde, hasta });
+  }, [todosDocumentos, tiposActivos, sedeFiltro, busqueda, desde, hasta]);
 
   if (loading) {
     return (
@@ -189,6 +258,109 @@ export default function DocumentosHub() {
           {modulos.map((modulo) => (
             <ModuloCard key={modulo.id} modulo={modulo} />
           ))}
+        </div>
+
+        <div className="mt-8">
+          <h3 className="mb-1 text-lg font-semibold text-gray-700">Buscar en todos los documentos</h3>
+          <p className="mb-4 text-sm text-gray-500">
+            Por número, cliente, sede o concepto — de cualquier tipo y de cualquier cliente.
+          </p>
+
+          {loadingBusqueda ? (
+            <div className="p-10 text-center bg-white rounded-lg shadow-md">
+              <div className="w-8 h-8 mx-auto border-b-2 rounded-full animate-spin border-primary"></div>
+            </div>
+          ) : (
+            <>
+              <div className="p-4 space-y-4 bg-white rounded-lg shadow-md">
+                <div className="relative">
+                  <Search size={16} className="absolute -translate-y-1/2 left-3 top-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    placeholder="Buscar por número, cliente, sede, concepto..."
+                    className="w-full py-2 pl-9 pr-9 text-sm border border-gray-300 rounded-md"
+                  />
+                  {busqueda && (
+                    <button
+                      onClick={() => setBusqueda('')}
+                      title="Limpiar búsqueda"
+                      className="absolute p-1 -translate-y-1/2 rounded-full right-1.5 top-1/2 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-end gap-3">
+                  {sedesDisponibles.length > 1 && (
+                    <div>
+                      <label className="block mb-1 text-xs font-medium text-gray-500">Sede</label>
+                      <select
+                        value={sedeFiltro}
+                        onChange={(e) => setSedeFiltro(e.target.value)}
+                        className="px-3 py-2 text-sm border border-gray-300 rounded-md"
+                      >
+                        <option value="todas">Todas las sedes</option>
+                        {sedesDisponibles.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  <div>
+                    <label className="block mb-1 text-xs font-medium text-gray-500">Desde</label>
+                    <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="px-3 py-2 text-sm border border-gray-300 rounded-md" />
+                  </div>
+                  <div>
+                    <label className="block mb-1 text-xs font-medium text-gray-500">Hasta</label>
+                    <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="px-3 py-2 text-sm border border-gray-300 rounded-md" />
+                  </div>
+                  <ViewToggle vista={vista} onChange={setVista} />
+                </div>
+
+                {tiposPresentes.length > 1 && (
+                  <div className="flex flex-wrap gap-2">
+                    {tiposPresentes.map((tipo) => {
+                      const { label, icono: Icono } = TIPOS_DOC[tipo];
+                      const activo = tiposActivos.has(tipo);
+                      return (
+                        <button
+                          key={tipo}
+                          type="button"
+                          onClick={() => toggleTipo(tipo)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                            activo ? 'bg-primary text-white border-primary' : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <Icono size={13} /> {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4">
+                {todosDocumentos.length === 0 ? (
+                  <div className="p-10 text-center bg-white rounded-lg shadow-md">
+                    <FileText size={32} className="mx-auto mb-2 text-gray-300" />
+                    <p className="text-gray-500">Todavía no hay documentos cargados.</p>
+                  </div>
+                ) : documentosFiltrados.length === 0 ? (
+                  <div className="p-10 text-center bg-white rounded-lg shadow-md">
+                    <p className="text-gray-500">No hay documentos que coincidan con la búsqueda.</p>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-white rounded-lg shadow-md sm:p-6">
+                    <p className="mb-4 text-sm text-gray-400">{documentosFiltrados.length} documentos</p>
+                    <ListaDocumentosAdmin documentos={documentosFiltrados} vista={vista} />
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
