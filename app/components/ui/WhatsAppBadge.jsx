@@ -7,8 +7,9 @@ import { MessageCircle } from 'lucide-react';
 export default function WhatsAppBadge({ phoneNumber }) {
   const pathname = usePathname();
   
-  // Ocultar en rutas de admin
-  if (pathname?.startsWith('/admin')) {
+  // Ocultar en rutas de admin y del portal del cliente: son paneles logueados,
+  // no la página pública que necesita el botón de contacto rápido.
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/cuenta')) {
     return null;
   }
 

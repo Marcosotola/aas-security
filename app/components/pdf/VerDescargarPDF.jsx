@@ -9,9 +9,13 @@ const Spinner = () => (
 );
 
 // Botones "Ver" (abre el PDF en una pestaña nueva) y "Descargar" para
-// documentos livianos (presupuesto/remito/recibo) generados con
+// documentos livianos (presupuesto/remito/recibo/estado) generados con
 // @react-pdf/renderer. A diferencia de PDFDownloadLink, permite elegir entre
 // visualizar o forzar la descarga.
+// Ícono de 20px + padding con fondo circular al hover (no 16px pelado): así
+// el área táctil real queda pareja con accionIconoClase.js, que usan las
+// otras acciones del hub de documentos (factura/certificado/orden) — ver
+// app/cuenta/documentos/page.js.
 export default function VerDescargarPDF({ documento, fileName }) {
   const [generando, setGenerando] = useState(null);
 
@@ -41,12 +45,24 @@ export default function VerDescargarPDF({ documento, fileName }) {
   };
 
   return (
-    <span className="inline-flex items-center space-x-3">
-      <button type="button" onClick={() => handleClick('ver')} disabled={!!generando} title="Ver PDF" className="text-gray-600 hover:text-primary disabled:opacity-50">
-        {generando === 'ver' ? <Spinner /> : <Eye size={16} />}
+    <span className="inline-flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => handleClick('ver')}
+        disabled={!!generando}
+        title="Ver PDF"
+        className="inline-flex items-center justify-center p-2.5 text-gray-600 transition-colors rounded-full hover:text-primary hover:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none"
+      >
+        {generando === 'ver' ? <Spinner /> : <Eye size={20} />}
       </button>
-      <button type="button" onClick={() => handleClick('descargar')} disabled={!!generando} title="Descargar PDF" className="text-primary hover:text-primary-light disabled:opacity-50">
-        {generando === 'descargar' ? <Spinner /> : <Download size={16} />}
+      <button
+        type="button"
+        onClick={() => handleClick('descargar')}
+        disabled={!!generando}
+        title="Descargar PDF"
+        className="inline-flex items-center justify-center p-2.5 text-primary transition-colors rounded-full hover:text-primary-light hover:bg-primary/10 disabled:opacity-50 disabled:pointer-events-none"
+      >
+        {generando === 'descargar' ? <Spinner /> : <Download size={20} />}
       </button>
     </span>
   );
