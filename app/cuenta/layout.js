@@ -19,7 +19,7 @@ function CuentaShell({ children }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+    <div className="min-h-screen bg-gray-50 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
       <ClienteHeader user={user} perfil={perfil} />
       {children}
     </div>

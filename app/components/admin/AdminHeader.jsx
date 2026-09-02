@@ -24,7 +24,8 @@ import {
   ClipboardList,
   ListChecks,
   ShieldAlert,
-  Award
+  Award,
+  Search
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
@@ -230,6 +231,14 @@ export default function AdminHeader({ user, suscripcionVencida }) {
         </div>
         <div className="flex items-center space-x-2 md:space-x-4">
           <span className="hidden md:inline">{user?.email}</span>
+          <Link
+            href="/admin/documentos"
+            title="Buscador general"
+            className="flex items-center p-2 text-white rounded-md hover:bg-primary-light"
+          >
+            <Search size={18} className="md:mr-2" />
+            <span className="hidden md:inline">Buscar</span>
+          </Link>
           <a
             href="/carta-presentacion-aas-security.pdf"
             download

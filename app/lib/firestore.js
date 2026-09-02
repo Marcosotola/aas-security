@@ -1069,6 +1069,7 @@ export const obtenerOrdenesTrabajoPorCliente = (clienteId) => obtenerColeccionPo
 export const obtenerFacturasPorCliente = (clienteId) => obtenerColeccionPorCliente('facturas', clienteId);
 export const obtenerCertificadosPorCliente = (clienteId) => obtenerColeccionPorCliente('certificados', clienteId);
 export const obtenerEstadosPorCliente = (clienteId) => obtenerColeccionPorCliente('estados', clienteId);
+export const obtenerDocumentosPorCliente = (clienteId) => obtenerColeccionPorCliente('documentos', clienteId);
 
 // ========== SUSCRIPCIÓN DE LA APP (solo lectura para Admin, edición solo SuperAdmin) ==========
 // Doc único config/suscripcion. Si no existe todavía, se devuelven valores

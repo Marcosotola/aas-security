@@ -10,6 +10,7 @@ import PresupuestoPDF from '../pdf/PresupuestoPDF';
 import RemitoPDF from '../pdf/RemitoPDF';
 import ReciboPDF from '../pdf/ReciboPDF';
 import EstadoPDF from '../pdf/EstadoPDF';
+import DocumentoPDF from '../pdf/DocumentoPDF';
 // BadgeSede y CeldaEstado son genéricos (no dependen de estar viendo los
 // documentos de un solo cliente), así que se reutilizan tal cual del portal
 // del cliente en vez de duplicarlos acá.
@@ -22,14 +23,16 @@ const RUTA_BASE = {
   factura: '/admin/facturas',
   certificado: '/admin/certificados',
   estado: '/admin/estados',
-  orden: '/admin/ordenes-trabajo'
+  orden: '/admin/ordenes-trabajo',
+  informe: '/admin/informes'
 };
 
 const PDF_COMPONENTS = {
   presupuesto: { Component: PresupuestoPDF, propName: 'presupuesto' },
   remito: { Component: RemitoPDF, propName: 'remito' },
   recibo: { Component: ReciboPDF, propName: 'recibo' },
-  estado: { Component: EstadoPDF, propName: 'estado' }
+  estado: { Component: EstadoPDF, propName: 'estado' },
+  informe: { Component: DocumentoPDF, propName: 'documento' }
 };
 
 // Badge con el nombre del cliente, linkeado a su ficha (con clienteId) —

@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Home, MapPin, Eye, Edit, Trash, Download,
-  FileText, FileCheck, Receipt, Banknote, Award, DollarSign, ClipboardList
+  FileText, FileCheck, Receipt, Banknote, Award, DollarSign, ClipboardList, File
 } from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import {
@@ -18,13 +18,15 @@ import {
   obtenerCertificadosPorCliente,
   obtenerEstadosPorCliente,
   obtenerOrdenesTrabajoPorCliente,
+  obtenerDocumentosPorCliente,
   eliminarPresupuesto,
   eliminarRemito,
   eliminarRecibo,
   eliminarFactura,
   eliminarCertificado,
   eliminarEstado,
-  eliminarOrdenTrabajo
+  eliminarOrdenTrabajo,
+  eliminarDocumento
 } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import ViewToggle from '../../../components/admin/ViewToggle';
@@ -34,6 +36,7 @@ import PresupuestoPDF from '../../../components/pdf/PresupuestoPDF';
 import RemitoPDF from '../../../components/pdf/RemitoPDF';
 import ReciboPDF from '../../../components/pdf/ReciboPDF';
 import EstadoPDF from '../../../components/pdf/EstadoPDF';
+import DocumentoPDF from '../../../components/pdf/DocumentoPDF';
 import DescargarOrdenTrabajoPDF from '../../../components/pdf/DescargarOrdenTrabajoPDF';
 import { EstadoFacturaBadge } from '../../../components/ui/EstadoFactura';
 
@@ -74,7 +77,8 @@ const TIPOS = [
   { key: 'facturas', label: 'Facturas', icono: Banknote },
   { key: 'certificados', label: 'Certificados', icono: Award },
   { key: 'estados', label: 'Estados de Cuenta', icono: DollarSign },
-  { key: 'ordenes', label: 'Órdenes de Trabajo', icono: ClipboardList }
+  { key: 'ordenes', label: 'Órdenes de Trabajo', icono: ClipboardList },
+  { key: 'informes', label: 'Informes', icono: File }
 ];
 
 // Tabla genérica para documentos generados con @react-pdf/renderer
@@ -309,6 +313,7 @@ function DocumentosCliente({ params }) {
   const [certificados, setCertificados] = useState([]);
   const [estados, setEstados] = useState([]);
   const [ordenes, setOrdenes] = useState([]);
+  const [informes, setInformes] = useState([]);
 
   const loading = loadingAuth || loadingData;
 
@@ -325,7 +330,7 @@ function DocumentosCliente({ params }) {
 
     (async () => {
       try {
-        const [perfilData, pres, rem, rec, fac, cert, est, ord] = await Promise.all([
+        const [perfilData, pres, rem, rec, fac, cert, est, ord, inf] = await Promise.all([
           obtenerUsuarioPorId(id),
           obtenerPresupuestosPorCliente(id),
           obtenerRemitosPorCliente(id),
@@ -333,7 +338,8 @@ function DocumentosCliente({ params }) {
           obtenerFacturasPorCliente(id),
           obtenerCertificadosPorCliente(id),
           obtenerEstadosPorCliente(id),
-          obtenerOrdenesTrabajoPorCliente(id)
+          obtenerOrdenesTrabajoPorCliente(id),
+          obtenerDocumentosPorCliente(id)
         ]);
 
         if (!perfilData) {
@@ -350,6 +356,10 @@ function DocumentosCliente({ params }) {
         setCertificados(cert);
         setEstados(est);
         setOrdenes(ord);
+        // Los informes no tienen número correlativo, solo un título de texto
+        // libre (ej. "CERTIFICACIÓN") — se usa como "número" para poder
+        // listarlos con la misma tabla genérica (SeccionPDF) que el resto.
+        setInformes(inf.map((d) => ({ ...d, numero: d.titulo || 'Informe' })));
       } catch (error) {
         console.error('Error al cargar los documentos del cliente:', error);
       } finally {
@@ -361,10 +371,10 @@ function DocumentosCliente({ params }) {
   const sedesDisponibles = useMemo(() => {
     const set = new Set();
     (perfil?.sedes || []).forEach((s) => s.nombre && set.add(s.nombre));
-    [...presupuestos, ...remitos, ...estados, ...ordenes].forEach((d) => d.cliente?.sedeNombre && set.add(d.cliente.sedeNombre));
+    [...presupuestos, ...remitos, ...estados, ...ordenes, ...informes].forEach((d) => d.cliente?.sedeNombre && set.add(d.cliente.sedeNombre));
     [...recibos, ...facturas, ...certificados].forEach((d) => d.sedeNombre && set.add(d.sedeNombre));
     return Array.from(set).sort();
-  }, [perfil, presupuestos, remitos, recibos, facturas, certificados, estados, ordenes]);
+  }, [perfil, presupuestos, remitos, recibos, facturas, certificados, estados, ordenes, informes]);
 
   const porSedeA = (items) => sedeFiltro === 'todas' ? items : items.filter((d) => (d.cliente?.sedeNombre || '') === sedeFiltro);
   const porSedeB = (items) => sedeFiltro === 'todas' ? items : items.filter((d) => (d.sedeNombre || '') === sedeFiltro);
@@ -373,11 +383,12 @@ function DocumentosCliente({ params }) {
   const remitosFiltrados = useMemo(() => porSedeA(remitos), [remitos, sedeFiltro]);
   const estadosFiltrados = useMemo(() => porSedeA(estados), [estados, sedeFiltro]);
   const ordenesFiltradas = useMemo(() => porSedeA(ordenes), [ordenes, sedeFiltro]);
+  const informesFiltrados = useMemo(() => porSedeA(informes), [informes, sedeFiltro]);
   const recibosFiltrados = useMemo(() => porSedeB(recibos), [recibos, sedeFiltro]);
   const facturasFiltradas = useMemo(() => porSedeB(facturas), [facturas, sedeFiltro]);
   const certificadosFiltrados = useMemo(() => porSedeB(certificados), [certificados, sedeFiltro]);
 
-  const totalDocumentos = presupuestos.length + remitos.length + recibos.length + facturas.length + certificados.length + estados.length + ordenes.length;
+  const totalDocumentos = presupuestos.length + remitos.length + recibos.length + facturas.length + certificados.length + estados.length + ordenes.length + informes.length;
 
   const toggleTipo = (key) => setTiposVisibles((prev) => ({ ...prev, [key]: !prev[key] }));
 
@@ -535,6 +546,15 @@ function DocumentosCliente({ params }) {
                   <Download size={ACCION_ICONO_TAMANO} />
                 </DescargarOrdenTrabajoPDF>
               )}
+            />
+          )}
+          {tiposVisibles.informes && (
+            <SeccionPDF
+              titulo="Informes" Icono={File} items={informesFiltrados}
+              rutaBase="/admin/informes" PDFDoc={DocumentoPDF} propName="documento"
+              extraCol={{ header: 'Contenido', render: (d) => d.contenido || '-' }}
+              sedeDe={(d) => d.cliente?.sedeNombre} tipo="informes" eliminando={eliminando} vista={vista}
+              onEliminar={(docId) => handleEliminar('informes', eliminarDocumento, docId, setInformes, informes)}
             />
           )}
         </div>

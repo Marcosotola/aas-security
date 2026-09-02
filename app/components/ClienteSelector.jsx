@@ -12,6 +12,7 @@ export default function ClienteSelector({ clientes, onSelect, placeholder = 'Bus
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [clienteElegido, setClienteElegido] = useState(null);
+  const [sedeQuery, setSedeQuery] = useState('');
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export default function ClienteSelector({ clientes, onSelect, placeholder = 'Bus
     setClienteElegido(cliente);
     setOpen(false);
     setQuery('');
+    setSedeQuery('');
 
     // Sin sedes cargadas: usamos directamente la dirección principal del cliente.
     if (!cliente.sedes || cliente.sedes.length === 0) {
@@ -115,25 +117,53 @@ export default function ClienteSelector({ clientes, onSelect, placeholder = 'Bus
           <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-100 bg-gray-50">
             Elegí la sede de {clienteElegido.nombre} {clienteElegido.apellido}
           </div>
-          <button
-            type="button"
-            onClick={() => elegirSede(null)}
-            className="flex items-center w-full gap-2 px-3 py-2 text-sm text-left border-b border-gray-100 hover:bg-blue-50"
-          >
-            <MapPin size={14} className="text-gray-400 shrink-0" />
-            <span>Dirección principal — {clienteElegido.direccion || 'sin dirección'}</span>
-          </button>
-          {clienteElegido.sedes.map((sede) => (
+          {clienteElegido.sedes.length > 5 && (
+            <div className="relative border-b border-gray-100">
+              <Search size={13} className="absolute -translate-y-1/2 left-3 top-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={sedeQuery}
+                onChange={(e) => setSedeQuery(e.target.value)}
+                placeholder="Buscar sede..."
+                autoFocus
+                className="w-full py-2 pl-8 pr-2 text-sm focus:outline-none"
+              />
+            </div>
+          )}
+          <div className="overflow-y-auto max-h-56">
             <button
               type="button"
-              key={sede.id}
-              onClick={() => elegirSede(sede)}
-              className="flex items-center w-full gap-2 px-3 py-2 text-sm text-left border-b border-gray-100 last:border-0 hover:bg-blue-50"
+              onClick={() => elegirSede(null)}
+              className="flex items-center w-full gap-2 px-3 py-2 text-sm text-left border-b border-gray-100 hover:bg-blue-50"
             >
-              <MapPin size={14} className="text-primary shrink-0" />
-              <span>{sede.nombre} — {sede.direccion}</span>
+              <MapPin size={14} className="text-gray-400 shrink-0" />
+              <span>Dirección principal — {clienteElegido.direccion || 'sin dirección'}</span>
             </button>
-          ))}
+            {(() => {
+              const sq = sedeQuery.trim().toLowerCase();
+              const sedesFiltradas = sq
+                ? clienteElegido.sedes.filter((sede) =>
+                    sede.nombre?.toLowerCase().includes(sq) || sede.direccion?.toLowerCase().includes(sq)
+                  )
+                : clienteElegido.sedes;
+
+              if (sedesFiltradas.length === 0) {
+                return <div className="px-3 py-2 text-sm text-gray-400">Sin sedes que coincidan</div>;
+              }
+
+              return sedesFiltradas.map((sede) => (
+                <button
+                  type="button"
+                  key={sede.id}
+                  onClick={() => elegirSede(sede)}
+                  className="flex items-center w-full gap-2 px-3 py-2 text-sm text-left border-b border-gray-100 last:border-0 hover:bg-blue-50"
+                >
+                  <MapPin size={14} className="text-primary shrink-0" />
+                  <span>{sede.nombre} — {sede.direccion}</span>
+                </button>
+              ));
+            })()}
+          </div>
         </div>
       )}
     </div>

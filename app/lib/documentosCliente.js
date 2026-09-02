@@ -2,7 +2,7 @@
 // Normaliza los 7 tipos de documento del cliente (que llegan con formas
 // distintas desde Firestore, ver useClienteAuth.js) a una forma común para
 // poder listarlos juntos en un solo hub buscable (app/cuenta/documentos).
-import { FileText, FileCheck, Receipt, Banknote, Award, DollarSign, ClipboardList } from 'lucide-react';
+import { FileText, FileCheck, Receipt, Banknote, Award, DollarSign, ClipboardList, File } from 'lucide-react';
 
 export const TIPOS_DOC = {
   presupuesto: { label: 'Presupuesto', icono: FileText },
@@ -11,15 +11,16 @@ export const TIPOS_DOC = {
   factura: { label: 'Factura', icono: Banknote },
   certificado: { label: 'Certificado', icono: Award },
   estado: { label: 'Estado de cuenta', icono: DollarSign },
-  orden: { label: 'Orden de trabajo', icono: ClipboardList }
+  orden: { label: 'Orden de trabajo', icono: ClipboardList },
+  informe: { label: 'Informe', icono: File }
 };
 
 // La sede queda anidada en `cliente.sedeNombre` para los documentos armados
-// con el generador interno (presupuesto/remito/estado/orden) y como
+// con el generador interno (presupuesto/remito/estado/orden/informe) y como
 // `sedeNombre` directo para los basados en archivo subido (recibo/factura/
 // certificado) — misma dualidad que ya existe en la ficha de admin
 // (app/admin/usuarios/[id]/page.js).
-export const SEDE_ANIDADA = new Set(['presupuesto', 'remito', 'estado', 'orden']);
+export const SEDE_ANIDADA = new Set(['presupuesto', 'remito', 'estado', 'orden', 'informe']);
 
 export const formatMoney = (amount) => {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;

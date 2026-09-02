@@ -13,7 +13,10 @@ const clienteNombreDe = (doc) => doc.cliente?.nombre || doc.clienteNombre || doc
 const clienteEmpresaDe = (doc) => doc.cliente?.empresa || null;
 
 const normalizarUno = (tipo, doc) => {
-  const numero = doc.numero || doc.nombre || '-';
+  // Los informes no tienen número correlativo, solo un título de texto libre
+  // (ej. "CERTIFICACIÓN") — se usa como "número" para poder listarlos junto
+  // al resto con la misma columna.
+  const numero = doc.numero || doc.nombre || doc.titulo || '-';
   const sede = SEDE_ANIDADA.has(tipo) ? doc.cliente?.sedeNombre : doc.sedeNombre;
   const clienteNombre = clienteNombreDe(doc);
   const clienteEmpresa = clienteEmpresaDe(doc);
@@ -31,17 +34,18 @@ const normalizarUno = (tipo, doc) => {
     estado: doc.estado,
     archivos: doc.archivos,
     // Mismo criterio que documentosCliente.js: además del número suma sede,
-    // cliente/empresa y concepto/descripción, para que la búsqueda no
-    // dependa de saber el número exacto de memoria.
-    texto: [numero, sede, clienteNombre, clienteEmpresa, doc.concepto, doc.descripcion].filter(Boolean).join(' ').toLowerCase(),
+    // cliente/empresa y concepto/descripción/contenido, para que la búsqueda
+    // no dependa de saber el número exacto de memoria.
+    texto: [numero, sede, clienteNombre, clienteEmpresa, doc.concepto, doc.descripcion, doc.contenido].filter(Boolean).join(' ').toLowerCase(),
     raw: doc
   };
 };
 
 // `colecciones` es { presupuestos, remitos, recibos, facturas, certificados,
-// estados, ordenesTrabajo } ya sin acotar por cliente (obtenerPresupuestos(),
-// obtenerRemitos(), etc. de firestore.js). Devuelve un único array ordenado
-// por fecha descendente.
+// estados, ordenesTrabajo, documentos } ya sin acotar por cliente
+// (obtenerPresupuestos(), obtenerRemitos(), ..., obtenerDocumentos() de
+// firestore.js — `documentos` son los informes). Devuelve un único array
+// ordenado por fecha descendente.
 export function normalizarDocumentosAdmin(colecciones) {
   const todos = [
     ...colecciones.presupuestos.map((d) => normalizarUno('presupuesto', d)),
@@ -50,7 +54,8 @@ export function normalizarDocumentosAdmin(colecciones) {
     ...colecciones.facturas.map((d) => normalizarUno('factura', d)),
     ...colecciones.certificados.map((d) => normalizarUno('certificado', d)),
     ...colecciones.estados.map((d) => normalizarUno('estado', d)),
-    ...colecciones.ordenesTrabajo.map((d) => normalizarUno('orden', d))
+    ...colecciones.ordenesTrabajo.map((d) => normalizarUno('orden', d)),
+    ...colecciones.documentos.map((d) => normalizarUno('informe', d))
   ];
   return todos.sort((a, b) => b.fechaOrden - a.fechaOrden);
 }

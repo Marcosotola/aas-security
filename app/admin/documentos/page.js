@@ -8,7 +8,8 @@ import { collection, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import {
   obtenerPresupuestos, obtenerEstados, obtenerRemitos, obtenerRecibos,
-  obtenerOrdenesTrabajo, obtenerFacturas, obtenerCertificados
+  obtenerOrdenesTrabajo, obtenerFacturas, obtenerCertificados, obtenerDocumentos,
+  obtenerClientes
 } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import ModuloCard from '../../components/admin/ModuloCard';
@@ -59,14 +60,17 @@ export default function DocumentosHub() {
     })();
   }, [user]);
 
-  // Buscador general: cruza los 7 tipos de documento de todos los clientes
-  // (no incluye "Informes" — colección `documentos` de las tarjetas de
-  // arriba — que son plantillas internas, no documentos de un cliente).
+  // Buscador general: cruza los 8 tipos de documento de todos los clientes
+  // (incluye "Informes" — colección `documentos` — ahora que también llevan
+  // cliente/sede asociados), más los clientes y sedes en sí, para poder
+  // buscar por cualquier cosa (número, cliente, empresa, sede, título,
+  // contenido) y llegar rápido a lo que corresponda.
   // Fetch aparte del conteo de arriba: trae los documentos completos, no
   // solo la cantidad, así que carga en su propio estado para no demorar las
   // tarjetas (que ya se ven con el conteo liviano de getCountFromServer).
   const [loadingBusqueda, setLoadingBusqueda] = useState(true);
   const [todosDocumentos, setTodosDocumentos] = useState([]);
+  const [clientes, setClientes] = useState([]);
   const [busqueda, setBusqueda] = useState('');
   const [sedeFiltro, setSedeFiltro] = useState('todas');
   const [desde, setDesde] = useState('');
@@ -79,16 +83,19 @@ export default function DocumentosHub() {
 
     (async () => {
       try {
-        const [presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo] = await Promise.all([
+        const [presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo, informes, clientesData] = await Promise.all([
           obtenerPresupuestos(),
           obtenerRemitos(),
           obtenerRecibos(),
           obtenerFacturas(),
           obtenerCertificados(),
           obtenerEstados(),
-          obtenerOrdenesTrabajo()
+          obtenerOrdenesTrabajo(),
+          obtenerDocumentos(),
+          obtenerClientes()
         ]);
-        setTodosDocumentos(normalizarDocumentosAdmin({ presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo }));
+        setTodosDocumentos(normalizarDocumentosAdmin({ presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo, documentos: informes }));
+        setClientes(clientesData);
       } catch (error) {
         console.error('Error al cargar los documentos para el buscador:', error);
       } finally {
@@ -96,6 +103,32 @@ export default function DocumentosHub() {
       }
     })();
   }, [user]);
+
+  const clientesFiltrados = useMemo(() => {
+    const q = busqueda.trim().toLowerCase();
+    if (!q) return [];
+    return clientes.filter((c) => {
+      const nombreCompleto = `${c.nombre || ''} ${c.apellido || ''}`.toLowerCase();
+      return nombreCompleto.includes(q)
+        || c.empresa?.toLowerCase().includes(q)
+        || c.email?.toLowerCase().includes(q)
+        || c.telefono?.toLowerCase().includes(q);
+    }).slice(0, 20);
+  }, [clientes, busqueda]);
+
+  const sedesFiltradas = useMemo(() => {
+    const q = busqueda.trim().toLowerCase();
+    if (!q) return [];
+    const resultado = [];
+    clientes.forEach((c) => {
+      (c.sedes || []).forEach((s) => {
+        if (s.nombre?.toLowerCase().includes(q) || s.direccion?.toLowerCase().includes(q)) {
+          resultado.push({ clienteId: c.id, clienteNombre: `${c.nombre || ''} ${c.apellido || ''}`.trim(), sede: s });
+        }
+      });
+    });
+    return resultado.slice(0, 20);
+  }, [clientes, busqueda]);
 
   const tiposPresentes = useMemo(() => {
     const set = new Set(todosDocumentos.map((d) => d.tipo));
@@ -261,9 +294,9 @@ export default function DocumentosHub() {
         </div>
 
         <div className="mt-8">
-          <h3 className="mb-1 text-lg font-semibold text-gray-700">Buscar en todos los documentos</h3>
+          <h3 className="mb-1 text-lg font-semibold text-gray-700">Buscador general</h3>
           <p className="mb-4 text-sm text-gray-500">
-            Por número, cliente, sede o concepto — de cualquier tipo y de cualquier cliente.
+            Por cliente, sede, número, título o concepto — cruza clientes, sedes y los 8 tipos de documento a la vez.
           </p>
 
           {loadingBusqueda ? (
@@ -341,6 +374,50 @@ export default function DocumentosHub() {
                   </div>
                 )}
               </div>
+
+              {busqueda.trim() && (clientesFiltrados.length > 0 || sedesFiltradas.length > 0) && (
+                <div className="grid grid-cols-1 gap-4 mt-4 sm:grid-cols-2">
+                  {clientesFiltrados.length > 0 && (
+                    <div className="p-4 bg-white rounded-lg shadow-md">
+                      <h4 className="mb-3 text-sm font-semibold text-gray-700">Clientes ({clientesFiltrados.length})</h4>
+                      <div className="space-y-1">
+                        {clientesFiltrados.map((c) => (
+                          <Link
+                            key={c.id}
+                            href={`/admin/usuarios/${c.id}`}
+                            className="flex items-center justify-between gap-2 p-2 -mx-2 text-sm rounded-md hover:bg-gray-50"
+                          >
+                            <span className="text-gray-900 truncate">
+                              {c.nombre ? `${c.nombre} ${c.apellido || ''}` : c.email}
+                              {c.empresa ? ` · ${c.empresa}` : ''}
+                            </span>
+                            <span className="text-xs text-gray-400 whitespace-nowrap">{c.email}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {sedesFiltradas.length > 0 && (
+                    <div className="p-4 bg-white rounded-lg shadow-md">
+                      <h4 className="mb-3 text-sm font-semibold text-gray-700">Sedes ({sedesFiltradas.length})</h4>
+                      <div className="space-y-1">
+                        {sedesFiltradas.map(({ clienteId, clienteNombre, sede }) => (
+                          <Link
+                            key={`${clienteId}-${sede.id}`}
+                            href={`/admin/usuarios/${clienteId}?sede=${encodeURIComponent(sede.nombre)}`}
+                            className="flex items-center justify-between gap-2 p-2 -mx-2 text-sm rounded-md hover:bg-gray-50"
+                          >
+                            <span className="text-gray-900 truncate">
+                              {sede.nombre} <span className="text-gray-400">— {sede.direccion}</span>
+                            </span>
+                            <span className="text-xs text-gray-400 whitespace-nowrap">{clienteNombre}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="mt-4">
                 {todosDocumentos.length === 0 ? (
