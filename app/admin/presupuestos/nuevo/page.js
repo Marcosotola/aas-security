@@ -15,6 +15,8 @@ import ClienteSelector from '../../../components/ClienteSelector';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
 import { fechaHoyLocal } from '../../../lib/fecha';
 
+const TITULOS_PRESUPUESTO = ['Detección', 'Extinción', 'Iluminación de emergencia', 'Extractor'];
+
 // Función para formatear montos con separador de miles (punto) y decimal (coma)
 const formatMoney = (amount) => {
     if (amount === undefined || amount === null) return '$0,00';
@@ -60,6 +62,7 @@ export default function NuevoPresupuesto() {
 
     const [presupuesto, setPresupuesto] = useState({
         numero: `P-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
+        titulo: '',
         fecha: fechaHoyLocal(),
         validez: '30 días',
         clienteId: null, // uid del cliente registrado seleccionado (null = cliente manual, sin cuenta)
@@ -263,6 +266,7 @@ export default function NuevoPresupuesto() {
             // Preparar datos del presupuesto
             const presupuestoData = {
                 numero: presupuesto.numero,
+                titulo: presupuesto.titulo,
                 fecha: presupuesto.fecha,
                 validez: presupuesto.validez,
                 modo: presupuesto.modo,
@@ -370,7 +374,7 @@ export default function NuevoPresupuesto() {
                     {/* Información del presupuesto */}
                     <div className="p-6 bg-white rounded-lg shadow-md">
                         <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Presupuesto</h3>
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                             <div>
                                 <label className="block mb-1 text-sm font-medium text-gray-700">Número</label>
                                 <input
@@ -379,6 +383,22 @@ export default function NuevoPresupuesto() {
                                     onChange={(e) => setPresupuesto({ ...presupuesto, numero: e.target.value })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
                                 />
+                            </div>
+                            <div>
+                                <label className="block mb-1 text-sm font-medium text-gray-700">Título</label>
+                                <input
+                                    type="text"
+                                    list="titulos-presupuesto"
+                                    value={presupuesto.titulo}
+                                    onChange={(e) => setPresupuesto({ ...presupuesto, titulo: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    placeholder="Ej: Detección"
+                                />
+                                <datalist id="titulos-presupuesto">
+                                    {TITULOS_PRESUPUESTO.map((t) => (
+                                        <option key={t} value={t} />
+                                    ))}
+                                </datalist>
                             </div>
                             <div>
                                 <label className="block mb-1 text-sm font-medium text-gray-700">Fecha</label>

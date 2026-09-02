@@ -62,6 +62,33 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666'
   },
+  infoBlock: {
+    backgroundColor: '#f9f9f9',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    backgroundColor: '#f5f5f5',
+    padding: 5,
+    color: '#1A5276'
+  },
+  infoRow: {
+    flexDirection: 'row',
+    marginBottom: 5,
+  },
+  label: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    flex: 1,
+  },
+  value: {
+    fontSize: 9,
+    flex: 2,
+  },
   content: {
     marginBottom: 20,
     minHeight: 400,
@@ -114,6 +141,31 @@ const DocumentoPDF = ({ documento }) => {
           <Text style={styles.title}>{documento.titulo || 'INFORME'}</Text>
           <Text style={styles.headerRowText}></Text>
         </View>
+
+        {/* Información del cliente */}
+        {(documento.cliente?.nombre || documento.cliente?.empresa || documento.cliente?.sedeNombre) && (
+          <View style={styles.infoBlock}>
+            <Text style={styles.sectionTitle}>Cliente</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Nombre:</Text>
+              <Text style={styles.value}>{documento.cliente?.nombre || ''}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Empresa:</Text>
+              <Text style={styles.value}>{documento.cliente?.empresa || ''}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Dirección:</Text>
+              <Text style={styles.value}>{documento.cliente?.direccion || ''}</Text>
+            </View>
+            {documento.cliente?.sedeNombre && (
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Sede:</Text>
+                <Text style={styles.value}>{documento.cliente.sedeNombre}</Text>
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Contenido principal */}
         <View style={styles.content}>

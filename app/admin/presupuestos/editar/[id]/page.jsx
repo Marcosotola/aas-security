@@ -11,6 +11,8 @@ import { use } from 'react';
 import BuscadorPrecio from '../../../../components/BuscadorPrecio';
 import ClienteSelector from '../../../../components/ClienteSelector';
 
+const TITULOS_PRESUPUESTO = ['Detección', 'Extinción', 'Iluminación de emergencia', 'Extractor'];
+
 // Función para formatear montos con separador de miles (punto) y decimal (coma)
 const formatMoney = (amount) => {
     if (amount === undefined || amount === null) return '$0,00';
@@ -62,6 +64,7 @@ export default function EditarPresupuesto({ params }) {
   
   const [presupuesto, setPresupuesto] = useState({
     numero: '',
+    titulo: '',
     fecha: '',
     validez: '',
     items: [
@@ -88,6 +91,7 @@ export default function EditarPresupuesto({ params }) {
         // Actualizar estado con los datos cargados, incluyendo valores por defecto para descuentos si no existen
         setPresupuesto({
           numero: presupuestoData.numero,
+          titulo: presupuestoData.titulo || '',
           fecha: presupuestoData.fecha,
           validez: presupuestoData.validez,
           clienteId: presupuestoData.clienteId || null,
@@ -300,6 +304,7 @@ export default function EditarPresupuesto({ params }) {
       // Preparar datos del presupuesto
       const presupuestoData = {
         numero: presupuesto.numero,
+        titulo: presupuesto.titulo,
         fecha: presupuesto.fecha,
         validez: presupuesto.validez,
         modo: presupuesto.modo,
@@ -380,15 +385,31 @@ export default function EditarPresupuesto({ params }) {
           {/* Información del presupuesto */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Presupuesto</h3>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Número</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={presupuesto.numero}
                   onChange={(e) => setPresupuesto({ ...presupuesto, numero: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Título</label>
+                <input
+                  type="text"
+                  list="titulos-presupuesto"
+                  value={presupuesto.titulo}
+                  onChange={(e) => setPresupuesto({ ...presupuesto, titulo: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="Ej: Detección"
+                />
+                <datalist id="titulos-presupuesto">
+                  {TITULOS_PRESUPUESTO.map((t) => (
+                    <option key={t} value={t} />
+                  ))}
+                </datalist>
               </div>
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Fecha</label>

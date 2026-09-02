@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Save } from 'lucide-react';
-import { obtenerDocumentoPorId, actualizarDocumento } from '../../../../lib/firestore';
+import { obtenerDocumentoPorId, actualizarDocumento, obtenerClientes } from '../../../../lib/firestore';
 import { useStaffAuth } from '../../../../lib/useStaffAuth';
 import { use } from 'react';
+import ClienteSelector from '../../../../components/ClienteSelector';
 
 export default function EditarDocumento({ params }) {
   const resolvedParams = use(params);
@@ -16,6 +17,7 @@ export default function EditarDocumento({ params }) {
   const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
+  const [clientes, setClientes] = useState([]);
   const loading = loadingAuth || loadingData;
 
   // Estado para el modal de contenido
@@ -24,10 +26,22 @@ export default function EditarDocumento({ params }) {
     value: ''
   });
 
+  // Estado del cliente
+  const [cliente, setCliente] = useState({
+    nombre: '',
+    empresa: '',
+    email: '',
+    telefono: '',
+    direccion: '',
+    sedeId: null,
+    sedeNombre: ''
+  });
+
   // Estado del formulario
   const [documento, setDocumento] = useState({
     titulo: '',
     fecha: '',
+    clienteId: null,
     contenido: ''
   });
 
@@ -40,8 +54,18 @@ export default function EditarDocumento({ params }) {
         setDocumento({
           titulo: data.titulo || '',
           fecha: data.fecha || '',
+          clienteId: data.clienteId || null,
           contenido: data.contenido || ''
         });
+        setCliente({ sedeId: null, sedeNombre: '', nombre: '', empresa: '', email: '', telefono: '', direccion: '', ...data.cliente });
+
+        try {
+          const clientesData = await obtenerClientes();
+          setClientes(clientesData);
+        } catch (error) {
+          console.error('Error al cargar clientes:', error);
+        }
+
         setLoadingData(false);
       } catch (error) {
         console.error('Error al cargar informe:', error);
@@ -50,6 +74,11 @@ export default function EditarDocumento({ params }) {
       }
     })();
   }, [id, user, router]);
+
+  const handleClienteChange = (e) => {
+    const { name, value } = e.target;
+    setCliente({ ...cliente, [name]: value });
+  };
 
   // Función para abrir el modal de contenido
   const abrirModalContenido = () => {
@@ -81,7 +110,7 @@ export default function EditarDocumento({ params }) {
 
     setGuardando(true);
     try {
-      await actualizarDocumento(id, documento);
+      await actualizarDocumento(id, { ...documento, cliente });
       alert('Informe actualizado exitosamente');
       router.push('/admin/informes');
     } catch (error) {
@@ -164,6 +193,82 @@ export default function EditarDocumento({ params }) {
                   value={documento.fecha}
                   onChange={(e) => setDocumento({ ...documento, fecha: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Información del cliente */}
+          <div className="p-6 bg-white rounded-lg shadow-md">
+            <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
+            <ClienteSelector
+              clientes={clientes}
+              onSelect={({ clienteId, nombre, empresa, email, telefono, direccion, sedeId, sedeNombre }) => {
+                setDocumento({ ...documento, clienteId });
+                setCliente({ nombre, empresa, email, telefono, direccion, sedeId, sedeNombre });
+              }}
+              placeholder="Buscar cliente registrado (opcional)..."
+            />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Nombre</label>
+                <input
+                  type="text"
+                  name="nombre"
+                  value={cliente.nombre}
+                  onChange={handleClienteChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Empresa</label>
+                <input
+                  type="text"
+                  name="empresa"
+                  value={cliente.empresa}
+                  onChange={handleClienteChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={cliente.email}
+                  onChange={handleClienteChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Teléfono</label>
+                <input
+                  type="text"
+                  name="telefono"
+                  value={cliente.telefono}
+                  onChange={handleClienteChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Sede</label>
+                <input
+                  type="text"
+                  name="sedeNombre"
+                  value={cliente.sedeNombre}
+                  onChange={handleClienteChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="Ej: Edificio Torre Norte"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Dirección</label>
+                <input
+                  type="text"
+                  name="direccion"
+                  value={cliente.direccion}
+                  onChange={handleClienteChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
             </div>

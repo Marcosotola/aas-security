@@ -8,6 +8,7 @@ import { useStaffAuth } from '../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import DocumentoPDF from '../../components/pdf/DocumentoPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
+import SedeLink from '../../components/admin/SedeLink';
 import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/accionIcono';
 import { formatearFecha } from '../../lib/fecha';
 
@@ -53,7 +54,9 @@ export default function HistorialDocumentos() {
     const terminoBusqueda = filtro.toLowerCase();
     return (
       documento.titulo?.toLowerCase().includes(terminoBusqueda) ||
-      documento.contenido?.toLowerCase().includes(terminoBusqueda)
+      documento.contenido?.toLowerCase().includes(terminoBusqueda) ||
+      documento.cliente?.nombre?.toLowerCase().includes(terminoBusqueda) ||
+      documento.cliente?.empresa?.toLowerCase().includes(terminoBusqueda)
     );
   });
 
@@ -115,6 +118,9 @@ export default function HistorialDocumentos() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {documentosFiltrados.map((documento) => (
                   <div key={documento.id} className="p-4 border border-gray-200 rounded-lg">
+                    <div className="mb-1">
+                      <SedeLink clienteId={documento.clienteId} sede={documento.cliente?.sedeNombre} />
+                    </div>
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-medium text-gray-900">{documento.titulo || 'Sin título'}</div>
                       <div className="text-xs text-gray-500 whitespace-nowrap">
@@ -126,6 +132,7 @@ export default function HistorialDocumentos() {
                         }
                       </div>
                     </div>
+                    <div className="mt-1 text-sm text-gray-900">{documento.cliente?.nombre || ''}</div>
                     <div className="mt-1 text-sm text-gray-500 line-clamp-2" title={documento.contenido}>
                       {documento.contenido || 'N/A'}
                     </div>
@@ -176,10 +183,16 @@ export default function HistorialDocumentos() {
               <thead className="bg-gray-50">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                    Sede
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                     Título
                   </th>
                   <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                     Fecha
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                    Cliente
                   </th>
                   <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                     Contenido
@@ -194,6 +207,9 @@ export default function HistorialDocumentos() {
                   documentosFiltrados.map((documento) => (
                     <tr key={documento.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <SedeLink clienteId={documento.clienteId} sede={documento.cliente?.sedeNombre} />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{documento.titulo || 'Sin título'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -205,6 +221,10 @@ export default function HistorialDocumentos() {
                               : 'No disponible'
                           }
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{documento.cliente?.nombre || ''}</div>
+                        <div className="mt-1 text-sm text-gray-500">{documento.cliente?.empresa || ''}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="max-w-xs text-sm text-gray-500 truncate" title={documento.contenido}>
@@ -249,7 +269,7 @@ export default function HistorialDocumentos() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
                       No hay informes que coincidan con su búsqueda
                     </td>
                   </tr>

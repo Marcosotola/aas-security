@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Save, Download } from 'lucide-react';
-import { crearDocumento } from '../../../lib/firestore';
+import { crearDocumento, obtenerClientes } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import DocumentoPDF from '../../../components/pdf/DocumentoPDF';
+import ClienteSelector from '../../../components/ClienteSelector';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
 import { fechaHoyLocal } from '../../../lib/fecha';
 
@@ -16,6 +17,7 @@ export default function NuevoDocumento() {
   const { user, loading } = useStaffAuth(['Admin']);
   const [guardando, setGuardando] = useState(false);
   const [documentoGuardado, setDocumentoGuardado] = useState(null);
+  const [clientes, setClientes] = useState([]);
 
   // Estado para el modal de contenido
   const [modalContenido, setModalContenido] = useState({
@@ -23,12 +25,36 @@ export default function NuevoDocumento() {
     value: ''
   });
 
+  // Estado del cliente
+  const [cliente, setCliente] = useState({
+    nombre: '',
+    empresa: '',
+    email: '',
+    telefono: '',
+    direccion: '',
+    sedeId: null,
+    sedeNombre: ''
+  });
+
   // Estado del formulario
   const [documento, setDocumento] = useState({
     titulo: '',
     fecha: fechaHoyLocal(),
+    clienteId: null,
     contenido: ''
   });
+
+  useEffect(() => {
+    if (!user) return;
+    obtenerClientes()
+      .then(setClientes)
+      .catch((error) => console.error('Error al cargar los clientes:', error));
+  }, [user]);
+
+  const handleClienteChange = (e) => {
+    const { name, value } = e.target;
+    setCliente({ ...cliente, [name]: value });
+  };
 
   // Función para abrir el modal de contenido
   const abrirModalContenido = () => {
@@ -62,13 +88,15 @@ export default function NuevoDocumento() {
     try {
       const documentoData = {
         ...documento,
+        cliente,
         usuarioCreador: user.email
       };
       await crearDocumento(documentoData);
       setDocumentoGuardado({
         pdfElement: <DocumentoPDF documento={documentoData} />,
         fileName: `${documentoData.titulo.replace(/\s+/g, '_')}.pdf`,
-        numero: documentoData.titulo
+        numero: documentoData.titulo,
+        telefono: cliente.telefono
       });
     } catch (error) {
       console.error('Error al guardar el informe:', error);
@@ -122,7 +150,7 @@ export default function NuevoDocumento() {
             </button>
             {documento.titulo && documento.contenido && (
               <PDFDownloadLink
-                document={<DocumentoPDF documento={documento} />}
+                document={<DocumentoPDF documento={{ ...documento, cliente }} />}
                 fileName={`${documento.titulo.replace(/\s+/g, '_')}.pdf`}
                 className={`bg-secondary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors flex items-center`}
               >
@@ -164,6 +192,82 @@ export default function NuevoDocumento() {
                   onChange={(e) => setDocumento({ ...documento, fecha: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
                   required
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Información del cliente */}
+          <div className="p-6 bg-white rounded-lg shadow-md">
+            <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
+            <ClienteSelector
+              clientes={clientes}
+              onSelect={({ clienteId, nombre, empresa, email, telefono, direccion, sedeId, sedeNombre }) => {
+                setDocumento({ ...documento, clienteId });
+                setCliente({ nombre, empresa, email, telefono, direccion, sedeId, sedeNombre });
+              }}
+              placeholder="Buscar cliente registrado (opcional)..."
+            />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Nombre</label>
+                <input
+                  type="text"
+                  name="nombre"
+                  value={cliente.nombre}
+                  onChange={handleClienteChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Empresa</label>
+                <input
+                  type="text"
+                  name="empresa"
+                  value={cliente.empresa}
+                  onChange={handleClienteChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={cliente.email}
+                  onChange={handleClienteChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Teléfono</label>
+                <input
+                  type="text"
+                  name="telefono"
+                  value={cliente.telefono}
+                  onChange={handleClienteChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Sede</label>
+                <input
+                  type="text"
+                  name="sedeNombre"
+                  value={cliente.sedeNombre}
+                  onChange={handleClienteChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="Ej: Edificio Torre Norte"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Dirección</label>
+                <input
+                  type="text"
+                  name="direccion"
+                  value={cliente.direccion}
+                  onChange={handleClienteChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
             </div>
@@ -292,6 +396,7 @@ export default function NuevoDocumento() {
           fileName={documentoGuardado.fileName}
           tipo="Informe"
           numero={documentoGuardado.numero}
+          telefono={documentoGuardado.telefono}
           onIrALista={() => router.push('/admin/informes')}
         />
       )}

@@ -138,6 +138,41 @@ export default function VerDocumento({ params }) {
             </div>
           </div>
 
+          {/* Información del cliente */}
+          {(documento.cliente?.nombre || documento.cliente?.empresa || documento.cliente?.sedeNombre) && (
+            <div className="p-6 bg-white rounded-lg shadow-md">
+              <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <span className="block mb-1 text-sm font-medium text-gray-600">Nombre:</span>
+                  <span className="text-gray-900">{documento.cliente?.nombre || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="block mb-1 text-sm font-medium text-gray-600">Empresa:</span>
+                  <span className="text-gray-900">{documento.cliente?.empresa || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="block mb-1 text-sm font-medium text-gray-600">Email:</span>
+                  <span className="text-gray-900">{documento.cliente?.email || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="block mb-1 text-sm font-medium text-gray-600">Teléfono:</span>
+                  <span className="text-gray-900">{documento.cliente?.telefono || 'N/A'}</span>
+                </div>
+                {documento.cliente?.sedeNombre && (
+                  <div>
+                    <span className="block mb-1 text-sm font-medium text-gray-600">Sede:</span>
+                    <span className="text-gray-900">{documento.cliente.sedeNombre}</span>
+                  </div>
+                )}
+                <div>
+                  <span className="block mb-1 text-sm font-medium text-gray-600">Dirección:</span>
+                  <span className="text-gray-900">{documento.cliente?.direccion || 'N/A'}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Contenido del documento */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Contenido</h3>

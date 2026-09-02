@@ -118,6 +118,7 @@ export default function HistorialPresupuestos() {
     const terminoBusqueda = filtro.toLowerCase();
     return (
       presupuesto.numero?.toLowerCase().includes(terminoBusqueda) ||
+      presupuesto.titulo?.toLowerCase().includes(terminoBusqueda) ||
       presupuesto.cliente?.nombre?.toLowerCase().includes(terminoBusqueda) ||
       presupuesto.cliente?.empresa?.toLowerCase().includes(terminoBusqueda)
     );
@@ -184,6 +185,9 @@ export default function HistorialPresupuestos() {
                     <div className="mb-1">
                       <SedeLink clienteId={presupuesto.clienteId} sede={presupuesto.cliente?.sedeNombre} />
                     </div>
+                    {presupuesto.titulo && (
+                      <div className="mb-1 text-sm font-medium text-gray-700">{presupuesto.titulo}</div>
+                    )}
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-medium text-gray-900">{presupuesto.numero}</div>
                       <div className="text-xs text-gray-500 whitespace-nowrap">
@@ -288,6 +292,9 @@ export default function HistorialPresupuestos() {
                     Sede
                   </th>
                   <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                    Título
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                     Número
                   </th>
                   <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
@@ -313,6 +320,9 @@ export default function HistorialPresupuestos() {
                     <tr key={presupuesto.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <SedeLink clienteId={presupuesto.clienteId} sede={presupuesto.cliente?.sedeNombre} />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{presupuesto.titulo || ''}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{presupuesto.numero}</div>
@@ -409,7 +419,7 @@ export default function HistorialPresupuestos() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan="8" className="px-6 py-4 text-center text-gray-500">
                       No hay presupuestos que coincidan con su búsqueda
                     </td>
                   </tr>

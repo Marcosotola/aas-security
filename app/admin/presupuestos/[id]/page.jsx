@@ -190,6 +190,12 @@ export default function VerPresupuesto({ params }) {
                   <span className="w-20 font-bold">Número:</span>
                   <span className="flex-1">{presupuesto.numero || ''}</span>
                 </div>
+                {presupuesto.titulo && (
+                  <div className="flex">
+                    <span className="w-20 font-bold">Título:</span>
+                    <span className="flex-1">{presupuesto.titulo}</span>
+                  </div>
+                )}
                 <div className="flex">
                   <span className="w-20 font-bold">Fecha:</span>
                   <span className="flex-1">{formatearFecha(presupuesto.fecha)}</span>

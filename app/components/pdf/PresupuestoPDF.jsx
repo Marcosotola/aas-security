@@ -289,6 +289,12 @@ const PresupuestoPDF = ({ presupuesto }) => {
           {/* Información del presupuesto */}
           <View style={[styles.infoBlock, { flex: 1, marginRight: 10 }]}>
             <Text style={styles.sectionTitle}>Condiciones</Text>
+            {presupuesto.titulo && (
+              <View style={styles.infoRow}>
+                <Text style={styles.label}>Título:</Text>
+                <Text style={styles.value}>{presupuesto.titulo}</Text>
+              </View>
+            )}
             <View style={styles.infoRow}>
               <Text style={styles.label}>Validez:</Text>
               <Text style={styles.value}>{presupuesto.validez || ''}</Text>
