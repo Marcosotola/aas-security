@@ -99,6 +99,15 @@ service cloud.firestore {
       allow update, delete: if esAdmin() || (esStaff() && esCreador(resource.data));
     }
 
+    // Mismo criterio que ordenesTrabajo: el Admin gestiona todos los
+    // Mantenimientos Preventivos, el Técnico solo los que él mismo creó, y el
+    // Cliente solo puede leer los suyos.
+    match /mantenimientosPreventivos/{id} {
+      allow read: if esAdmin() || esPropietario(resource.data.clienteId) || esCreador(resource.data);
+      allow create: if esAdmin() || (esStaff() && esCreador(request.resource.data));
+      allow update, delete: if esAdmin() || (esStaff() && esCreador(resource.data));
+    }
+
     // Plantillas de inspección (checklists reutilizables para adjuntar a una
     // OT): el Técnico las puede leer para completarlas, pero solo el Admin
     // las crea, edita o borra.

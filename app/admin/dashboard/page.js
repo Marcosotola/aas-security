@@ -15,7 +15,8 @@ import {
   Wallet,
   CreditCard,
   ClipboardList,
-  ListChecks
+  ListChecks,
+  Wrench
 } from 'lucide-react';
 import { collection, query, where, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -28,7 +29,7 @@ import ModuloCard from '../../components/admin/ModuloCard';
 // colecciones (movimientos, config, etc.) están bloqueadas para su rol por
 // firestore.rules, así que ni siquiera se consultan cuando el usuario es
 // Técnico (antes esto no importaba porque el dashboard era Admin-only).
-const IDS_VISIBLES_PARA_TECNICO = ['ordenes-trabajo'];
+const IDS_VISIBLES_PARA_TECNICO = ['ordenes-trabajo', 'mantenimiento-preventivo'];
 
 export default function Dashboard() {
   const { user, usuario, loading: loadingAuth } = useStaffAuth(['Admin', 'Tecnico']);
@@ -98,6 +99,20 @@ export default function Dashboard() {
       rutas: {
         nuevo: '/admin/ordenes-trabajo/nueva',
         historial: '/admin/ordenes-trabajo'
+      },
+      activo: true
+    },
+    {
+      id: 'mantenimiento-preventivo',
+      titulo: 'Mantenimiento Preventivo',
+      icono: Wrench,
+      color: 'bg-amber-600',
+      colorClaro: 'bg-amber-100',
+      colorTexto: 'text-amber-600',
+      descripcion: 'Mismo detalle que una OT: trabajo, fotos y firmas',
+      rutas: {
+        nuevo: '/admin/mantenimiento-preventivo/nueva',
+        historial: '/admin/mantenimiento-preventivo'
       },
       activo: true
     },

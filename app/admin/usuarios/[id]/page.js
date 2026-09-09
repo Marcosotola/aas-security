@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Home, MapPin, Eye, Edit, Trash, Download,
-  FileText, FileCheck, Receipt, Banknote, Award, DollarSign, ClipboardList, File
+  FileText, FileCheck, Receipt, Banknote, Award, DollarSign, ClipboardList, File, Wrench
 } from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import {
@@ -18,6 +18,7 @@ import {
   obtenerCertificadosPorCliente,
   obtenerEstadosPorCliente,
   obtenerOrdenesTrabajoPorCliente,
+  obtenerMantenimientosPreventivosPorCliente,
   obtenerDocumentosPorCliente,
   eliminarPresupuesto,
   eliminarRemito,
@@ -26,6 +27,7 @@ import {
   eliminarCertificado,
   eliminarEstado,
   eliminarOrdenTrabajo,
+  eliminarMantenimientoPreventivo,
   eliminarDocumento
 } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
@@ -38,6 +40,7 @@ import ReciboPDF from '../../../components/pdf/ReciboPDF';
 import EstadoPDF from '../../../components/pdf/EstadoPDF';
 import DocumentoPDF from '../../../components/pdf/DocumentoPDF';
 import DescargarOrdenTrabajoPDF from '../../../components/pdf/DescargarOrdenTrabajoPDF';
+import DescargarMantenimientoPreventivoPDF from '../../../components/pdf/DescargarMantenimientoPreventivoPDF';
 import { EstadoFacturaBadge } from '../../../components/ui/EstadoFactura';
 
 const formatFecha = (doc) => {
@@ -78,6 +81,7 @@ const TIPOS = [
   { key: 'certificados', label: 'Certificados', icono: Award },
   { key: 'estados', label: 'Estados de Cuenta', icono: DollarSign },
   { key: 'ordenes', label: 'Órdenes de Trabajo', icono: ClipboardList },
+  { key: 'mantenimientos', label: 'Mantenimiento Preventivo', icono: Wrench },
   { key: 'informes', label: 'Informes', icono: File }
 ];
 
@@ -313,6 +317,7 @@ function DocumentosCliente({ params }) {
   const [certificados, setCertificados] = useState([]);
   const [estados, setEstados] = useState([]);
   const [ordenes, setOrdenes] = useState([]);
+  const [mantenimientos, setMantenimientos] = useState([]);
   const [informes, setInformes] = useState([]);
 
   const loading = loadingAuth || loadingData;
@@ -330,7 +335,7 @@ function DocumentosCliente({ params }) {
 
     (async () => {
       try {
-        const [perfilData, pres, rem, rec, fac, cert, est, ord, inf] = await Promise.all([
+        const [perfilData, pres, rem, rec, fac, cert, est, ord, mant, inf] = await Promise.all([
           obtenerUsuarioPorId(id),
           obtenerPresupuestosPorCliente(id),
           obtenerRemitosPorCliente(id),
@@ -339,6 +344,7 @@ function DocumentosCliente({ params }) {
           obtenerCertificadosPorCliente(id),
           obtenerEstadosPorCliente(id),
           obtenerOrdenesTrabajoPorCliente(id),
+          obtenerMantenimientosPreventivosPorCliente(id),
           obtenerDocumentosPorCliente(id)
         ]);
 
@@ -356,6 +362,7 @@ function DocumentosCliente({ params }) {
         setCertificados(cert);
         setEstados(est);
         setOrdenes(ord);
+        setMantenimientos(mant);
         // Los informes no tienen número correlativo, solo un título de texto
         // libre (ej. "CERTIFICACIÓN") — se usa como "número" para poder
         // listarlos con la misma tabla genérica (SeccionPDF) que el resto.
@@ -371,10 +378,10 @@ function DocumentosCliente({ params }) {
   const sedesDisponibles = useMemo(() => {
     const set = new Set();
     (perfil?.sedes || []).forEach((s) => s.nombre && set.add(s.nombre));
-    [...presupuestos, ...remitos, ...estados, ...ordenes, ...informes].forEach((d) => d.cliente?.sedeNombre && set.add(d.cliente.sedeNombre));
+    [...presupuestos, ...remitos, ...estados, ...ordenes, ...mantenimientos, ...informes].forEach((d) => d.cliente?.sedeNombre && set.add(d.cliente.sedeNombre));
     [...recibos, ...facturas, ...certificados].forEach((d) => d.sedeNombre && set.add(d.sedeNombre));
     return Array.from(set).sort();
-  }, [perfil, presupuestos, remitos, recibos, facturas, certificados, estados, ordenes, informes]);
+  }, [perfil, presupuestos, remitos, recibos, facturas, certificados, estados, ordenes, mantenimientos, informes]);
 
   const porSedeA = (items) => sedeFiltro === 'todas' ? items : items.filter((d) => (d.cliente?.sedeNombre || '') === sedeFiltro);
   const porSedeB = (items) => sedeFiltro === 'todas' ? items : items.filter((d) => (d.sedeNombre || '') === sedeFiltro);
@@ -383,12 +390,13 @@ function DocumentosCliente({ params }) {
   const remitosFiltrados = useMemo(() => porSedeA(remitos), [remitos, sedeFiltro]);
   const estadosFiltrados = useMemo(() => porSedeA(estados), [estados, sedeFiltro]);
   const ordenesFiltradas = useMemo(() => porSedeA(ordenes), [ordenes, sedeFiltro]);
+  const mantenimientosFiltrados = useMemo(() => porSedeA(mantenimientos), [mantenimientos, sedeFiltro]);
   const informesFiltrados = useMemo(() => porSedeA(informes), [informes, sedeFiltro]);
   const recibosFiltrados = useMemo(() => porSedeB(recibos), [recibos, sedeFiltro]);
   const facturasFiltradas = useMemo(() => porSedeB(facturas), [facturas, sedeFiltro]);
   const certificadosFiltrados = useMemo(() => porSedeB(certificados), [certificados, sedeFiltro]);
 
-  const totalDocumentos = presupuestos.length + remitos.length + recibos.length + facturas.length + certificados.length + estados.length + ordenes.length + informes.length;
+  const totalDocumentos = presupuestos.length + remitos.length + recibos.length + facturas.length + certificados.length + estados.length + ordenes.length + mantenimientos.length + informes.length;
 
   const toggleTipo = (key) => setTiposVisibles((prev) => ({ ...prev, [key]: !prev[key] }));
 
@@ -545,6 +553,19 @@ function DocumentosCliente({ params }) {
                 <DescargarOrdenTrabajoPDF orden={item} className={accionIconoClase('primary')}>
                   <Download size={ACCION_ICONO_TAMANO} />
                 </DescargarOrdenTrabajoPDF>
+              )}
+            />
+          )}
+          {tiposVisibles.mantenimientos && (
+            <SeccionPDF
+              titulo="Mantenimiento Preventivo" Icono={Wrench} items={mantenimientosFiltrados}
+              rutaBase="/admin/mantenimiento-preventivo"
+              sedeDe={(d) => d.cliente?.sedeNombre} tipo="mantenimientos" eliminando={eliminando} vista={vista}
+              onEliminar={(docId) => handleEliminar('mantenimientos', eliminarMantenimientoPreventivo, docId, setMantenimientos, mantenimientos)}
+              renderDescarga={(item) => (
+                <DescargarMantenimientoPreventivoPDF mantenimiento={item} className={accionIconoClase('primary')}>
+                  <Download size={ACCION_ICONO_TAMANO} />
+                </DescargarMantenimientoPreventivoPDF>
               )}
             />
           )}

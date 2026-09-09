@@ -32,6 +32,7 @@ const consultasCollection = db ? collection(db, 'consultas') : null;
 const listaPreciosCollection = db ? collection(db, 'listaPrecios') : null;
 const usuariosCollection = db ? collection(db, 'usuarios') : null;
 const ordenesTrabajoCollection = db ? collection(db, 'ordenesTrabajo') : null;
+const mantenimientosPreventivosCollection = db ? collection(db, 'mantenimientosPreventivos') : null;
 const plantillasCollection = db ? collection(db, 'plantillas') : null;
 const facturasCollection = db ? collection(db, 'facturas') : null;
 const certificadosCollection = db ? collection(db, 'certificados') : null;
@@ -517,6 +518,83 @@ export const eliminarOrdenTrabajo = async (id) => {
     return { id };
   } catch (error) {
     console.error('Error al eliminar la orden de trabajo:', error);
+    throw error;
+  }
+};
+
+// ========== FUNCIONES PARA MANTENIMIENTO PREVENTIVO ==========
+// Mismo patrón que Órdenes de Trabajo (mismo tipo de documento, distinto
+// título y numeración): id reservado antes de guardar por la carpeta de fotos.
+
+export const generarIdMantenimientoPreventivo = () => doc(mantenimientosPreventivosCollection).id;
+
+export const crearMantenimientoPreventivo = async (id, mpData) => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    await setDoc(doc(db, 'mantenimientosPreventivos', id), {
+      ...mpData,
+      fechaCreacion: serverTimestamp()
+    });
+    return { id };
+  } catch (error) {
+    console.error('Error al crear el mantenimiento preventivo:', error);
+    throw error;
+  }
+};
+
+export const obtenerMantenimientosPreventivos = async () => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const q = query(mantenimientosPreventivosCollection, orderBy('fechaCreacion', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error al obtener los mantenimientos preventivos:', error);
+    throw error;
+  }
+};
+
+export const obtenerMantenimientoPreventivoPorId = async (id) => {
+  try {
+    const docRef = doc(db, 'mantenimientosPreventivos', id);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    } else {
+      throw new Error('Mantenimiento preventivo no encontrado');
+    }
+  } catch (error) {
+    console.error('Error al obtener el mantenimiento preventivo:', error);
+    throw error;
+  }
+};
+
+export const actualizarMantenimientoPreventivo = async (id, mpData) => {
+  try {
+    const docRef = doc(db, 'mantenimientosPreventivos', id);
+    await updateDoc(docRef, {
+      ...mpData,
+      fechaActualizacion: serverTimestamp()
+    });
+    return { id };
+  } catch (error) {
+    console.error('Error al actualizar el mantenimiento preventivo:', error);
+    throw error;
+  }
+};
+
+export const eliminarMantenimientoPreventivo = async (id) => {
+  try {
+    const mp = await obtenerMantenimientoPreventivoPorId(id).catch(() => null);
+    await eliminarFotosStorage(mp?.fotos);
+    await deleteDoc(doc(db, 'mantenimientosPreventivos', id));
+    return { id };
+  } catch (error) {
+    console.error('Error al eliminar el mantenimiento preventivo:', error);
     throw error;
   }
 };
@@ -1066,6 +1144,7 @@ export const obtenerPresupuestosPorCliente = (clienteId) => obtenerColeccionPorC
 export const obtenerRemitosPorCliente = (clienteId) => obtenerColeccionPorCliente('remitos', clienteId);
 export const obtenerRecibosPorCliente = (clienteId) => obtenerColeccionPorCliente('recibos', clienteId);
 export const obtenerOrdenesTrabajoPorCliente = (clienteId) => obtenerColeccionPorCliente('ordenesTrabajo', clienteId);
+export const obtenerMantenimientosPreventivosPorCliente = (clienteId) => obtenerColeccionPorCliente('mantenimientosPreventivos', clienteId);
 export const obtenerFacturasPorCliente = (clienteId) => obtenerColeccionPorCliente('facturas', clienteId);
 export const obtenerCertificadosPorCliente = (clienteId) => obtenerColeccionPorCliente('certificados', clienteId);
 export const obtenerEstadosPorCliente = (clienteId) => obtenerColeccionPorCliente('estados', clienteId);

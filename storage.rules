@@ -23,6 +23,11 @@ service firebase.storage {
       allow read, write: if esStaff();
     }
 
+    // Fotos de Mantenimiento Preventivo: mismo criterio que ordenes-trabajo.
+    match /mantenimiento-preventivo/{mpId}/{fileName} {
+      allow read, write: if esStaff();
+    }
+
     // PDFs de facturas: solo el Admin sube/borra (igual que firestore.rules
     // en /facturas). El Cliente dueño de la factura puede descargar su PDF;
     // para eso se lee el clienteId directo del documento de Firestore

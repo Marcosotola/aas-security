@@ -8,7 +8,7 @@ import { collection, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import {
   obtenerPresupuestos, obtenerEstados, obtenerRemitos, obtenerRecibos,
-  obtenerOrdenesTrabajo, obtenerFacturas, obtenerCertificados, obtenerDocumentos,
+  obtenerOrdenesTrabajo, obtenerMantenimientosPreventivos, obtenerFacturas, obtenerCertificados, obtenerDocumentos,
   obtenerClientes
 } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
@@ -83,7 +83,7 @@ export default function DocumentosHub() {
 
     (async () => {
       try {
-        const [presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo, informes, clientesData] = await Promise.all([
+        const [presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo, mantenimientosPreventivos, informes, clientesData] = await Promise.all([
           obtenerPresupuestos(),
           obtenerRemitos(),
           obtenerRecibos(),
@@ -91,10 +91,11 @@ export default function DocumentosHub() {
           obtenerCertificados(),
           obtenerEstados(),
           obtenerOrdenesTrabajo(),
+          obtenerMantenimientosPreventivos(),
           obtenerDocumentos(),
           obtenerClientes()
         ]);
-        setTodosDocumentos(normalizarDocumentosAdmin({ presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo, documentos: informes }));
+        setTodosDocumentos(normalizarDocumentosAdmin({ presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo, mantenimientosPreventivos, documentos: informes }));
         setClientes(clientesData);
       } catch (error) {
         console.error('Error al cargar los documentos para el buscador:', error);

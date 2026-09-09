@@ -55,6 +55,7 @@ export function normalizarDocumentosAdmin(colecciones) {
     ...colecciones.certificados.map((d) => normalizarUno('certificado', d)),
     ...colecciones.estados.map((d) => normalizarUno('estado', d)),
     ...colecciones.ordenesTrabajo.map((d) => normalizarUno('orden', d)),
+    ...colecciones.mantenimientosPreventivos.map((d) => normalizarUno('mantenimiento', d)),
     ...colecciones.documentos.map((d) => normalizarUno('informe', d))
   ];
   return todos.sort((a, b) => b.fechaOrden - a.fechaOrden);

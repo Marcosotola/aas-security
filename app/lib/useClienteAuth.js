@@ -13,14 +13,15 @@ import {
   obtenerFacturasPorCliente,
   obtenerCertificadosPorCliente,
   obtenerEstadosPorCliente,
-  obtenerOrdenesTrabajoPorCliente
+  obtenerOrdenesTrabajoPorCliente,
+  obtenerMantenimientosPreventivosPorCliente
 } from './firestore';
 
 const ClienteAuthContext = createContext(null);
 
 const DOCUMENTOS_VACIOS = {
   presupuestos: [], remitos: [], recibos: [], facturas: [],
-  certificados: [], estados: [], ordenesTrabajo: []
+  certificados: [], estados: [], ordenesTrabajo: [], mantenimientosPreventivos: []
 };
 
 // Gatekeeper + fuente de datos única de /cuenta/*: resuelve sesión, perfil y
@@ -59,19 +60,20 @@ export function ClienteAuthProvider({ children }) {
           return;
         }
 
-        const [presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo] = await Promise.all([
+        const [presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo, mantenimientosPreventivos] = await Promise.all([
           obtenerPresupuestosPorCliente(currentUser.uid),
           obtenerRemitosPorCliente(currentUser.uid),
           obtenerRecibosPorCliente(currentUser.uid),
           obtenerFacturasPorCliente(currentUser.uid),
           obtenerCertificadosPorCliente(currentUser.uid),
           obtenerEstadosPorCliente(currentUser.uid),
-          obtenerOrdenesTrabajoPorCliente(currentUser.uid)
+          obtenerOrdenesTrabajoPorCliente(currentUser.uid),
+          obtenerMantenimientosPreventivosPorCliente(currentUser.uid)
         ]);
 
         setUser(currentUser);
         setPerfil(perfilData);
-        setDocumentos({ presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo });
+        setDocumentos({ presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo, mantenimientosPreventivos });
         setLoading(false);
       } catch (error) {
         console.error('Error al cargar la cuenta del cliente:', error);

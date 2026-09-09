@@ -2,7 +2,7 @@
 // Normaliza los 7 tipos de documento del cliente (que llegan con formas
 // distintas desde Firestore, ver useClienteAuth.js) a una forma común para
 // poder listarlos juntos en un solo hub buscable (app/cuenta/documentos).
-import { FileText, FileCheck, Receipt, Banknote, Award, DollarSign, ClipboardList, File } from 'lucide-react';
+import { FileText, FileCheck, Receipt, Banknote, Award, DollarSign, ClipboardList, File, Wrench } from 'lucide-react';
 
 export const TIPOS_DOC = {
   presupuesto: { label: 'Presupuesto', icono: FileText },
@@ -12,15 +12,16 @@ export const TIPOS_DOC = {
   certificado: { label: 'Certificado', icono: Award },
   estado: { label: 'Estado de cuenta', icono: DollarSign },
   orden: { label: 'Orden de trabajo', icono: ClipboardList },
+  mantenimiento: { label: 'Mantenimiento Preventivo', icono: Wrench },
   informe: { label: 'Informe', icono: File }
 };
 
 // La sede queda anidada en `cliente.sedeNombre` para los documentos armados
-// con el generador interno (presupuesto/remito/estado/orden/informe) y como
-// `sedeNombre` directo para los basados en archivo subido (recibo/factura/
-// certificado) — misma dualidad que ya existe en la ficha de admin
-// (app/admin/usuarios/[id]/page.js).
-export const SEDE_ANIDADA = new Set(['presupuesto', 'remito', 'estado', 'orden', 'informe']);
+// con el generador interno (presupuesto/remito/estado/orden/mantenimiento/
+// informe) y como `sedeNombre` directo para los basados en archivo subido
+// (recibo/factura/certificado) — misma dualidad que ya existe en la ficha de
+// admin (app/admin/usuarios/[id]/page.js).
+export const SEDE_ANIDADA = new Set(['presupuesto', 'remito', 'estado', 'orden', 'mantenimiento', 'informe']);
 
 export const formatMoney = (amount) => {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -81,7 +82,8 @@ export function normalizarDocumentos(documentos) {
     ...documentos.facturas.map((d) => normalizarUno('factura', d)),
     ...documentos.certificados.map((d) => normalizarUno('certificado', d)),
     ...documentos.estados.map((d) => normalizarUno('estado', d)),
-    ...documentos.ordenesTrabajo.map((d) => normalizarUno('orden', d))
+    ...documentos.ordenesTrabajo.map((d) => normalizarUno('orden', d)),
+    ...documentos.mantenimientosPreventivos.map((d) => normalizarUno('mantenimiento', d))
   ];
   return todos.sort((a, b) => b.fechaOrden - a.fechaOrden);
 }

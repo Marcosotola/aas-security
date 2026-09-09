@@ -5,6 +5,7 @@ import { MapPin, Eye, Download, FileText } from 'lucide-react';
 import { accionIconoClase, ACCION_ICONO_TAMANO } from '../admin/accionIcono';
 import VerDescargarPDF from '../pdf/VerDescargarPDF';
 import DescargarOrdenTrabajoPDF from '../pdf/DescargarOrdenTrabajoPDF';
+import DescargarMantenimientoPreventivoPDF from '../pdf/DescargarMantenimientoPreventivoPDF';
 import PresupuestoPDF from '../pdf/PresupuestoPDF';
 import RemitoPDF from '../pdf/RemitoPDF';
 import ReciboPDF from '../pdf/ReciboPDF';
@@ -55,6 +56,19 @@ export function AccionesDocumento({ doc }) {
         <DescargarOrdenTrabajoPDF orden={doc.raw} modo="descargar" className={accionIconoClase('primary')}>
           <Download size={ACCION_ICONO_TAMANO} />
         </DescargarOrdenTrabajoPDF>
+      </span>
+    );
+  }
+
+  if (doc.tipo === 'mantenimiento') {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <DescargarMantenimientoPreventivoPDF mantenimiento={doc.raw} modo="ver" className={accionIconoClase('gray')}>
+          <Eye size={ACCION_ICONO_TAMANO} />
+        </DescargarMantenimientoPreventivoPDF>
+        <DescargarMantenimientoPreventivoPDF mantenimiento={doc.raw} modo="descargar" className={accionIconoClase('primary')}>
+          <Download size={ACCION_ICONO_TAMANO} />
+        </DescargarMantenimientoPreventivoPDF>
       </span>
     );
   }

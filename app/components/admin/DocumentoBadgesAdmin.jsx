@@ -6,6 +6,7 @@ import { Eye, Download } from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { accionIconoClase, ACCION_ICONO_TAMANO } from './accionIcono';
 import DescargarOrdenTrabajoPDF from '../pdf/DescargarOrdenTrabajoPDF';
+import DescargarMantenimientoPreventivoPDF from '../pdf/DescargarMantenimientoPreventivoPDF';
 import PresupuestoPDF from '../pdf/PresupuestoPDF';
 import RemitoPDF from '../pdf/RemitoPDF';
 import ReciboPDF from '../pdf/ReciboPDF';
@@ -24,6 +25,7 @@ const RUTA_BASE = {
   certificado: '/admin/certificados',
   estado: '/admin/estados',
   orden: '/admin/ordenes-trabajo',
+  mantenimiento: '/admin/mantenimiento-preventivo',
   informe: '/admin/informes'
 };
 
@@ -68,6 +70,10 @@ export function AccionesDocumentoAdmin({ doc }) {
         <DescargarOrdenTrabajoPDF orden={doc.raw} className={accionIconoClase('primary')}>
           <Download size={ACCION_ICONO_TAMANO} />
         </DescargarOrdenTrabajoPDF>
+      ) : doc.tipo === 'mantenimiento' ? (
+        <DescargarMantenimientoPreventivoPDF mantenimiento={doc.raw} className={accionIconoClase('primary')}>
+          <Download size={ACCION_ICONO_TAMANO} />
+        </DescargarMantenimientoPreventivoPDF>
       ) : doc.tipo === 'factura' || doc.tipo === 'certificado' ? (
         (doc.archivos || []).length > 0 ? (
           <a
