@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   FileText,
   DollarSign,
@@ -16,7 +17,8 @@ import {
   CreditCard,
   ClipboardList,
   ListChecks,
-  Wrench
+  Wrench,
+  Search
 } from 'lucide-react';
 import { collection, query, where, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -32,6 +34,7 @@ import ModuloCard from '../../components/admin/ModuloCard';
 const IDS_VISIBLES_PARA_TECNICO = ['ordenes-trabajo', 'mantenimiento-preventivo'];
 
 export default function Dashboard() {
+  const router = useRouter();
   const { user, usuario, loading: loadingAuth } = useStaffAuth(['Admin', 'Tecnico']);
   const [loadingData, setLoadingData] = useState(true);
   const [totales, setTotales] = useState({
@@ -39,7 +42,19 @@ export default function Dashboard() {
     consultasNoLeidas: 0
   });
   const [suscripcionVencida, setSuscripcionVencida] = useState(false);
+  const [busquedaRapida, setBusquedaRapida] = useState('');
   const loading = loadingAuth || loadingData;
+
+  // Buscador general: no trae resultados acá (el dashboard no lee todos los
+  // documentos de todos los clientes, para no gastar lecturas de más en la
+  // pantalla más visitada) -- solo redirige al hub de Documentos, que ya
+  // cruza los 9 tipos de documento de todos los clientes, con la búsqueda
+  // aplicada.
+  const handleBuscarRapido = (e) => {
+    e.preventDefault();
+    const texto = busquedaRapida.trim();
+    router.push(texto ? `/admin/documentos?busqueda=${encodeURIComponent(texto)}` : '/admin/documentos');
+  };
 
   useEffect(() => {
     if (!usuario) return;
@@ -230,7 +245,8 @@ export default function Dashboard() {
   ];
 
   // El Técnico solo ve las tarjetas que le corresponden (por ahora, Órdenes
-  // de Trabajo): el resto de los módulos son de gestión administrativa.
+  // de Trabajo y Mantenimiento Preventivo): el resto de los módulos son de
+  // gestión administrativa.
   const modulosVisibles = usuario.role === 'Admin'
     ? modulos
     : modulos.filter((m) => IDS_VISIBLES_PARA_TECNICO.includes(m.id));
@@ -247,6 +263,35 @@ export default function Dashboard() {
             {new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
+
+        {/* Buscador general: solo Admin (el hub de Documentos al que manda
+            es Admin-only, ver app/admin/documentos/page.js). */}
+        {usuario.role === 'Admin' && (
+          <div className="mb-8">
+            <h3 className="mb-2 text-sm font-semibold tracking-wide text-gray-500 uppercase">Buscador general</h3>
+            <form onSubmit={handleBuscarRapido} className="flex gap-2">
+              <div className="relative flex-1">
+                <Search size={18} className="absolute -translate-y-1/2 left-3 top-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  value={busquedaRapida}
+                  onChange={(e) => setBusquedaRapida(e.target.value)}
+                  placeholder="Buscar por número, cliente, empresa, sede..."
+                  className="w-full py-2.5 pl-10 pr-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+              <button
+                type="submit"
+                className="px-4 py-2 text-sm font-medium text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
+              >
+                Buscar
+              </button>
+            </form>
+            <p className="mt-1.5 text-xs text-gray-400">
+              Busca en presupuestos, remitos, recibos, facturas, certificados, estados de cuenta, órdenes de trabajo, mantenimiento preventivo e informes de todos los clientes.
+            </p>
+          </div>
+        )}
 
         {/* Módulos del sistema */}
         <h3 className="mb-4 text-xl font-bold text-gray-800">Módulos del sistema</h3>

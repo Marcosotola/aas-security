@@ -1,8 +1,9 @@
 // app/admin/documentos/page.js
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Home, FileText, DollarSign, FileCheck, Receipt, File, Banknote, Award, Search, X } from 'lucide-react';
 import { collection, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -22,7 +23,8 @@ import { filtrarDocumentos, TIPOS_DOC } from '../../lib/documentosCliente';
 // de Cuenta, Remitos, Recibos, Informes) con las mismas tarjetas que el panel
 // principal (ver app/components/admin/ModuloCard.jsx), para no perder ese
 // estilo al sacarlos del dashboard y agruparlos bajo un solo acceso.
-export default function DocumentosHub() {
+function DocumentosHub() {
+  const searchParams = useSearchParams();
   const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
   const [loadingData, setLoadingData] = useState(true);
   const [totales, setTotales] = useState({
@@ -60,7 +62,7 @@ export default function DocumentosHub() {
     })();
   }, [user]);
 
-  // Buscador general: cruza los 8 tipos de documento de todos los clientes
+  // Buscador general: cruza los 9 tipos de documento de todos los clientes
   // (incluye "Informes" — colección `documentos` — ahora que también llevan
   // cliente/sede asociados), más los clientes y sedes en sí, para poder
   // buscar por cualquier cosa (número, cliente, empresa, sede, título,
@@ -71,7 +73,9 @@ export default function DocumentosHub() {
   const [loadingBusqueda, setLoadingBusqueda] = useState(true);
   const [todosDocumentos, setTodosDocumentos] = useState([]);
   const [clientes, setClientes] = useState([]);
-  const [busqueda, setBusqueda] = useState('');
+  // Prefiere el valor con el que se navegó desde el buscador rápido del
+  // panel principal (?busqueda=...), si vino con uno.
+  const [busqueda, setBusqueda] = useState(() => searchParams.get('busqueda') || '');
   const [sedeFiltro, setSedeFiltro] = useState('todas');
   const [desde, setDesde] = useState('');
   const [hasta, setHasta] = useState('');
@@ -297,7 +301,7 @@ export default function DocumentosHub() {
         <div className="mt-8">
           <h3 className="mb-1 text-lg font-semibold text-gray-700">Buscador general</h3>
           <p className="mb-4 text-sm text-gray-500">
-            Por cliente, sede, número, título o concepto — cruza clientes, sedes y los 8 tipos de documento a la vez.
+            Por cliente, sede, número, título o concepto — cruza clientes, sedes y los 9 tipos de documento a la vez.
           </p>
 
           {loadingBusqueda ? (
@@ -442,5 +446,13 @@ export default function DocumentosHub() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DocumentosHubPage() {
+  return (
+    <Suspense fallback={null}>
+      <DocumentosHub />
+    </Suspense>
   );
 }
