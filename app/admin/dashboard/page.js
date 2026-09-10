@@ -97,7 +97,6 @@ export default function Dashboard() {
   // como ya buscaba en todos los tipos (no solo los agrupados ahí dentro) no
   // tenía sentido tenerlo separado del panel principal -- solo Admin (mismos
   // datos cross-cliente que antes solo se pedían en esa página Admin-only).
-  const [loadingBusqueda, setLoadingBusqueda] = useState(true);
   const [todosDocumentos, setTodosDocumentos] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [busqueda, setBusqueda] = useState('');
@@ -106,12 +105,23 @@ export default function Dashboard() {
   const [hasta, setHasta] = useState('');
   const [tiposActivos, setTiposActivos] = useState(() => new Set(Object.keys(TIPOS_DOC)));
   const [vista, setVista] = useState('tabla');
+  const [visibleDocs, setVisibleDocs] = useState(20);
+  const [visibleClientes, setVisibleClientes] = useState(20);
+  const [visibleSedes, setVisibleSedes] = useState(20);
 
-  useEffect(() => {
-    if (!usuario || usuario.role !== 'Admin') {
-      setLoadingBusqueda(false);
-      return;
-    }
+  // El cruce de los 9 tipos de documento + clientes es una lectura pesada
+  // (Firestore no tiene búsqueda de texto server-side, así que hay que traer
+  // las colecciones enteras para poder filtrar en memoria). Antes se pedía
+  // siempre al entrar al panel, se usara el buscador o no. Ahora se pide
+  // recién la primera vez que el Admin toca el buscador (foco en el texto o
+  // en las fechas) y se cachea para el resto de la sesión.
+  const [busquedaIniciada, setBusquedaIniciada] = useState(false);
+  const [cargandoBusqueda, setCargandoBusqueda] = useState(false);
+
+  const iniciarBusqueda = () => {
+    if (busquedaIniciada || !usuario || usuario.role !== 'Admin') return;
+    setBusquedaIniciada(true);
+    setCargandoBusqueda(true);
 
     (async () => {
       try {
@@ -132,10 +142,22 @@ export default function Dashboard() {
       } catch (error) {
         console.error('Error al cargar los documentos para el buscador:', error);
       } finally {
-        setLoadingBusqueda(false);
+        setCargandoBusqueda(false);
       }
     })();
-  }, [usuario]);
+  };
+
+  // Sin ningún criterio cargado, no tiene sentido volcar todos los
+  // documentos: se espera a que el Admin escriba algo o elija sede/fecha.
+  const hayCriterio = busqueda.trim() !== '' || sedeFiltro !== 'todas' || desde !== '' || hasta !== '';
+
+  // Cada vez que cambia el criterio arranca de nuevo desde los primeros 20 --
+  // si no, "Ver más" en una búsqueda podría quedar pedido de una anterior.
+  useEffect(() => {
+    setVisibleDocs(20);
+    setVisibleClientes(20);
+    setVisibleSedes(20);
+  }, [busqueda, sedeFiltro, desde, hasta, tiposActivos]);
 
   const clientesFiltrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -146,7 +168,7 @@ export default function Dashboard() {
         || c.empresa?.toLowerCase().includes(q)
         || c.email?.toLowerCase().includes(q)
         || c.telefono?.toLowerCase().includes(q);
-    }).slice(0, 20);
+    });
   }, [clientes, busqueda]);
 
   const sedesFiltradas = useMemo(() => {
@@ -160,7 +182,7 @@ export default function Dashboard() {
         }
       });
     });
-    return resultado.slice(0, 20);
+    return resultado;
   }, [clientes, busqueda]);
 
   const tiposPresentes = useMemo(() => {
@@ -225,7 +247,7 @@ export default function Dashboard() {
       color: 'bg-amber-600',
       colorClaro: 'bg-amber-100',
       colorTexto: 'text-amber-600',
-      descripcion: 'Mismo detalle que una OT: trabajo, fotos y firmas',
+      descripcion: 'Trabajo, fotos y firmas',
       rutas: {
         nuevo: '/admin/mantenimiento-preventivo/nueva',
         historial: '/admin/mantenimiento-preventivo'
@@ -382,89 +404,95 @@ export default function Dashboard() {
               Por cliente, sede, número, título o concepto — cruza clientes, sedes y los 9 tipos de documento a la vez.
             </p>
 
-            {loadingBusqueda ? (
-              <div className="p-10 text-center bg-white rounded-lg shadow-md">
+            <div className="p-4 space-y-4 bg-white rounded-lg shadow-md">
+              <div className="relative">
+                <Search size={16} className="absolute -translate-y-1/2 left-3 top-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  onFocus={iniciarBusqueda}
+                  placeholder="Buscar por número, cliente, sede, concepto..."
+                  className="w-full py-2 pl-9 pr-9 text-sm border border-gray-300 rounded-md"
+                />
+                {busqueda && (
+                  <button
+                    onClick={() => setBusqueda('')}
+                    title="Limpiar búsqueda"
+                    className="absolute p-1 -translate-y-1/2 rounded-full right-1.5 top-1/2 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-end gap-3">
+                {sedesDisponibles.length > 1 && (
+                  <div>
+                    <label className="block mb-1 text-xs font-medium text-gray-500">Sede</label>
+                    <select
+                      value={sedeFiltro}
+                      onChange={(e) => setSedeFiltro(e.target.value)}
+                      className="px-3 py-2 text-sm border border-gray-300 rounded-md"
+                    >
+                      <option value="todas">Todas las sedes</option>
+                      {sedesDisponibles.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <div>
+                  <label className="block mb-1 text-xs font-medium text-gray-500">Desde</label>
+                  <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} onFocus={iniciarBusqueda} className="px-3 py-2 text-sm border border-gray-300 rounded-md" />
+                </div>
+                <div>
+                  <label className="block mb-1 text-xs font-medium text-gray-500">Hasta</label>
+                  <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} onFocus={iniciarBusqueda} className="px-3 py-2 text-sm border border-gray-300 rounded-md" />
+                </div>
+                <ViewToggle vista={vista} onChange={setVista} />
+              </div>
+
+              {tiposPresentes.length > 1 && (
+                <div className="flex flex-wrap gap-2">
+                  {tiposPresentes.map((tipo) => {
+                    const { label, icono: Icono } = TIPOS_DOC[tipo];
+                    const activo = tiposActivos.has(tipo);
+                    return (
+                      <button
+                        key={tipo}
+                        type="button"
+                        onClick={() => toggleTipo(tipo)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                          activo ? 'bg-primary text-white border-primary' : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Icono size={13} /> {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {!hayCriterio ? (
+              <div className="p-10 mt-4 text-center bg-white rounded-lg shadow-md">
+                <Search size={32} className="mx-auto mb-2 text-gray-300" />
+                <p className="text-gray-500">Escribí algo, o elegí sede/fecha, para buscar.</p>
+              </div>
+            ) : cargandoBusqueda ? (
+              <div className="p-10 mt-4 text-center bg-white rounded-lg shadow-md">
                 <div className="w-8 h-8 mx-auto border-b-2 rounded-full animate-spin border-primary"></div>
               </div>
             ) : (
               <>
-                <div className="p-4 space-y-4 bg-white rounded-lg shadow-md">
-                  <div className="relative">
-                    <Search size={16} className="absolute -translate-y-1/2 left-3 top-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      value={busqueda}
-                      onChange={(e) => setBusqueda(e.target.value)}
-                      placeholder="Buscar por número, cliente, sede, concepto..."
-                      className="w-full py-2 pl-9 pr-9 text-sm border border-gray-300 rounded-md"
-                    />
-                    {busqueda && (
-                      <button
-                        onClick={() => setBusqueda('')}
-                        title="Limpiar búsqueda"
-                        className="absolute p-1 -translate-y-1/2 rounded-full right-1.5 top-1/2 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                      >
-                        <X size={16} />
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="flex flex-wrap items-end gap-3">
-                    {sedesDisponibles.length > 1 && (
-                      <div>
-                        <label className="block mb-1 text-xs font-medium text-gray-500">Sede</label>
-                        <select
-                          value={sedeFiltro}
-                          onChange={(e) => setSedeFiltro(e.target.value)}
-                          className="px-3 py-2 text-sm border border-gray-300 rounded-md"
-                        >
-                          <option value="todas">Todas las sedes</option>
-                          {sedesDisponibles.map((s) => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                    <div>
-                      <label className="block mb-1 text-xs font-medium text-gray-500">Desde</label>
-                      <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="px-3 py-2 text-sm border border-gray-300 rounded-md" />
-                    </div>
-                    <div>
-                      <label className="block mb-1 text-xs font-medium text-gray-500">Hasta</label>
-                      <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="px-3 py-2 text-sm border border-gray-300 rounded-md" />
-                    </div>
-                    <ViewToggle vista={vista} onChange={setVista} />
-                  </div>
-
-                  {tiposPresentes.length > 1 && (
-                    <div className="flex flex-wrap gap-2">
-                      {tiposPresentes.map((tipo) => {
-                        const { label, icono: Icono } = TIPOS_DOC[tipo];
-                        const activo = tiposActivos.has(tipo);
-                        return (
-                          <button
-                            key={tipo}
-                            type="button"
-                            onClick={() => toggleTipo(tipo)}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                              activo ? 'bg-primary text-white border-primary' : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
-                            }`}
-                          >
-                            <Icono size={13} /> {label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
                 {busqueda.trim() && (clientesFiltrados.length > 0 || sedesFiltradas.length > 0) && (
                   <div className="grid grid-cols-1 gap-4 mt-4 sm:grid-cols-2">
                     {clientesFiltrados.length > 0 && (
                       <div className="p-4 bg-white rounded-lg shadow-md">
                         <h4 className="mb-3 text-sm font-semibold text-gray-700">Clientes ({clientesFiltrados.length})</h4>
                         <div className="space-y-1">
-                          {clientesFiltrados.map((c) => (
+                          {clientesFiltrados.slice(0, visibleClientes).map((c) => (
                             <Link
                               key={c.id}
                               href={`/admin/usuarios/${c.id}`}
@@ -478,13 +506,22 @@ export default function Dashboard() {
                             </Link>
                           ))}
                         </div>
+                        {clientesFiltrados.length > visibleClientes && (
+                          <button
+                            type="button"
+                            onClick={() => setVisibleClientes((v) => v + 20)}
+                            className="w-full py-2 mt-2 text-xs font-medium text-center border rounded-md text-primary border-primary hover:bg-primary/5"
+                          >
+                            Ver más ({clientesFiltrados.length - visibleClientes} más)
+                          </button>
+                        )}
                       </div>
                     )}
                     {sedesFiltradas.length > 0 && (
                       <div className="p-4 bg-white rounded-lg shadow-md">
                         <h4 className="mb-3 text-sm font-semibold text-gray-700">Sedes ({sedesFiltradas.length})</h4>
                         <div className="space-y-1">
-                          {sedesFiltradas.map(({ clienteId, clienteNombre, sede }) => (
+                          {sedesFiltradas.slice(0, visibleSedes).map(({ clienteId, clienteNombre, sede }) => (
                             <Link
                               key={`${clienteId}-${sede.id}`}
                               href={`/admin/usuarios/${clienteId}?sede=${encodeURIComponent(sede.nombre)}`}
@@ -497,6 +534,15 @@ export default function Dashboard() {
                             </Link>
                           ))}
                         </div>
+                        {sedesFiltradas.length > visibleSedes && (
+                          <button
+                            type="button"
+                            onClick={() => setVisibleSedes((v) => v + 20)}
+                            className="w-full py-2 mt-2 text-xs font-medium text-center border rounded-md text-primary border-primary hover:bg-primary/5"
+                          >
+                            Ver más ({sedesFiltradas.length - visibleSedes} más)
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -515,7 +561,18 @@ export default function Dashboard() {
                   ) : (
                     <div className="p-4 bg-white rounded-lg shadow-md sm:p-6">
                       <p className="mb-4 text-sm text-gray-400">{documentosFiltrados.length} documentos</p>
-                      <ListaDocumentosAdmin documentos={documentosFiltrados} vista={vista} />
+                      <ListaDocumentosAdmin documentos={documentosFiltrados.slice(0, visibleDocs)} vista={vista} />
+                      {documentosFiltrados.length > visibleDocs && (
+                        <div className="mt-4 text-center">
+                          <button
+                            type="button"
+                            onClick={() => setVisibleDocs((v) => v + 20)}
+                            className="px-4 py-2 text-sm font-medium border rounded-md text-primary border-primary hover:bg-primary/5"
+                          >
+                            Ver más ({documentosFiltrados.length - visibleDocs} más)
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
