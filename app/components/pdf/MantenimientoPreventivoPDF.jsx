@@ -1,6 +1,8 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { formatearFecha } from '../../lib/fecha';
+import { esHtmlEnriquecido } from '../../lib/richText';
+import { renderHtmlEnriquecidoParaPdf } from './htmlToPdf';
 
 const ESTADO_LABEL = { OK: 'OK', NOK: 'N OK', NA: 'N/A' };
 const ESTADO_COLOR = { OK: '#27AE60', NOK: '#C0392B', NA: '#888888' };
@@ -94,6 +96,39 @@ const styles = StyleSheet.create({
   },
   colContent: {
     fontSize: 9,
+  },
+  // Estilos para el HTML del editor de texto enriquecido (ver htmlToPdf.jsx)
+  rtParrafo: {
+    fontSize: 9,
+    marginBottom: 4,
+  },
+  rtTitulo: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#1A5276',
+    marginTop: 4,
+    marginBottom: 3,
+  },
+  rtLista: {
+    marginBottom: 4,
+  },
+  rtItemLista: {
+    flexDirection: 'row',
+    marginBottom: 2,
+  },
+  rtVinieta: {
+    width: 12,
+    fontSize: 9,
+  },
+  rtTextoItemLista: {
+    flex: 1,
+    fontSize: 9,
+  },
+  rtNegrita: {
+    fontWeight: 'bold',
+  },
+  rtCursiva: {
+    fontStyle: 'italic',
   },
   notes: {
     fontSize: 9,
@@ -333,7 +368,20 @@ const MantenimientoPreventivoPDF = ({ mantenimiento }) => {
         {/* Descripción del trabajo realizado */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Descripción del trabajo realizado</Text>
-          <Text style={styles.colContent}>{mantenimiento.descripcionTrabajo || ''}</Text>
+          {esHtmlEnriquecido(mantenimiento.descripcionTrabajo) ? (
+            renderHtmlEnriquecidoParaPdf(mantenimiento.descripcionTrabajo, {
+              parrafo: styles.rtParrafo,
+              titulo: styles.rtTitulo,
+              lista: styles.rtLista,
+              itemLista: styles.rtItemLista,
+              vinieta: styles.rtVinieta,
+              textoItemLista: styles.rtTextoItemLista,
+              negrita: styles.rtNegrita,
+              cursiva: styles.rtCursiva
+            })
+          ) : (
+            <Text style={styles.colContent}>{mantenimiento.descripcionTrabajo || ''}</Text>
+          )}
         </View>
 
         {/* Observaciones */}

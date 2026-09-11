@@ -13,6 +13,7 @@ import ClienteSelector from '../../../components/ClienteSelector';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
 import FotosUploader from '../../../components/ui/FotosUploader';
 import FirmaCanvas from '../../../components/ui/FirmaCanvas';
+import RichTextEditor from '../../../components/ui/RichTextEditor';
 import PlanillasAdjuntas from '../../../components/planillas/PlanillasAdjuntas';
 import { fechaHoyLocal } from '../../../lib/fecha';
 import { archivoABase64 } from '../../../lib/imagenes';
@@ -274,10 +275,9 @@ export default function NuevoMantenimientoPreventivo() {
           {/* Descripción del trabajo */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Descripción del Trabajo Realizado</h3>
-            <textarea
+            <RichTextEditor
               value={mantenimiento.descripcionTrabajo}
-              onChange={(e) => setMantenimiento({ ...mantenimiento, descripcionTrabajo: e.target.value })}
-              className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md"
+              onChange={(html) => setMantenimiento({ ...mantenimiento, descripcionTrabajo: html })}
               placeholder="Detalle el trabajo realizado..."
             />
           </div>

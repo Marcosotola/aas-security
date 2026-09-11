@@ -10,6 +10,7 @@ import { eliminarMantenimientoPreventivo } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import DescargarMantenimientoPreventivoPDF from '../../../components/pdf/DescargarMantenimientoPreventivoPDF';
 import { formatearFecha } from '../../../lib/fecha';
+import { esHtmlEnriquecido } from '../../../lib/richText';
 
 const ESTADO_LABEL = { OK: 'OK', NOK: 'N OK', NA: 'N/A' };
 const ESTADO_CLASE = { OK: 'bg-success text-white', NOK: 'bg-danger text-white', NA: 'bg-gray-400 text-white' };
@@ -190,9 +191,16 @@ export default function VerMantenimientoPreventivo({ params }) {
           {/* Descripción del trabajo */}
           <div className="px-8 py-4">
             <h3 className="p-2 mb-3 text-sm font-bold text-blue-800 bg-gray-100 rounded">Descripción del Trabajo Realizado</h3>
-            <div className="p-4 text-xs whitespace-pre-line rounded bg-gray-50">
-              {mantenimiento.descripcionTrabajo || ''}
-            </div>
+            {esHtmlEnriquecido(mantenimiento.descripcionTrabajo) ? (
+              <div
+                className="p-4 text-xs rounded rich-text-view bg-gray-50"
+                dangerouslySetInnerHTML={{ __html: mantenimiento.descripcionTrabajo }}
+              />
+            ) : (
+              <div className="p-4 text-xs whitespace-pre-line rounded bg-gray-50">
+                {mantenimiento.descripcionTrabajo || ''}
+              </div>
+            )}
           </div>
 
           {/* Observaciones */}

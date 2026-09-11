@@ -135,49 +135,45 @@ export default function NuevoPresupuesto() {
     };
 
     const handleItemChange = (id, field, value) => {
-        const updatedItems = presupuesto.items.map(item => {
-            if (item.id === id) {
-                const updatedItem = { ...item, [field]: value };
-                if (field === 'cantidad' || field === 'precioUnitario') {
-                    const cantidad = parseFloat(updatedItem.cantidad) || 0;
-                    const precio = parseFloat(updatedItem.precioUnitario) || 0;
-                    updatedItem.subtotal = cantidad * precio;
+        setPresupuesto(prev => {
+            const updatedItems = prev.items.map(item => {
+                if (item.id === id) {
+                    const updatedItem = { ...item, [field]: value };
+                    if (field === 'cantidad' || field === 'precioUnitario') {
+                        const cantidad = parseFloat(updatedItem.cantidad) || 0;
+                        const precio = parseFloat(updatedItem.precioUnitario) || 0;
+                        updatedItem.subtotal = cantidad * precio;
+                    }
+                    return updatedItem;
                 }
-                return updatedItem;
-            }
-            return item;
-        });
+                return item;
+            });
 
-        const totales = calcularTotales(updatedItems, presupuesto.tipoDescuento, presupuesto.valorDescuento);
+            const totales = calcularTotales(updatedItems, prev.tipoDescuento, prev.valorDescuento);
 
-        setPresupuesto({
-            ...presupuesto,
-            items: updatedItems,
-            ...totales
+            return { ...prev, items: updatedItems, ...totales };
         });
     };
 
     // Aplica un item elegido de la lista de precios: completa descripción y precio,
     // recalcula el subtotal con la cantidad que ya tenga cargada el item.
     const seleccionarItemCatalogo = (id, producto) => {
-        const updatedItems = presupuesto.items.map(item => {
-            if (item.id !== id) return item;
-            const cantidad = parseFloat(item.cantidad) || 0;
-            const precio = parseFloat(producto.precioUnitario) || 0;
-            return {
-                ...item,
-                descripcion: producto.descripcion,
-                precioUnitario: producto.precioUnitario,
-                subtotal: cantidad * precio
-            };
-        });
+        setPresupuesto(prev => {
+            const updatedItems = prev.items.map(item => {
+                if (item.id !== id) return item;
+                const cantidad = parseFloat(item.cantidad) || 0;
+                const precio = parseFloat(producto.precioUnitario) || 0;
+                return {
+                    ...item,
+                    descripcion: producto.descripcion,
+                    precioUnitario: producto.precioUnitario,
+                    subtotal: cantidad * precio
+                };
+            });
 
-        const totales = calcularTotales(updatedItems, presupuesto.tipoDescuento, presupuesto.valorDescuento);
+            const totales = calcularTotales(updatedItems, prev.tipoDescuento, prev.valorDescuento);
 
-        setPresupuesto({
-            ...presupuesto,
-            items: updatedItems,
-            ...totales
+            return { ...prev, items: updatedItems, ...totales };
         });
     };
 
@@ -202,31 +198,26 @@ export default function NuevoPresupuesto() {
     };
 
     const addItem = () => {
-        const newId = Math.max(...presupuesto.items.map(item => item.id), 0) + 1;
-        const newItems = [
-            ...presupuesto.items,
-            { id: newId, descripcion: '', cantidad: '', precioUnitario: '', subtotal: 0 }
-        ];
+        setPresupuesto(prev => {
+            const newItems = [
+                ...prev.items,
+                { id: crypto.randomUUID(), descripcion: '', cantidad: '', precioUnitario: '', subtotal: 0 }
+            ];
 
-        const totales = calcularTotales(newItems, presupuesto.tipoDescuento, presupuesto.valorDescuento);
+            const totales = calcularTotales(newItems, prev.tipoDescuento, prev.valorDescuento);
 
-        setPresupuesto({
-            ...presupuesto,
-            items: newItems,
-            ...totales
+            return { ...prev, items: newItems, ...totales };
         });
     };
 
     const removeItem = (id) => {
-        if (presupuesto.items.length === 1) return;
+        setPresupuesto(prev => {
+            if (prev.items.length === 1) return prev;
 
-        const updatedItems = presupuesto.items.filter(item => item.id !== id);
-        const totales = calcularTotales(updatedItems, presupuesto.tipoDescuento, presupuesto.valorDescuento);
+            const updatedItems = prev.items.filter(item => item.id !== id);
+            const totales = calcularTotales(updatedItems, prev.tipoDescuento, prev.valorDescuento);
 
-        setPresupuesto({
-            ...presupuesto,
-            items: updatedItems,
-            ...totales
+            return { ...prev, items: updatedItems, ...totales };
         });
     };
 
@@ -626,6 +617,7 @@ export default function NuevoPresupuesto() {
                                                     </td>
                                                     <td className="px-4 py-2">
                                                         <button
+                                                            type="button"
                                                             onClick={() => removeItem(item.id)}
                                                             className="text-red-500 hover:text-red-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-red-500"
                                                             disabled={presupuesto.items.length === 1}
@@ -642,6 +634,7 @@ export default function NuevoPresupuesto() {
 
                                 <div className="mt-4">
                                     <button
+                                        type="button"
                                         onClick={addItem}
                                         className="flex items-center text-blue-500 hover:text-blue-700"
                                     >
@@ -773,10 +766,10 @@ export default function NuevoPresupuesto() {
 
             {/* Modal para editar descripción */}
             {modalDescripcion.isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="flex flex-col w-full h-full bg-white md:w-11/12 md:h-5/6 md:rounded-lg md:max-w-4xl">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black bg-opacity-50">
+                    <div className="flex flex-col w-full h-[85vh] max-w-2xl bg-white rounded-lg shadow-xl md:w-11/12 md:h-5/6 md:max-w-4xl">
                         {/* Header del modal */}
-                        <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200 md:rounded-t-lg">
+                        <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200 rounded-t-lg">
                             <h3 className="text-lg font-semibold text-gray-800">Descripción del servicio</h3>
                             <button
                                 onClick={() => setModalDescripcion({ isOpen: false, itemId: null, value: '' })}
@@ -789,7 +782,7 @@ export default function NuevoPresupuesto() {
                         </div>
                         
                         {/* Contenido del modal */}
-                        <div className="flex flex-col flex-1 p-4 bg-white md:rounded-b-lg">
+                        <div className="flex flex-col flex-1 p-4 overflow-y-auto bg-white rounded-b-lg">
                             <BuscadorPrecio
                                 listaPrecios={listaPrecios}
                                 onSelect={(producto) => {

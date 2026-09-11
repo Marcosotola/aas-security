@@ -345,3 +345,65 @@ select:-webkit-autofill:active {
     touch-action: none;
   }
 }
+
+/* Estilos compartidos por el editor de texto enriquecido (RichTextEditor) y
+   por la vista de solo lectura de documentos que muestran ese HTML guardado
+   (descripcionTrabajo). */
+.rich-text-content,
+.rich-text-view {
+  line-height: 1.5;
+}
+
+.rich-text-content p,
+.rich-text-view p {
+  margin: 0 0 0.75em;
+}
+
+.rich-text-content h2,
+.rich-text-view h2 {
+  margin: 0.9em 0 0.4em;
+  font-size: 1.25em;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.rich-text-content h3,
+.rich-text-view h3 {
+  margin: 0.8em 0 0.3em;
+  font-size: 1.1em;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.rich-text-content ul,
+.rich-text-view ul {
+  margin: 0 0 0.75em;
+  padding-left: 1.4em;
+  list-style: disc;
+}
+
+.rich-text-content ol,
+.rich-text-view ol {
+  margin: 0 0 0.75em;
+  padding-left: 1.4em;
+  list-style: decimal;
+}
+
+.rich-text-content li,
+.rich-text-view li {
+  margin: 0.15em 0;
+}
+
+.rich-text-content strong,
+.rich-text-view strong {
+  font-weight: 700;
+}
+
+/* Placeholder de Tiptap: requiere este selector puntual para mostrarse. */
+.rich-text-content p.is-editor-empty:first-child::before {
+  float: left;
+  height: 0;
+  color: #9ca3af;
+  content: attr(data-placeholder);
+  pointer-events: none;
+}

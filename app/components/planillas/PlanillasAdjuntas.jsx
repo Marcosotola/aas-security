@@ -257,8 +257,8 @@ export default function PlanillasAdjuntas({ plantillasDisponibles, planillasAdju
 
                           <div className="space-y-2">
                             {planilla.columnas.map((columna) => (
-                              <div key={columna} className="flex items-center justify-between gap-2">
-                                <span className="flex-1 text-sm text-gray-700">{columna}</span>
+                              <div key={columna} className="flex items-start justify-between gap-2">
+                                <span className="flex-1 pt-1.5 text-sm text-gray-700">{columna}</span>
                                 <div className="flex gap-1 shrink-0">
                                   {estadosDisponibles.map((estado) => (
                                     <button
