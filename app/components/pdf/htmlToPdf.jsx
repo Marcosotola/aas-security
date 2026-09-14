@@ -49,6 +49,17 @@ const renderInline = (nodos, keyPrefix, estilos) => {
   return elementos;
 };
 
+// Un <p><br></p> (línea en blanco dejada por Enter, o un título vacío como
+// <h2></h2>) produce un array de contenido con un único string "\n" -- no
+// está vacío (length > 0), pero tampoco tiene ningún carácter visible.
+// @react-pdf/renderer puede colgarse indefinidamente al paginar un <Text>
+// cuyo contenido es así de degenerado (visto en producción: pasaba solo
+// cuando ese bloque caía cerca de otro con wrap={false}, como las firmas).
+// Por eso hace falta detectar "en blanco" por contenido real, no por
+// longitud de array, y en ese caso reemplazar por un espacio simple.
+const esContenidoEnBlanco = (contenido) =>
+  contenido.every((item) => typeof item === 'string' && item.trim() === '');
+
 // `estilos` debe traer: parrafo, titulo, lista, itemLista, vinieta,
 // textoItemLista, negrita, cursiva.
 export function renderHtmlEnriquecidoParaPdf(html, estilos) {
@@ -62,9 +73,10 @@ export function renderHtmlEnriquecidoParaPdf(html, estilos) {
     const tag = nodo.tagName?.toLowerCase();
 
     if (tag === 'h2' || tag === 'h3') {
+      const contenidoTitulo = renderInline(Array.from(nodo.childNodes), key, estilos);
       return (
         <Text key={key} style={estilos.titulo}>
-          {renderInline(Array.from(nodo.childNodes), key, estilos)}
+          {esContenidoEnBlanco(contenidoTitulo) ? ' ' : contenidoTitulo}
         </Text>
       );
     }
@@ -73,14 +85,17 @@ export function renderHtmlEnriquecidoParaPdf(html, estilos) {
       const items = Array.from(nodo.childNodes).filter((n) => n.tagName?.toLowerCase() === 'li');
       return (
         <View key={key} style={estilos.lista}>
-          {items.map((li, j) => (
-            <View key={j} style={estilos.itemLista}>
-              <Text style={estilos.vinieta}>{tag === 'ol' ? `${j + 1}.` : '•'}</Text>
-              <Text style={estilos.textoItemLista}>
-                {renderInline(Array.from(li.childNodes), `${key}-${j}`, estilos)}
-              </Text>
-            </View>
-          ))}
+          {items.map((li, j) => {
+            const contenidoItem = renderInline(Array.from(li.childNodes), `${key}-${j}`, estilos);
+            return (
+              <View key={j} style={estilos.itemLista}>
+                <Text style={estilos.vinieta}>{tag === 'ol' ? `${j + 1}.` : '•'}</Text>
+                <Text style={estilos.textoItemLista}>
+                  {esContenidoEnBlanco(contenidoItem) ? ' ' : contenidoItem}
+                </Text>
+              </View>
+            );
+          })}
         </View>
       );
     }
@@ -96,7 +111,7 @@ export function renderHtmlEnriquecidoParaPdf(html, estilos) {
     const contenido = renderInline(Array.from(nodo.childNodes), key, estilos);
     return (
       <Text key={key} style={estilos.parrafo}>
-        {contenido.length > 0 ? contenido : ' '}
+        {esContenidoEnBlanco(contenido) ? ' ' : contenido}
       </Text>
     );
   });
