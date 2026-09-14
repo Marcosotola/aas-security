@@ -2,6 +2,8 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { formatearFecha } from '../../lib/fecha';
+import { esHtmlEnriquecido } from '../../lib/richText';
+import { renderHtmlEnriquecidoParaPdf } from './htmlToPdf';
 
 // Estilos para el PDF
 const styles = StyleSheet.create({
@@ -99,6 +101,42 @@ const styles = StyleSheet.create({
     color: '#000',
     textAlign: 'justify'
   },
+  // Estilos para el HTML del editor de texto enriquecido (ver htmlToPdf.jsx)
+  rtParrafo: {
+    fontSize: 11,
+    lineHeight: 1.6,
+    marginBottom: 6,
+    textAlign: 'justify'
+  },
+  rtTitulo: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#1A5276',
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  rtLista: {
+    marginBottom: 6,
+  },
+  rtItemLista: {
+    flexDirection: 'row',
+    marginBottom: 3,
+  },
+  rtVinieta: {
+    width: 14,
+    fontSize: 11,
+  },
+  rtTextoItemLista: {
+    flex: 1,
+    fontSize: 11,
+    lineHeight: 1.6,
+  },
+  rtNegrita: {
+    fontWeight: 'bold',
+  },
+  rtCursiva: {
+    fontStyle: 'italic',
+  },
   footer: {
     position: 'absolute',
     bottom: 20,
@@ -169,7 +207,20 @@ const DocumentoPDF = ({ documento }) => {
 
         {/* Contenido principal */}
         <View style={styles.content}>
-          <Text style={styles.bodyText}>{documento.contenido || ''}</Text>
+          {esHtmlEnriquecido(documento.contenido) ? (
+            renderHtmlEnriquecidoParaPdf(documento.contenido, {
+              parrafo: styles.rtParrafo,
+              titulo: styles.rtTitulo,
+              lista: styles.rtLista,
+              itemLista: styles.rtItemLista,
+              vinieta: styles.rtVinieta,
+              textoItemLista: styles.rtTextoItemLista,
+              negrita: styles.rtNegrita,
+              cursiva: styles.rtCursiva
+            })
+          ) : (
+            <Text style={styles.bodyText}>{documento.contenido || ''}</Text>
+          )}
         </View>
 
         {/* Pie de página con numeración */}

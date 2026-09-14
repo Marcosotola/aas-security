@@ -11,6 +11,7 @@ import { use } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import DocumentoPDF from '../../../components/pdf/DocumentoPDF';
 import { formatearFecha } from '../../../lib/fecha';
+import { esHtmlEnriquecido } from '../../../lib/richText';
 
 export default function VerDocumento({ params }) {
   const resolvedParams = use(params);
@@ -176,11 +177,18 @@ export default function VerDocumento({ params }) {
           {/* Contenido del documento */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Contenido</h3>
-            <div className="p-4 rounded-md bg-gray-50">
-              <p className="leading-relaxed text-gray-900 whitespace-pre-line">
-                {documento.contenido || 'Sin contenido'}
-              </p>
-            </div>
+            {esHtmlEnriquecido(documento.contenido) ? (
+              <div
+                className="p-4 text-sm rounded rich-text-view bg-gray-50"
+                dangerouslySetInnerHTML={{ __html: documento.contenido }}
+              />
+            ) : (
+              <div className="p-4 rounded-md bg-gray-50">
+                <p className="leading-relaxed text-gray-900 whitespace-pre-line">
+                  {documento.contenido || 'Sin contenido'}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Información de auditoría */}
