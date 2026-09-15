@@ -510,7 +510,68 @@ export default function NuevoPresupuesto() {
                             </div>
                         ) : (
                             <>
-                                <div className="overflow-x-auto">
+                                {/* Vista móvil - Cards apiladas, sin tabla apretada */}
+                                <div className="space-y-4 md:hidden">
+                                    {presupuesto.items.map((item, index) => (
+                                        <div key={item.id} className="p-3 border border-gray-200 rounded-lg bg-gray-50">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-xs font-semibold text-gray-500">Ítem {index + 1}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeItem(item.id)}
+                                                    className="text-red-500 hover:text-red-700 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-red-500"
+                                                    disabled={presupuesto.items.length === 1}
+                                                    title={presupuesto.items.length === 1 ? 'Debe quedar al menos un ítem' : 'Eliminar ítem'}
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
+                                            <BuscadorPrecio
+                                                listaPrecios={listaPrecios}
+                                                onSelect={(producto) => seleccionarItemCatalogo(item.id, producto)}
+                                            />
+                                            <textarea
+                                                value={item.descripcion}
+                                                onChange={(e) => handleItemChange(item.id, 'descripcion', e.target.value)}
+                                                className="w-full px-2 py-1 mb-3 border border-gray-300 rounded-md min-h-[80px] resize-y"
+                                                placeholder="Descripción del servicio"
+                                                rows={3}
+                                            />
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="block mb-1 text-xs font-medium text-gray-600">Cantidad</label>
+                                                    <input
+                                                        type="number"
+                                                        value={item.cantidad}
+                                                        onChange={(e) =>
+                                                            handleItemChange(item.id, 'cantidad', e.target.value)
+                                                        }
+                                                        className="w-full px-2 py-1.5 border border-gray-300 rounded-md [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block mb-1 text-xs font-medium text-gray-600">Precio Unit.</label>
+                                                    <input
+                                                        type="number"
+                                                        value={item.precioUnitario}
+                                                        onChange={(e) =>
+                                                            handleItemChange(item.id, 'precioUnitario', e.target.value)
+                                                        }
+                                                        className="w-full px-2 py-1.5 border border-gray-300 rounded-md [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="pt-2 mt-2 text-sm font-medium text-right text-gray-700 border-t border-gray-200">
+                                                Subtotal: {formatMoney(item.subtotal)}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Vista desktop - Tabla */}
+                                <div className="hidden overflow-x-auto md:block">
                                     <table className="min-w-full">
                                         <thead>
                                             <tr className="bg-gray-100">
