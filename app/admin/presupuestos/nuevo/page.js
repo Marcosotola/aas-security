@@ -8,8 +8,8 @@ import Link from 'next/link';
 import { Home, Save, Download, Eye, PlusCircle, Trash2, Percent, DollarSign } from 'lucide-react';
 import { crearPresupuesto, obtenerListaPrecios, obtenerClientes } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
-import { PDFDownloadLink } from '@react-pdf/renderer';
 import PresupuestoPDF from '../../../components/pdf/PresupuestoPDF';
+import DescargarPresupuestoPDF from '../../../components/pdf/DescargarPresupuestoPDF';
 import BuscadorPrecio from '../../../components/BuscadorPrecio';
 import ClienteSelector from '../../../components/ClienteSelector';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
@@ -307,17 +307,12 @@ export default function NuevoPresupuesto() {
                             {guardando ? 'Guardando...' : 'Guardar'}
                         </button>
                         {presupuesto.items.some(item => item.descripcion && item.descripcion.trim()) ? (
-                            <PDFDownloadLink
-                                document={<PresupuestoPDF presupuesto={{ ...presupuesto, cliente }} />}
-                                fileName={`${presupuesto.numero}.pdf`}
+                            <DescargarPresupuestoPDF
+                                presupuesto={{ ...presupuesto, cliente }}
                                 className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
                             >
-                                {({ loading }) =>
-                                    loading ?
-                                        <span className="flex items-center"><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
-                                        <span className="flex items-center"><Download size={18} className="mr-2" /> Descargar PDF</span>
-                                }
-                            </PDFDownloadLink>
+                                <span className="flex items-center"><Download size={18} className="mr-2" /> Descargar PDF</span>
+                            </DescargarPresupuestoPDF>
                         ) : (
                             <button
                                 type="button"
