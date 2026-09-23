@@ -23,6 +23,15 @@ export const TIPOS_DOC = {
 // admin (app/admin/usuarios/[id]/page.js).
 export const SEDE_ANIDADA = new Set(['presupuesto', 'remito', 'estado', 'orden', 'mantenimiento', 'informe']);
 
+// Nombre con el que se muestra una cuenta cliente (ej. una cuenta vinculada
+// en el portal de su cuenta principal).
+export const nombreCuenta = (usuario) =>
+  usuario.empresa || `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim() || usuario.email || 'Cuenta vinculada';
+
+// Sede de una cuenta vinculada: se antepone el nombre de la cuenta para que
+// no se confunda con una sede propia del mismo nombre (ej. "Principal").
+export const etiquetaSedeVinculada = (cuentaNombre, sedeNombre) => `${cuentaNombre} · ${sedeNombre || 'Principal'}`;
+
 export const formatMoney = (amount) => {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
   if (amount === undefined || amount === null || isNaN(num)) return '$0,00';
@@ -52,7 +61,8 @@ export const fechaOrdenDe = (doc) => {
 
 const normalizarUno = (tipo, doc) => {
   const numero = doc.numero || doc.nombre || '-';
-  const sede = SEDE_ANIDADA.has(tipo) ? doc.cliente?.sedeNombre : doc.sedeNombre;
+  const sedePropia = SEDE_ANIDADA.has(tipo) ? doc.cliente?.sedeNombre : doc.sedeNombre;
+  const sede = doc.cuentaNombre ? etiquetaSedeVinculada(doc.cuentaNombre, sedePropia) : sedePropia;
   return {
     id: doc.id,
     tipo,

@@ -17,6 +17,15 @@ service firebase.storage {
       return request.auth != null && rolDe(request.auth.uid) == 'Admin';
     }
 
+    // Dueño del documento o cuenta principal que lo tiene vinculado (mismo
+    // criterio que puedeVerCliente en firestore.rules).
+    function puedeVerCliente(clienteId) {
+      return request.auth != null && (
+        clienteId == request.auth.uid
+        || clienteId in firestore.get(/databases/(default)/documents/usuarios/$(request.auth.uid)).data.get('cuentasVinculadas', [])
+      );
+    }
+
     // Fotos de las órdenes de trabajo: solo el staff (Admin/Tecnico) puede
     // subirlas, leerlas o borrarlas.
     match /ordenes-trabajo/{otId}/{fileName} {
@@ -29,22 +38,20 @@ service firebase.storage {
     }
 
     // PDFs de facturas: solo el Admin sube/borra (igual que firestore.rules
-    // en /facturas). El Cliente dueño de la factura puede descargar su PDF;
-    // para eso se lee el clienteId directo del documento de Firestore
-    // correspondiente a este facturaId.
+    // en /facturas). El Cliente dueño de la factura (o su cuenta principal)
+    // puede descargar su PDF; para eso se lee el clienteId directo del
+    // documento de Firestore correspondiente a este facturaId.
     match /facturas/{facturaId}/{fileName} {
-      allow read: if esAdmin() || (
-        request.auth != null &&
-        firestore.get(/databases/(default)/documents/facturas/$(facturaId)).data.clienteId == request.auth.uid
+      allow read: if esAdmin() || puedeVerCliente(
+        firestore.get(/databases/(default)/documents/facturas/$(facturaId)).data.clienteId
       );
       allow write: if esAdmin();
     }
 
     // Fotos/PDFs de certificados: mismo criterio que facturas.
     match /certificados/{certificadoId}/{fileName} {
-      allow read: if esAdmin() || (
-        request.auth != null &&
-        firestore.get(/databases/(default)/documents/certificados/$(certificadoId)).data.clienteId == request.auth.uid
+      allow read: if esAdmin() || puedeVerCliente(
+        firestore.get(/databases/(default)/documents/certificados/$(certificadoId)).data.clienteId
       );
       allow write: if esAdmin();
     }

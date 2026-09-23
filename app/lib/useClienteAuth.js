@@ -16,6 +16,7 @@ import {
   obtenerOrdenesTrabajoPorCliente,
   obtenerMantenimientosPreventivosPorCliente
 } from './firestore';
+import { nombreCuenta } from './documentosCliente';
 
 const ClienteAuthContext = createContext(null);
 
@@ -23,6 +24,18 @@ const DOCUMENTOS_VACIOS = {
   presupuestos: [], remitos: [], recibos: [], facturas: [],
   certificados: [], estados: [], ordenesTrabajo: [], mantenimientosPreventivos: []
 };
+
+// Clave en `documentos` -> consulta por clienteId.
+const TIPOS_CONSULTA = [
+  ['presupuestos', obtenerPresupuestosPorCliente],
+  ['remitos', obtenerRemitosPorCliente],
+  ['recibos', obtenerRecibosPorCliente],
+  ['facturas', obtenerFacturasPorCliente],
+  ['certificados', obtenerCertificadosPorCliente],
+  ['estados', obtenerEstadosPorCliente],
+  ['ordenesTrabajo', obtenerOrdenesTrabajoPorCliente],
+  ['mantenimientosPreventivos', obtenerMantenimientosPreventivosPorCliente]
+];
 
 // Gatekeeper + fuente de datos única de /cuenta/*: resuelve sesión, perfil y
 // los 7 tipos de documento del cliente una sola vez en el layout, para que
@@ -35,6 +48,7 @@ export function ClienteAuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [perfil, setPerfil] = useState(null);
   const [documentos, setDocumentos] = useState(DOCUMENTOS_VACIOS);
+  const [cuentasVinculadas, setCuentasVinculadas] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -60,20 +74,36 @@ export function ClienteAuthProvider({ children }) {
           return;
         }
 
-        const [presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo, mantenimientosPreventivos] = await Promise.all([
-          obtenerPresupuestosPorCliente(currentUser.uid),
-          obtenerRemitosPorCliente(currentUser.uid),
-          obtenerRecibosPorCliente(currentUser.uid),
-          obtenerFacturasPorCliente(currentUser.uid),
-          obtenerCertificadosPorCliente(currentUser.uid),
-          obtenerEstadosPorCliente(currentUser.uid),
-          obtenerOrdenesTrabajoPorCliente(currentUser.uid),
-          obtenerMantenimientosPreventivosPorCliente(currentUser.uid)
-        ]);
+        // Cuentas vinculadas (las asigna el Admin desde la ficha del usuario):
+        // esta cuenta ve también sus documentos y sedes. Si alguna se borró o
+        // no se puede leer, se ignora en vez de romper todo el portal.
+        const vinculadasIds = (perfilData.cuentasVinculadas || []).filter((id) => id && id !== currentUser.uid);
+        const vinculadas = (await Promise.all(
+          vinculadasIds.map((id) => obtenerUsuarioPorId(id).catch(() => null))
+        )).filter(Boolean);
+
+        const cuentas = [
+          { id: currentUser.uid, nombre: null },
+          ...vinculadas.map((c) => ({ id: c.id, nombre: nombreCuenta(c) }))
+        ];
+
+        // Una consulta por cuenta y tipo (clienteId == uid, igual que antes):
+        // así las reglas de Firestore pueden validar cada consulta. Los
+        // documentos de una cuenta vinculada se marcan con `cuentaNombre`
+        // para mostrar de quién son (ver documentosCliente.js).
+        const porCuenta = await Promise.all(cuentas.map(async ({ id, nombre }) => {
+          const resultados = await Promise.all(TIPOS_CONSULTA.map(([, obtener]) => obtener(id)));
+          return resultados.map((docs) => (nombre ? docs.map((d) => ({ ...d, cuentaNombre: nombre })) : docs));
+        }));
+
+        const nuevosDocumentos = Object.fromEntries(
+          TIPOS_CONSULTA.map(([clave], i) => [clave, porCuenta.flatMap((resultados) => resultados[i])])
+        );
 
         setUser(currentUser);
         setPerfil(perfilData);
-        setDocumentos({ presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo, mantenimientosPreventivos });
+        setCuentasVinculadas(vinculadas);
+        setDocumentos(nuevosDocumentos);
         setLoading(false);
       } catch (error) {
         console.error('Error al cargar la cuenta del cliente:', error);
@@ -85,7 +115,7 @@ export function ClienteAuthProvider({ children }) {
   }, [router]);
 
   return (
-    <ClienteAuthContext.Provider value={{ user, perfil, setPerfil, documentos, loading }}>
+    <ClienteAuthContext.Provider value={{ user, perfil, setPerfil, documentos, cuentasVinculadas, loading }}>
       {children}
     </ClienteAuthContext.Provider>
   );

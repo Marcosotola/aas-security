@@ -5,12 +5,14 @@ import { Suspense, useState, useEffect, useMemo, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Home, MapPin, Eye, Edit, Trash, Download,
+  Home, MapPin, Eye, Edit, Trash, Download, Link2, X, Search,
   FileText, FileCheck, Receipt, Banknote, Award, DollarSign, ClipboardList, File, Wrench
 } from 'lucide-react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import {
   obtenerUsuarioPorId,
+  obtenerClientes,
+  actualizarUsuario,
   obtenerPresupuestosPorCliente,
   obtenerRemitosPorCliente,
   obtenerRecibosPorCliente,
@@ -298,6 +300,118 @@ function SeccionArchivos({ titulo, Icono, items, rutaBase, nombreField, montoFie
   );
 }
 
+const nombreDe = (c) => c.empresa || `${c.nombre || ''} ${c.apellido || ''}`.trim() || c.email;
+
+// Cuentas vinculadas: la cuenta de esta ficha ve en su portal también los
+// documentos y sedes de las cuentas que se agreguen acá. Es de un solo
+// sentido (la vinculada no ve nada de esta) y solo lo edita el Admin (ver
+// cuentasVinculadas en firestore.rules).
+function CuentasVinculadas({ perfil, clientes, onGuardar }) {
+  const [busqueda, setBusqueda] = useState('');
+  const [guardando, setGuardando] = useState(false);
+
+  const vinculadasIds = perfil.cuentasVinculadas || [];
+  const vinculadas = vinculadasIds.map((vid) => clientes.find((c) => c.id === vid) || { id: vid, email: 'Cuenta eliminada' });
+  // Cuentas que ven a esta (el sentido inverso), solo informativo.
+  const vistaPor = clientes.filter((c) => (c.cuentasVinculadas || []).includes(perfil.id));
+
+  const termino = busqueda.trim().toLowerCase();
+  const candidatos = termino
+    ? clientes
+      .filter((c) => c.id !== perfil.id && !vinculadasIds.includes(c.id))
+      .filter((c) => [nombreDe(c), c.nombre, c.apellido, c.email].some((v) => v?.toLowerCase().includes(termino)))
+      .slice(0, 8)
+    : [];
+
+  const guardar = async (nuevosIds) => {
+    setGuardando(true);
+    try {
+      await onGuardar(nuevosIds);
+      setBusqueda('');
+    } catch (error) {
+      console.error('Error al guardar las cuentas vinculadas:', error);
+      alert('No se pudieron guardar las cuentas vinculadas. Inténtelo de nuevo más tarde.');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const quitar = (cuenta) => {
+    if (!confirm(`¿Quitar el acceso a los documentos de ${nombreDe(cuenta)}?`)) return;
+    guardar(vinculadasIds.filter((vid) => vid !== cuenta.id));
+  };
+
+  return (
+    <div className="p-4 mb-6 bg-white rounded-lg shadow-md">
+      <h3 className="flex items-center gap-2 mb-1 text-lg font-semibold text-gray-700">
+        <Link2 size={18} className="text-primary" /> Cuentas vinculadas
+      </h3>
+      <p className="mb-4 text-sm text-gray-500">
+        Esta cuenta ve en su portal los documentos y sedes de las cuentas que agregues acá. Ellas no ven nada de esta cuenta.
+      </p>
+
+      {vinculadas.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {vinculadas.map((c) => (
+            <span key={c.id} className="inline-flex items-center gap-1 py-1 pl-3 pr-1 text-sm border border-blue-200 rounded-full bg-blue-50">
+              <Link href={`/admin/usuarios/${c.id}`} className="text-blue-800 hover:underline">{nombreDe(c)}</Link>
+              <button
+                type="button"
+                onClick={() => quitar(c)}
+                disabled={guardando}
+                title="Quitar vínculo"
+                className="p-1 text-blue-700 rounded-full hover:bg-blue-100 disabled:opacity-50"
+              >
+                <X size={14} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div className="relative max-w-md">
+        <Search size={14} className="absolute text-gray-400 -translate-y-1/2 left-2 top-1/2" />
+        <input
+          type="text"
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder="Buscar cliente para vincular..."
+          disabled={guardando}
+          className="w-full py-2 pr-2 text-sm border border-gray-300 rounded-md pl-7"
+        />
+        {termino && (
+          <div className="absolute left-0 right-0 z-20 mt-1 overflow-y-auto bg-white border border-gray-200 rounded-md shadow-lg max-h-56">
+            {candidatos.length > 0 ? candidatos.map((c) => (
+              <button
+                type="button"
+                key={c.id}
+                onClick={() => guardar([...vinculadasIds, c.id])}
+                className="flex items-center justify-between w-full px-3 py-2 text-sm text-left border-b border-gray-100 last:border-0 hover:bg-blue-50"
+              >
+                <span className="flex-1 mr-2 truncate">{nombreDe(c)}</span>
+                <span className="text-xs text-gray-400 whitespace-nowrap">{c.email}</span>
+              </button>
+            )) : (
+              <div className="px-3 py-2 text-sm text-gray-400">Sin resultados</div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {vistaPor.length > 0 && (
+        <p className="mt-4 text-xs text-gray-500">
+          Esta cuenta es visible desde: {vistaPor.map((c, i) => (
+            <span key={c.id}>
+              {i > 0 && ', '}
+              <Link href={`/admin/usuarios/${c.id}`} className="text-primary hover:underline">{nombreDe(c)}</Link>
+            </span>
+          ))}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function DocumentosCliente({ params }) {
   const { id } = use(params);
   const router = useRouter();
@@ -305,6 +419,7 @@ function DocumentosCliente({ params }) {
   const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
   const [loadingData, setLoadingData] = useState(true);
   const [perfil, setPerfil] = useState(null);
+  const [clientes, setClientes] = useState([]);
   const [sedeFiltro, setSedeFiltro] = useState(searchParams.get('sede') || 'todas');
   const [tiposVisibles, setTiposVisibles] = useState(() => Object.fromEntries(TIPOS.map((t) => [t.key, true])));
   const [eliminando, setEliminando] = useState(null);
@@ -335,8 +450,9 @@ function DocumentosCliente({ params }) {
 
     (async () => {
       try {
-        const [perfilData, pres, rem, rec, fac, cert, est, ord, mant, inf] = await Promise.all([
+        const [perfilData, listaClientes, pres, rem, rec, fac, cert, est, ord, mant, inf] = await Promise.all([
           obtenerUsuarioPorId(id),
+          obtenerClientes(),
           obtenerPresupuestosPorCliente(id),
           obtenerRemitosPorCliente(id),
           obtenerRecibosPorCliente(id),
@@ -355,6 +471,7 @@ function DocumentosCliente({ params }) {
         }
 
         setPerfil(perfilData);
+        setClientes(listaClientes);
         setPresupuestos(pres);
         setRemitos(rem);
         setRecibos(rec);
@@ -452,6 +569,17 @@ function DocumentosCliente({ params }) {
             <Edit size={16} /> Editar datos del cliente
           </Link>
         </div>
+
+        {perfil.role === 'Cliente' && (
+          <CuentasVinculadas
+            perfil={perfil}
+            clientes={clientes}
+            onGuardar={async (nuevosIds) => {
+              await actualizarUsuario(id, { cuentasVinculadas: nuevosIds });
+              setPerfil((prev) => ({ ...prev, cuentasVinculadas: nuevosIds }));
+            }}
+          />
+        )}
 
         <div className="p-4 mb-6 bg-white rounded-lg shadow-md">
           <div className="flex flex-wrap items-end justify-between gap-4 mb-4">

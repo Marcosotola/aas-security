@@ -24,6 +24,20 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == clienteId;
     }
 
+    // Cuentas cliente cuyos documentos puede ver además de los suyos (ej. una
+    // administración principal que ve todo lo de una sub-cuenta). Vínculo de
+    // un solo sentido y no transitivo; solo lo edita un Admin (ver /usuarios).
+    function cuentasVinculadasDe(uid) {
+      return get(/databases/$(database)/documents/usuarios/$(uid)).data.get('cuentasVinculadas', []);
+    }
+
+    // Lectura de un documento de cliente: el dueño, o una cuenta principal
+    // que lo tenga vinculado.
+    function puedeVerCliente(clienteId) {
+      return esPropietario(clienteId)
+        || (request.auth != null && clienteId in cuentasVinculadasDe(request.auth.uid));
+    }
+
     // El Técnico que creó un documento (hoy solo se usa para Órdenes de
     // Trabajo): compara contra el email guardado en `usuarioCreador` al
     // crearlo, igual que ya se usa request.auth.token.email en esSuperAdmin().
@@ -48,16 +62,27 @@ service cloud.firestore {
 
     // Usuarios: cada uno gestiona su propio perfil; el rol solo lo cambia un Admin
     // (salvo el bootstrap único de las cuentas históricas de arriba).
+    // cuentasVinculadas da acceso a documentos de otras cuentas, así que igual
+    // que el rol: el propio usuario nunca puede ponérselo ni cambiarlo.
     match /usuarios/{uid} {
       allow create: if request.auth != null
                     && request.auth.uid == uid
+                    && !('cuentasVinculadas' in request.resource.data)
                     && (
                       request.resource.data.role == 'Cliente'
                       || (request.resource.data.role == 'Admin' && esCuentaAdminHistorica())
                     );
-      allow read: if request.auth != null && (request.auth.uid == uid || esStaff());
+      // La cuenta principal lee el perfil de sus vinculadas para mostrar su
+      // nombre y sus sedes en el portal.
+      allow read: if request.auth != null && (
+                    request.auth.uid == uid
+                    || esStaff()
+                    || uid in cuentasVinculadasDe(request.auth.uid)
+                  );
       allow update: if request.auth != null && (
-                      (request.auth.uid == uid && request.resource.data.role == resource.data.role)
+                      (request.auth.uid == uid
+                        && request.resource.data.role == resource.data.role
+                        && request.resource.data.get('cuentasVinculadas', []) == resource.data.get('cuentasVinculadas', []))
                       || esAdmin()
                     );
       allow delete: if esAdmin();
@@ -67,22 +92,22 @@ service cloud.firestore {
     // completo; un Cliente solo puede leer sus propios documentos (los que
     // tengan su UID en clienteId), nunca escribirlos.
     match /presupuestos/{id} {
-      allow read: if esStaff() || esPropietario(resource.data.clienteId);
+      allow read: if esStaff() || puedeVerCliente(resource.data.clienteId);
       allow write: if esStaff();
     }
 
     match /estados/{id} {
-      allow read: if esStaff() || esPropietario(resource.data.clienteId);
+      allow read: if esStaff() || puedeVerCliente(resource.data.clienteId);
       allow write: if esStaff();
     }
 
     match /remitos/{id} {
-      allow read: if esStaff() || esPropietario(resource.data.clienteId);
+      allow read: if esStaff() || puedeVerCliente(resource.data.clienteId);
       allow write: if esStaff();
     }
 
     match /recibos/{id} {
-      allow read: if esStaff() || esPropietario(resource.data.clienteId);
+      allow read: if esStaff() || puedeVerCliente(resource.data.clienteId);
       allow write: if esStaff();
     }
 
@@ -92,9 +117,9 @@ service cloud.firestore {
 
     // El Admin gestiona todas las OT. El Técnico solo puede leer/editar/
     // borrar las que él mismo creó (usuarioCreador == su email) -- no las de
-    // otros técnicos. El Cliente solo puede leer las suyas (esPropietario).
+    // otros técnicos. El Cliente solo puede leer las suyas (puedeVerCliente).
     match /ordenesTrabajo/{id} {
-      allow read: if esAdmin() || esPropietario(resource.data.clienteId) || esCreador(resource.data);
+      allow read: if esAdmin() || puedeVerCliente(resource.data.clienteId) || esCreador(resource.data);
       allow create: if esAdmin() || (esStaff() && esCreador(request.resource.data));
       allow update, delete: if esAdmin() || (esStaff() && esCreador(resource.data));
     }
@@ -103,7 +128,7 @@ service cloud.firestore {
     // Mantenimientos Preventivos, el Técnico solo los que él mismo creó, y el
     // Cliente solo puede leer los suyos.
     match /mantenimientosPreventivos/{id} {
-      allow read: if esAdmin() || esPropietario(resource.data.clienteId) || esCreador(resource.data);
+      allow read: if esAdmin() || puedeVerCliente(resource.data.clienteId) || esCreador(resource.data);
       allow create: if esAdmin() || (esStaff() && esCreador(request.resource.data));
       allow update, delete: if esAdmin() || (esStaff() && esCreador(resource.data));
     }
@@ -130,7 +155,7 @@ service cloud.firestore {
     // dato de dinero, igual que Movimientos, solo para Admin (ni siquiera
     // Tecnico). El Cliente solo puede leer las suyas, nunca escribirlas.
     match /facturas/{id} {
-      allow read: if esAdmin() || esPropietario(resource.data.clienteId);
+      allow read: if esAdmin() || puedeVerCliente(resource.data.clienteId);
       allow write: if esAdmin();
     }
 
@@ -138,7 +163,7 @@ service cloud.firestore {
     // mismo criterio de acceso que Facturas, solo para Admin. El Cliente solo
     // puede leer los suyos, nunca escribirlos.
     match /certificados/{id} {
-      allow read: if esAdmin() || esPropietario(resource.data.clienteId);
+      allow read: if esAdmin() || puedeVerCliente(resource.data.clienteId);
       allow write: if esAdmin();
     }
 

@@ -3,8 +3,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { MapPin, PlusCircle, Trash2, MoreVertical, Edit } from 'lucide-react';
+import { MapPin, PlusCircle, Trash2, MoreVertical, Edit, Link2 } from 'lucide-react';
 import { useCliente } from '../../lib/useClienteAuth';
+import { nombreCuenta, etiquetaSedeVinculada } from '../../lib/documentosCliente';
 import { actualizarUsuario } from '../../lib/firestore';
 import ViewToggle from '../../components/admin/ViewToggle';
 import PortalDropdown from '../../components/PortalDropdown';
@@ -42,7 +43,7 @@ function FormEdicionSede({ datos, onChange, onGuardar, onCancelar, guardando }) 
 }
 
 export default function SedesPage() {
-  const { user, perfil, setPerfil } = useCliente();
+  const { user, perfil, setPerfil, cuentasVinculadas } = useCliente();
   const [vista, setVista] = useState('cards');
 
   const [nuevaSede, setNuevaSede] = useState(SEDE_VACIA);
@@ -257,6 +258,41 @@ export default function SedesPage() {
           </button>
         </form>
       </div>
+
+      {/* Sedes de cuentas vinculadas por el Admin: solo lectura, cada una
+          lleva a sus documentos en el hub (misma etiqueta "Cuenta · Sede"
+          que usa documentosCliente.js para filtrar). */}
+      {cuentasVinculadas.map((cuenta) => {
+        const nombre = nombreCuenta(cuenta);
+        const sedesCuenta = cuenta.sedes?.length
+          ? cuenta.sedes
+          : [{ id: 'principal', nombre: 'Principal', direccion: cuenta.direccion }];
+        return (
+          <div key={cuenta.id} className="p-6 bg-white rounded-lg shadow-md">
+            <div className="flex items-center gap-2 mb-1">
+              <Link2 size={16} className="text-primary" />
+              <h3 className="text-lg font-semibold text-gray-700">{nombre}</h3>
+            </div>
+            <p className="mb-4 text-xs text-gray-500">Cuenta vinculada · solo lectura</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {sedesCuenta.map((sede) => (
+                <Link
+                  key={sede.id}
+                  href={`/cuenta/documentos?sede=${encodeURIComponent(etiquetaSedeVinculada(nombre, sede.nombre))}`}
+                  title={`Ver documentos de ${sede.nombre}`}
+                  className="flex items-start p-4 border border-gray-200 rounded-lg bg-gray-50 group"
+                >
+                  <MapPin size={16} className="mt-0.5 mr-2 text-primary shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-gray-800 truncate group-hover:text-primary group-hover:underline">{sede.nombre}</div>
+                    {sede.direccion && <div className="text-xs text-gray-500 truncate">{sede.direccion}</div>}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        );
+      })}
 
       <PortalDropdown
         open={!!sedeMenuAbierta}
