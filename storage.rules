@@ -26,6 +26,25 @@ service firebase.storage {
       );
     }
 
+    // Documento emitido a una empresa/sede: el usuario tiene habilitado ese
+    // tipo para esa sede o para todas (mismo criterio que puedeVer en
+    // firestore.rules).
+    function puedeVer(tipo, datos) {
+      let empresaId = datos.get('empresaId', null);
+      let sedeId = datos.get('sedeId', null);
+      let accesosEmpresa = request.auth != null && empresaId is string
+        ? firestore.get(/databases/(default)/documents/usuarios/$(request.auth.uid)).data.get('accesos', {}).get(empresaId, {})
+        : {};
+      return (sedeId is string && tipo in accesosEmpresa.get(sedeId, []))
+        || tipo in accesosEmpresa.get('*', []);
+    }
+
+    // Lectura del archivo de un documento: por dueño/cuenta vinculada o por
+    // accesos a empresa, mientras conviven los dos modelos.
+    function puedeVerDocumento(tipo, datos) {
+      return puedeVerCliente(datos.get('clienteId', null)) || puedeVer(tipo, datos);
+    }
+
     // Fotos de las órdenes de trabajo: solo el staff (Admin/Tecnico) puede
     // subirlas, leerlas o borrarlas.
     match /ordenes-trabajo/{otId}/{fileName} {
@@ -38,20 +57,19 @@ service firebase.storage {
     }
 
     // PDFs de facturas: solo el Admin sube/borra (igual que firestore.rules
-    // en /facturas). El Cliente dueño de la factura (o su cuenta principal)
-    // puede descargar su PDF; para eso se lee el clienteId directo del
-    // documento de Firestore correspondiente a este facturaId.
+    // en /facturas). El Cliente que puede ver la factura puede descargar su
+    // PDF; para eso se lee el documento de Firestore de este facturaId.
     match /facturas/{facturaId}/{fileName} {
-      allow read: if esAdmin() || puedeVerCliente(
-        firestore.get(/databases/(default)/documents/facturas/$(facturaId)).data.clienteId
+      allow read: if esAdmin() || puedeVerDocumento('factura',
+        firestore.get(/databases/(default)/documents/facturas/$(facturaId)).data
       );
       allow write: if esAdmin();
     }
 
     // Fotos/PDFs de certificados: mismo criterio que facturas.
     match /certificados/{certificadoId}/{fileName} {
-      allow read: if esAdmin() || puedeVerCliente(
-        firestore.get(/databases/(default)/documents/certificados/$(certificadoId)).data.clienteId
+      allow read: if esAdmin() || puedeVerDocumento('certificado',
+        firestore.get(/databases/(default)/documents/certificados/$(certificadoId)).data
       );
       allow write: if esAdmin();
     }
