@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# respaldos y planes de migración (datos personales de clientes)
+/migracion/
