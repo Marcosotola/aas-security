@@ -98,7 +98,7 @@ async function leerTodo(db) {
     leerColeccion(db, 'empresas'),
     ...Object.values(COLECCIONES_MIGRADAS).map((c) => leerColeccion(db, c))
   ]);
-  const documentos = Object.keys(COLECCIONES_MIGRADAS).flatMap((tipo, i) => porTipo[i].map((d) => ({ tipo, ...d })));
+  const documentos = Object.keys(COLECCIONES_MIGRADAS).flatMap((tipo, i) => porTipo[i].map((d) => ({ ...d, _tipo: tipo })));
   return { usuarios, empresas, documentos };
 }
 
@@ -107,10 +107,10 @@ async function leerTodo(db) {
 // - si no hay sedeId, una sede del perfil con el mismo nombre;
 // - si el sedeId ya no existe (el cliente la borró), esa sede "huérfana";
 // - si no, la "Principal" de la cuenta.
-const sedeNombreDe = (doc) => ((SEDE_ARRIBA.has(doc.tipo) ? doc.sedeNombre : doc.cliente?.sedeNombre) || '').trim();
+const sedeNombreDe = (doc) => ((SEDE_ARRIBA.has(doc._tipo) ? doc.sedeNombre : doc.cliente?.sedeNombre) || '').trim();
 
 function sedeDelDocumento(doc, usuario) {
-  const sedeId = (SEDE_ARRIBA.has(doc.tipo) ? doc.sedeId : doc.cliente?.sedeId) || null;
+  const sedeId = (SEDE_ARRIBA.has(doc._tipo) ? doc.sedeId : doc.cliente?.sedeId) || null;
   const sedeNombre = sedeNombreDe(doc);
   const sedes = usuario.sedes || [];
   if (sedeId) {
@@ -356,10 +356,10 @@ async function ejecutar(db, confirmar) {
     const { id: sedeOrigen } = sedeDelDocumento(doc, usuario);
     const sedeFinal = destinoSede.get(`${i}:${sedeOrigen}`);
     if (!sedeFinal) {
-      errores.push(`El documento ${doc.tipo} ${doc.id} apunta a la sede ${sedeOrigen}, que no está en el plan de "${activas[i].nombre}" (¿el plan está desactualizado? volvé a correr "analizar").`);
+      errores.push(`El documento ${doc._tipo} ${doc.id} apunta a la sede ${sedeOrigen}, que no está en el plan de "${activas[i].nombre}" (¿el plan está desactualizado? volvé a correr "analizar").`);
       continue;
     }
-    actualizacionesDocs.push({ coleccion: COLECCIONES_MIGRADAS[doc.tipo], id: doc.id, sedeId: sedeFinal, i });
+    actualizacionesDocs.push({ coleccion: COLECCIONES_MIGRADAS[doc._tipo], id: doc.id, sedeId: sedeFinal, i });
   }
 
   // Documentos de cuentas borradas asignados a mano a una empresa del plan:
@@ -377,10 +377,10 @@ async function ejecutar(db, confirmar) {
     }
     const sede = activas[i].sedes.find((s) => normalizarTexto(s.nombre) === normalizarTexto(sedeNombreDe(doc)));
     if (!sede) {
-      errores.push(`El documento ${doc.tipo} ${doc.id} (cuenta borrada) es de la sede "${sedeNombreDe(doc)}", que no existe en "${nombreEmpresa}".`);
+      errores.push(`El documento ${doc._tipo} ${doc.id} (cuenta borrada) es de la sede "${sedeNombreDe(doc)}", que no existe en "${nombreEmpresa}".`);
       continue;
     }
-    actualizacionesDocs.push({ coleccion: COLECCIONES_MIGRADAS[doc.tipo], id: doc.id, sedeId: destinoSede.get(`${i}:${sede.id}`), i });
+    actualizacionesDocs.push({ coleccion: COLECCIONES_MIGRADAS[doc._tipo], id: doc.id, sedeId: destinoSede.get(`${i}:${sede.id}`), i });
   }
 
   // Accesos: cada cuenta ve sus propias sedes (y las de sus cuentas
@@ -403,6 +403,10 @@ async function ejecutar(db, confirmar) {
       lista.push(...sedesPropiasDe(vinculada));
     }
     accesosPorCuenta.set(uid, lista);
+  }
+
+  for (const a of actualizacionesDocs) {
+    if (!a.coleccion || !a.sedeId) errores.push(`Registro ${a.id}: colección o sede sin resolver.`);
   }
 
   if (errores.length) {
