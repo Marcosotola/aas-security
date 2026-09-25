@@ -1,29 +1,33 @@
 // app/admin/usuarios/[id]/page.js
 'use client';
 
-import { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, useEffect, use } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Edit, Mail, Phone, Building2, IdCard } from 'lucide-react';
-import { obtenerUsuarioPorId, obtenerEmpresas, actualizarUsuario } from '../../../lib/firestore';
+import { obtenerUsuarioPorId, obtenerEmpresas, actualizarUsuario, obtenerPerfiles, asignarPerfil } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import AccesosUsuario from '../../../components/admin/AccesosUsuario';
+import PerfilPersonal from '../../../components/admin/PerfilPersonal';
 
-// Ficha de un usuario: sus datos y, si es Cliente, qué documentos ve en su
-// portal (accesos por empresa/sede/tipo). Los documentos en sí se ven desde
-// la ficha de cada empresa.
-export default function FichaUsuario({ params }) {
+// Ficha de un usuario: sus datos y, según el rol, qué documentos ve en su
+// portal (Cliente: accesos por empresa/sede/tipo) o qué puede hacer en el
+// panel (Personal: perfil de permisos). Los documentos en sí se ven desde la
+// ficha de cada empresa.
+function FichaUsuario({ params }) {
   const { id } = use(params);
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const searchParams = useSearchParams();
+  const { user, loading: loadingAuth } = useStaffAuth('admin');
   const [perfil, setPerfil] = useState(null);
   const [empresas, setEmpresas] = useState([]);
+  const [perfiles, setPerfiles] = useState([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     if (!user || !id) return;
-    Promise.all([obtenerUsuarioPorId(id), obtenerEmpresas()])
-      .then(([perfilData, empresasData]) => {
+    Promise.all([obtenerUsuarioPorId(id), obtenerEmpresas(), obtenerPerfiles()])
+      .then(([perfilData, empresasData, perfilesData]) => {
         if (!perfilData) {
           alert('No se encontró el usuario.');
           router.push('/admin/usuarios');
@@ -31,6 +35,7 @@ export default function FichaUsuario({ params }) {
         }
         setPerfil(perfilData);
         setEmpresas(empresasData);
+        setPerfiles(perfilesData);
       })
       .catch((error) => console.error('Error al cargar el usuario:', error))
       .finally(() => setCargando(false));
@@ -93,6 +98,19 @@ export default function FichaUsuario({ params }) {
         </div>
       </div>
 
+      {/* Personal (o Técnico anterior, o un cliente al que se lo está pasando
+          a Personal desde el listado con ?perfil=1): su perfil de permisos. */}
+      {(['Personal', 'Tecnico'].includes(perfil.role) || searchParams.get('perfil') === '1') && perfil.role !== 'Admin' && (
+        <PerfilPersonal
+          usuario={perfil}
+          perfiles={perfiles}
+          onAsignar={async (perfilElegido) => {
+            await asignarPerfil(id, perfilElegido);
+            setPerfil((prev) => ({ ...prev, role: 'Personal', perfilId: perfilElegido.id, permisos: perfilElegido.permisos }));
+          }}
+        />
+      )}
+
       {(perfil.role || 'Cliente') === 'Cliente' ? (
         <AccesosUsuario
           accesosIniciales={perfil.accesos || {}}
@@ -102,11 +120,19 @@ export default function FichaUsuario({ params }) {
             setPerfil((prev) => ({ ...prev, accesos }));
           }}
         />
-      ) : (
+      ) : perfil.role === 'Admin' && (
         <p className="p-6 text-sm text-gray-500 bg-white rounded-lg shadow-md">
-          Los usuarios {perfil.role} acceden al panel de administración; los accesos por empresa son solo para clientes.
+          Los Admin tienen acceso total al panel; los accesos por empresa son solo para clientes.
         </p>
       )}
     </div>
+  );
+}
+
+export default function FichaUsuarioPage({ params }) {
+  return (
+    <Suspense fallback={null}>
+      <FichaUsuario params={params} />
+    </Suspense>
   );
 }

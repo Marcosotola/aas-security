@@ -31,7 +31,7 @@ const formatMoney = (amount) => {
 
 export default function NuevoEstado() {
     const router = useRouter();
-    const { user, loading } = useStaffAuth(['Admin']);
+    const { user, loading } = useStaffAuth({ modulo: 'estado', accion: 'crear' });
     const [guardando, setGuardando] = useState(false);
     const [documentoGuardado, setDocumentoGuardado] = useState(null);
     const [empresas, setEmpresas] = useState([]);

@@ -18,7 +18,7 @@ export default function VerDocumento({ params }) {
   const id = resolvedParams.id;
 
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'informe', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [documento, setDocumento] = useState(null);
   const loading = loadingAuth || loadingData;
@@ -86,12 +86,14 @@ export default function VerDocumento({ params }) {
             >
               <ArrowLeft size={18} className="mr-2" /> Volver
             </Link>
-            <Link
-              href={`/admin/informes/editar/${id}`}
-              className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
-            >
-              <Edit size={18} className="mr-2" /> Editar
-            </Link>
+            {puede('informe', 'gestionar', documento) && (
+              <Link
+                href={`/admin/informes/editar/${id}`}
+                className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
+              >
+                <Edit size={18} className="mr-2" /> Editar
+              </Link>
+            )}
             <PDFDownloadLink
               document={<DocumentoPDF documento={documento} />}
               fileName={`${documento.titulo?.replace(/\s+/g, '_') || 'Informe'}.pdf`}

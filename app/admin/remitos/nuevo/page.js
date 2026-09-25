@@ -15,7 +15,7 @@ import { fechaHoyLocal } from '../../../lib/fecha';
 
 export default function NuevoRemito() {
     const router = useRouter();
-    const { user, loading } = useStaffAuth(['Admin']);
+    const { user, loading } = useStaffAuth({ modulo: 'remito', accion: 'crear' });
     const [guardando, setGuardando] = useState(false);
     const [documentoGuardado, setDocumentoGuardado] = useState(null);
     const [empresas, setEmpresas] = useState([]);

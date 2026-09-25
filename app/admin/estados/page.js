@@ -6,8 +6,9 @@ import Link from 'next/link';
 import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye } from 'lucide-react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { eliminarEstado } from '../../lib/firestore';
+import { eliminarEstado, obtenerEstados } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
+import { soloPropios } from '../../lib/permisos';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import EstadoPDF from '../../components/pdf/EstadoPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
@@ -16,7 +17,7 @@ import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/ac
 import { formatearFecha } from '../../lib/fecha';
 
 export default function HistorialEstados() {
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, usuario, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'estado', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [estados, setEstados] = useState([]);
   const [filtro, setFiltro] = useState('');
@@ -30,14 +31,7 @@ export default function HistorialEstados() {
 
   const cargarEstados = async () => {
     try {
-      const estadosRef = collection(db, 'estados');
-      const q = query(estadosRef, orderBy('fechaCreacion', 'desc'));
-      const querySnapshot = await getDocs(q);
-
-      const estadosData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const estadosData = await obtenerEstados(soloPropios(usuario, 'estado') ? user.email : null);
 
       console.log("estados cargados:", estadosData.length);
       setEstados(estadosData);
@@ -110,12 +104,14 @@ export default function HistorialEstados() {
             <span className="text-gray-700">Historial de Estados</span>
           </div>
 
-          <Link
-            href="/admin/estados/nuevo"
-            className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
-          >
-            <FilePlus size={18} className="mr-2" /> Nuevo Estado
-          </Link>
+          {puede('estado', 'crear') && (
+            <Link
+              href="/admin/estados/nuevo"
+              className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
+            >
+              <FilePlus size={18} className="mr-2" /> Nuevo Estado
+            </Link>
+          )}
         </div>
 
         <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
@@ -179,20 +175,24 @@ export default function HistorialEstados() {
                           <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
                         }
                       </PDFDownloadLink>
-                      <Link
-                        href={`/admin/estados/editar/${estado.id}`}
-                        title="Editar"
-                        className={accionIconoClase('secondary')}
-                      >
-                        <Edit size={ACCION_ICONO_TAMANO} />
-                      </Link>
-                      <button
-                        onClick={() => handleDeleteEstado(estado.id)}
-                        title="Eliminar"
-                        className={accionIconoClase('red')}
-                      >
-                        <Trash size={ACCION_ICONO_TAMANO} />
-                      </button>
+                      {puede('estado', 'gestionar', estado) && (
+                        <Link
+                          href={`/admin/estados/editar/${estado.id}`}
+                          title="Editar"
+                          className={accionIconoClase('secondary')}
+                        >
+                          <Edit size={ACCION_ICONO_TAMANO} />
+                        </Link>
+                      )}
+                      {puede('estado', 'gestionar', estado) && (
+                        <button
+                          onClick={() => handleDeleteEstado(estado.id)}
+                          title="Eliminar"
+                          className={accionIconoClase('red')}
+                        >
+                          <Trash size={ACCION_ICONO_TAMANO} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -277,20 +277,24 @@ export default function HistorialEstados() {
                               <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
                             }
                           </PDFDownloadLink>
-                          <Link
-                            href={`/admin/estados/editar/${estado.id}`}
-                            title="Editar"
-                            className={accionIconoClase('secondary')}
-                          >
-                            <Edit size={ACCION_ICONO_TAMANO} />
-                          </Link>
-                          <button
-                            onClick={() => handleDeleteEstado(estado.id)}
-                            title="Eliminar"
-                            className={accionIconoClase('red')}
-                          >
-                            <Trash size={ACCION_ICONO_TAMANO} />
-                          </button>
+                          {puede('estado', 'gestionar', estado) && (
+                            <Link
+                              href={`/admin/estados/editar/${estado.id}`}
+                              title="Editar"
+                              className={accionIconoClase('secondary')}
+                            >
+                              <Edit size={ACCION_ICONO_TAMANO} />
+                            </Link>
+                          )}
+                          {puede('estado', 'gestionar', estado) && (
+                            <button
+                              onClick={() => handleDeleteEstado(estado.id)}
+                              title="Eliminar"
+                              className={accionIconoClase('red')}
+                            >
+                              <Trash size={ACCION_ICONO_TAMANO} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

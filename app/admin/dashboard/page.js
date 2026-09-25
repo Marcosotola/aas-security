@@ -41,18 +41,28 @@ import {
 import { estaBloqueada } from '../../lib/suscripcion';
 import { normalizarDocumentosAdmin } from '../../lib/documentosAdmin';
 import { filtrarDocumentos, TIPOS_DOC } from '../../lib/documentosCliente';
+import { MODULOS } from '../../lib/permisos';
 import ModuloCard from '../../components/admin/ModuloCard';
 import ViewToggle from '../../components/admin/ViewToggle';
 import ListaDocumentosAdmin from '../../components/admin/ListaDocumentosAdmin';
 
-// Único módulo visible para el Técnico por ahora: el resto de las
-// colecciones (movimientos, config, etc.) están bloqueadas para su rol por
-// firestore.rules, así que ni siquiera se consultan cuando el usuario es
-// Técnico (antes esto no importaba porque el dashboard era Admin-only).
-const IDS_VISIBLES_PARA_TECNICO = ['ordenes-trabajo', 'mantenimiento-preventivo'];
+// Módulo de permisos (app/lib/permisos.js) de cada tarjeta del panel;
+// 'admin' = solo Admin, 'documentos' = el hub que agrupa varios tipos.
+const MODULO_DE_TARJETA = {
+  'ordenes-trabajo': 'orden',
+  'mantenimiento-preventivo': 'mantenimiento',
+  documentos: 'documentos',
+  planillas: 'plantillas',
+  finanzas: 'finanzas',
+  'lista-precios': 'listaPrecios',
+  empresas: 'empresas',
+  usuarios: 'admin',
+  consultas: 'consultas',
+  suscripcion: 'admin'
+};
 
 export default function Dashboard() {
-  const { user, usuario, loading: loadingAuth } = useStaffAuth(['Admin', 'Tecnico']);
+  const { user, usuario, loading: loadingAuth, puede } = useStaffAuth('interno');
   const [loadingData, setLoadingData] = useState(true);
   const [totales, setTotales] = useState({
     consultas: 0,
@@ -73,7 +83,8 @@ export default function Dashboard() {
   // datos que no se muestran en ningún lado.
   const cargarTotales = async () => {
     try {
-      if (usuario.role === 'Tecnico') return;
+      // Conteos de consultas y estado de la suscripción: solo para el Admin.
+      if (usuario.role !== 'Admin') return;
 
       const contar = async (ref) => (await getCountFromServer(ref)).data().count;
 
@@ -268,11 +279,11 @@ export default function Dashboard() {
       activo: true,
       nuevoDropdown: true,
       nuevoAccesos: [
-        { label: 'Nuevo Presupuesto', icono: FileText, href: '/admin/presupuestos/nuevo' },
-        { label: 'Nuevo Estado de Cuenta', icono: DollarSign, href: '/admin/estados/nuevo' },
-        { label: 'Nuevo Remito', icono: FileCheck, href: '/admin/remitos/nuevo' },
-        { label: 'Nuevo Recibo', icono: Receipt, href: '/admin/recibos/nuevo' },
-        { label: 'Nuevo Informe', icono: File, href: '/admin/informes/nuevo' }
+        { label: 'Nuevo Presupuesto', icono: FileText, href: '/admin/presupuestos/nuevo', modulo: 'presupuesto' },
+        { label: 'Nuevo Estado de Cuenta', icono: DollarSign, href: '/admin/estados/nuevo', modulo: 'estado' },
+        { label: 'Nuevo Remito', icono: FileCheck, href: '/admin/remitos/nuevo', modulo: 'remito' },
+        { label: 'Nuevo Recibo', icono: Receipt, href: '/admin/recibos/nuevo', modulo: 'recibo' },
+        { label: 'Nuevo Informe', icono: File, href: '/admin/informes/nuevo', modulo: 'informe' }
       ]
     },
     {
@@ -381,12 +392,27 @@ export default function Dashboard() {
     }
   ];
 
-  // El Técnico solo ve las tarjetas que le corresponden (por ahora, Órdenes
-  // de Trabajo y Mantenimiento Preventivo): el resto de los módulos son de
-  // gestión administrativa.
-  const modulosVisibles = usuario.role === 'Admin'
-    ? modulos
-    : modulos.filter((m) => IDS_VISIBLES_PARA_TECNICO.includes(m.id));
+  // Cada tarjeta se muestra solo si la persona puede ver su módulo, y su
+  // "Nuevo" solo si puede crear (documentos) o gestionar (el resto).
+  // "Documentos" agrupa varios tipos: aparece si ve al menos uno.
+  const TIPOS_HUB = ['presupuesto', 'estado', 'remito', 'recibo', 'informe', 'factura', 'certificado'];
+  const puedeCrearEn = (modulo) => puede(modulo, MODULOS[modulo].documento ? 'crear' : 'gestionar');
+  const modulosVisibles = modulos
+    .filter((m) => {
+      const modulo = MODULO_DE_TARJETA[m.id];
+      if (modulo === 'admin') return usuario.role === 'Admin';
+      if (modulo === 'documentos') return TIPOS_HUB.some((t) => puede(t, 'ver'));
+      return puede(modulo, 'ver');
+    })
+    .map((m) => {
+      const modulo = MODULO_DE_TARJETA[m.id];
+      if (m.nuevoAccesos) {
+        const nuevoAccesos = m.nuevoAccesos.filter((a) => puede(a.modulo, 'crear'));
+        return nuevoAccesos.length > 0 ? { ...m, nuevoAccesos } : { ...m, nuevoDropdown: false, sinNuevo: true };
+      }
+      if (m.rutas.nuevo && modulo !== 'admin' && !puedeCrearEn(modulo)) return { ...m, sinNuevo: true };
+      return m;
+    });
 
   return (
     <div>

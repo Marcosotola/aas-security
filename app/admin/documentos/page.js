@@ -17,7 +17,7 @@ import ModuloCard from '../../components/admin/ModuloCard';
 // clientes) vive en el panel principal (app/admin/dashboard/page.js), no acá
 // -- ya buscaba en todos los tipos, no solo en los agrupados en este hub.
 export default function DocumentosHub() {
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, loading: loadingAuth, puede } = useStaffAuth('interno');
   const [loadingData, setLoadingData] = useState(true);
   const [totales, setTotales] = useState({
     presupuestos: 0,
@@ -35,7 +35,9 @@ export default function DocumentosHub() {
 
     (async () => {
       try {
-        const contar = async (ref) => (await getCountFromServer(ref)).data().count;
+        // Si la persona no puede leer toda la colección (nivel "propios" o
+        // sin acceso), Firestore rechaza el conteo: se muestra sin total.
+        const contar = async (ref) => getCountFromServer(ref).then((r) => r.data().count).catch(() => null);
         const [presupuestos, estados, remitos, recibos, documentos, facturas, certificados] = await Promise.all([
           contar(collection(db, 'presupuestos')),
           contar(collection(db, 'estados')),
@@ -173,6 +175,15 @@ export default function DocumentosHub() {
     }
   ];
 
+  // Solo los tipos que puede ver, y "Nuevo" solo si puede crear.
+  const MODULO_DE_TARJETA = {
+    presupuestos: 'presupuesto', estados: 'estado', remitos: 'remito', recibos: 'recibo',
+    informes: 'informe', facturas: 'factura', certificados: 'certificado'
+  };
+  const modulosVisibles = modulos
+    .filter((m) => puede(MODULO_DE_TARJETA[m.id], 'ver'))
+    .map((m) => (puede(MODULO_DE_TARJETA[m.id], 'crear') ? m : { ...m, sinNuevo: true }));
+
   return (
     <div>
       <div className="container px-4 py-8 mx-auto">
@@ -189,7 +200,7 @@ export default function DocumentosHub() {
         </h2>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 md:gap-4">
-          {modulos.map((modulo) => (
+          {modulosVisibles.map((modulo) => (
             <ModuloCard key={modulo.id} modulo={modulo} />
           ))}
         </div>

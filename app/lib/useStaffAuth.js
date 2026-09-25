@@ -1,12 +1,13 @@
 // app/lib/useStaffAuth.js
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
 import { obtenerUsuarioPorId, crearUsuarioStaffHistorico } from './firestore';
 import { esSuperAdmin } from './superAdmin';
+import { puede, esInterno, esAdmin as esAdminPerfil } from './permisos';
 
 // Cuentas de Firebase Auth creadas manualmente antes de que existiera la
 // colección de roles. Se auto-provisionan como Admin la primera vez que
@@ -28,10 +29,22 @@ export async function resolverPerfilStaff(uid, email) {
   return perfil;
 }
 
-// Guard de acceso al panel: exige que el usuario esté logueado y que su rol
-// (leído desde /usuarios/{uid}) esté entre los permitidos. Redirige a /admin
-// si no hay sesión, o a la ruta que corresponda a su rol si no tiene permiso.
-export function useStaffAuth(rolesPermitidos = ['Admin']) {
+// Si el perfil cumple lo que pide la página:
+// - 'admin': solo Admin.
+// - 'interno': cualquier persona del panel (Admin, Personal, Técnico).
+// - { modulo, accion }: según sus permisos (ver app/lib/permisos.js).
+function cumple(perfil, requisito) {
+  if (requisito === 'admin') return esAdminPerfil(perfil);
+  if (requisito === 'interno') return esInterno(perfil);
+  return puede(perfil, requisito.modulo, requisito.accion);
+}
+
+// Guard de acceso al panel: exige que el usuario esté logueado y que cumpla
+// el requisito de la página. Redirige a /admin si no hay sesión, al portal
+// si es un cliente, o al panel si es personal sin permiso para esta página.
+// Devuelve también `puede(modulo, accion, doc)` para mostrar u ocultar
+// acciones (Nuevo, Editar, Eliminar) según sus permisos.
+export function useStaffAuth(requisito = 'admin') {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [usuario, setUsuario] = useState(null);
@@ -47,11 +60,11 @@ export function useStaffAuth(rolesPermitidos = ['Admin']) {
       try {
         const perfil = await resolverPerfilStaff(currentUser.uid, currentUser.email);
 
-        if (!perfil || !rolesPermitidos.includes(perfil.role)) {
+        if (!perfil || !cumple(perfil, requisito)) {
           if (perfil?.role === 'Cliente') {
             router.push('/cuenta');
-          } else if (perfil?.role === 'Tecnico') {
-            router.push('/admin/proximamente');
+          } else if (esInterno(perfil)) {
+            router.push('/admin/dashboard');
           } else {
             router.push('/admin');
           }
@@ -71,5 +84,10 @@ export function useStaffAuth(rolesPermitidos = ['Admin']) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
-  return { user, usuario, loading };
+  const puedeUsuario = useCallback(
+    (modulo, accion, doc = null) => puede(usuario, modulo, accion, doc),
+    [usuario]
+  );
+
+  return { user, usuario, loading, puede: puedeUsuario };
 }

@@ -27,7 +27,7 @@ export default function EditarEstado({ params }) {
   const id = resolvedParams.id;
   
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, loading: loadingAuth } = useStaffAuth({ modulo: 'estado', accion: 'crear' });
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [estadoOriginal, setEstadoOriginal] = useState(null);

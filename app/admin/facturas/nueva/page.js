@@ -14,7 +14,7 @@ import { fechaHoyLocal } from '../../../lib/fecha';
 
 export default function NuevaFactura() {
   const router = useRouter();
-  const { user, loading } = useStaffAuth(['Admin']);
+  const { user, loading } = useStaffAuth({ modulo: 'factura', accion: 'crear' });
   const [guardando, setGuardando] = useState(false);
   const [empresas, setEmpresas] = useState([]);
   const [archivosNuevos, setArchivosNuevos] = useState([]);

@@ -53,7 +53,7 @@ export default function EditarPresupuesto({ params }) {
   const id = resolvedParams.id;
   
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, loading: loadingAuth } = useStaffAuth({ modulo: 'presupuesto', accion: 'crear' });
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [presupuestoOriginal, setPresupuestoOriginal] = useState(null);

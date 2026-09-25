@@ -16,7 +16,7 @@ const SEDE_VACIA = { nombre: '', direccion: '' };
 // eso el uid viene por query param en vez de tomarse de la sesión activa.
 // También se reutiliza para editar el perfil de un usuario ya existente.
 function CompletarDatosAdmin() {
-  const { loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { loading: loadingAuth } = useStaffAuth('admin');
   const router = useRouter();
   const searchParams = useSearchParams();
   const uid = searchParams.get('uid');

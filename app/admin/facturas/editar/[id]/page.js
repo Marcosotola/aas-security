@@ -21,7 +21,7 @@ export default function EditarFactura({ params }) {
   const { id } = use(params);
 
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, loading: loadingAuth } = useStaffAuth({ modulo: 'factura', accion: 'crear' });
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [empresas, setEmpresas] = useState([]);

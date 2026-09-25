@@ -6,7 +6,7 @@ import { Wrench } from 'lucide-react';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 
 export default function ProximamenteTecnico() {
-  const { loading } = useStaffAuth(['Tecnico', 'Admin']);
+  const { loading } = useStaffAuth('interno');
 
   if (loading) {
     return (

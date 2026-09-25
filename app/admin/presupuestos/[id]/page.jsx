@@ -18,7 +18,7 @@ export default function VerPresupuesto({ params }) {
   const id = resolvedParams.id;
 
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'presupuesto', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [presupuesto, setPresupuesto] = useState(null);
   const loading = loadingAuth || loadingData;
@@ -125,12 +125,14 @@ export default function VerPresupuesto({ params }) {
               >
                 <ArrowLeft size={18} className="mr-2" /> Volver
               </Link>
-              <Link
-                href={`/admin/presupuestos/editar/${id}`}
-                className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
-              >
-                <Edit size={18} className="mr-2" /> Editar
-              </Link>
+              {puede('presupuesto', 'gestionar', presupuesto) && (
+                <Link
+                  href={`/admin/presupuestos/editar/${id}`}
+                  className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
+                >
+                  <Edit size={18} className="mr-2" /> Editar
+                </Link>
+              )}
               <PDFDownloadLink
                 document={<PresupuestoPDF presupuesto={presupuesto} />}
                 fileName={`${presupuesto.numero}.pdf`}
@@ -215,30 +217,36 @@ export default function VerPresupuesto({ params }) {
                     </span>
                     {/* Botones para cambiar estado */}
                     <div className="flex ml-2 space-x-1">
-                      <button
-                        onClick={() => handleCambiarEstado('Aprobado')}
-                        disabled={presupuesto.estado === 'Aprobado' || cambiandoEstado}
-                        className={`p-1 rounded-md ${presupuesto.estado === 'Aprobado' ? 'bg-green-100 text-green-800 cursor-default' : 'bg-white text-green-600 hover:bg-green-50 border border-green-200'}`}
-                        title="Aprobar presupuesto"
-                      >
-                        <Check size={12} />
-                      </button>
-                      <button
-                        onClick={() => handleCambiarEstado('Rechazado')}
-                        disabled={presupuesto.estado === 'Rechazado' || cambiandoEstado}
-                        className={`p-1 rounded-md ${presupuesto.estado === 'Rechazado' ? 'bg-red-100 text-red-800 cursor-default' : 'bg-white text-red-600 hover:bg-red-50 border border-red-200'}`}
-                        title="Rechazar presupuesto"
-                      >
-                        <X size={12} />
-                      </button>
-                      <button
-                        onClick={() => handleCambiarEstado('Pendiente')}
-                        disabled={presupuesto.estado === 'Pendiente' || cambiandoEstado}
-                        className={`p-1 rounded-md text-xs font-bold ${presupuesto.estado === 'Pendiente' ? 'bg-yellow-100 text-yellow-800 cursor-default' : 'bg-white text-yellow-600 hover:bg-yellow-50 border border-yellow-200'}`}
-                        title="Marcar como pendiente"
-                      >
-                        P
-                      </button>
+                      {puede('presupuesto', 'gestionar', presupuesto) && (
+                        <button
+                          onClick={() => handleCambiarEstado('Aprobado')}
+                          disabled={presupuesto.estado === 'Aprobado' || cambiandoEstado}
+                          className={`p-1 rounded-md ${presupuesto.estado === 'Aprobado' ? 'bg-green-100 text-green-800 cursor-default' : 'bg-white text-green-600 hover:bg-green-50 border border-green-200'}`}
+                          title="Aprobar presupuesto"
+                        >
+                          <Check size={12} />
+                        </button>
+                      )}
+                      {puede('presupuesto', 'gestionar', presupuesto) && (
+                        <button
+                          onClick={() => handleCambiarEstado('Rechazado')}
+                          disabled={presupuesto.estado === 'Rechazado' || cambiandoEstado}
+                          className={`p-1 rounded-md ${presupuesto.estado === 'Rechazado' ? 'bg-red-100 text-red-800 cursor-default' : 'bg-white text-red-600 hover:bg-red-50 border border-red-200'}`}
+                          title="Rechazar presupuesto"
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
+                      {puede('presupuesto', 'gestionar', presupuesto) && (
+                        <button
+                          onClick={() => handleCambiarEstado('Pendiente')}
+                          disabled={presupuesto.estado === 'Pendiente' || cambiandoEstado}
+                          className={`p-1 rounded-md text-xs font-bold ${presupuesto.estado === 'Pendiente' ? 'bg-yellow-100 text-yellow-800 cursor-default' : 'bg-white text-yellow-600 hover:bg-yellow-50 border border-yellow-200'}`}
+                          title="Marcar como pendiente"
+                        >
+                          P
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

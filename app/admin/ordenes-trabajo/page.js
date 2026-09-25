@@ -7,6 +7,7 @@ import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { eliminarOrdenTrabajo } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
+import { soloPropios } from '../../lib/permisos';
 import DescargarOrdenTrabajoPDF from '../../components/pdf/DescargarOrdenTrabajoPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
 import SedeLink from '../../components/admin/SedeLink';
@@ -14,13 +15,14 @@ import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/ac
 import { formatearFecha } from '../../lib/fecha';
 
 export default function HistorialOrdenesTrabajo() {
-  const { user, usuario, loading: loadingAuth } = useStaffAuth(['Admin', 'Tecnico']);
+  const { user, usuario, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'orden', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [ordenes, setOrdenes] = useState([]);
   const [filtro, setFiltro] = useState('');
   const [vista, setVista] = useState('tabla');
   const loading = loadingAuth || loadingData;
-  const esTecnico = usuario?.role === 'Tecnico';
+  // Con nivel "propios" solo ve lo que creó (mismo criterio que firestore.rules).
+  const soloLoPropio = soloPropios(usuario, 'orden');
 
   useEffect(() => {
     if (!user || !usuario) return;
@@ -34,7 +36,7 @@ export default function HistorialOrdenesTrabajo() {
   const cargarOrdenes = async () => {
     try {
       const ordenesRef = collection(db, 'ordenesTrabajo');
-      if (esTecnico) {
+      if (soloLoPropio) {
         const q = query(ordenesRef, where('usuarioCreador', '==', user.email));
         const querySnapshot = await getDocs(q);
         const datos = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -96,19 +98,21 @@ export default function HistorialOrdenesTrabajo() {
             <span className="text-gray-700">Órdenes de Trabajo</span>
           </div>
 
-          <Link
-            href="/admin/ordenes-trabajo/nueva"
-            className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
-          >
-            <FilePlus size={18} className="mr-2" /> Nueva Orden de Trabajo
-          </Link>
+          {puede('orden', 'crear') && (
+            <Link
+              href="/admin/ordenes-trabajo/nueva"
+              className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
+            >
+              <FilePlus size={18} className="mr-2" /> Nueva Orden de Trabajo
+            </Link>
+          )}
         </div>
 
         <h2 className="mb-1 text-2xl font-bold font-montserrat text-primary">
           Órdenes de Trabajo
         </h2>
         <p className="mb-6 text-sm text-gray-500">
-          {esTecnico ? 'Mostrando solo las órdenes de trabajo que vos creaste.' : ' '}
+          {soloLoPropio ? 'Mostrando solo las órdenes de trabajo que vos creaste.' : ' '}
         </p>
 
         <div className="p-6 mb-8 bg-white rounded-lg shadow-md">
@@ -146,7 +150,7 @@ export default function HistorialOrdenesTrabajo() {
                     </div>
                     <div className="mt-1 text-sm text-gray-900">{orden.cliente?.nombre || 'N/A'}</div>
                     <div className="mt-1 text-sm text-gray-500">{orden.cliente?.empresa || 'N/A'}</div>
-                    {!esTecnico && orden.usuarioCreador && (
+                    {!soloLoPropio && orden.usuarioCreador && (
                       <div className="text-xs text-gray-400">Técnico: {orden.usuarioCreador}</div>
                     )}
                     <div className="mt-2 text-sm text-gray-500">{orden.fotos?.length || 0} foto(s)</div>
@@ -162,20 +166,24 @@ export default function HistorialOrdenesTrabajo() {
                       <DescargarOrdenTrabajoPDF orden={orden} className={accionIconoClase('primary')}>
                         <Download size={ACCION_ICONO_TAMANO} />
                       </DescargarOrdenTrabajoPDF>
-                      <Link
-                        href={`/admin/ordenes-trabajo/editar/${orden.id}`}
-                        title="Editar"
-                        className={accionIconoClase('secondary')}
-                      >
-                        <Edit size={ACCION_ICONO_TAMANO} />
-                      </Link>
-                      <button
-                        onClick={() => handleEliminar(orden.id)}
-                        title="Eliminar"
-                        className={accionIconoClase('red')}
-                      >
-                        <Trash size={ACCION_ICONO_TAMANO} />
-                      </button>
+                      {puede('orden', 'gestionar', orden) && (
+                        <Link
+                          href={`/admin/ordenes-trabajo/editar/${orden.id}`}
+                          title="Editar"
+                          className={accionIconoClase('secondary')}
+                        >
+                          <Edit size={ACCION_ICONO_TAMANO} />
+                        </Link>
+                      )}
+                      {puede('orden', 'gestionar', orden) && (
+                        <button
+                          onClick={() => handleEliminar(orden.id)}
+                          title="Eliminar"
+                          className={accionIconoClase('red')}
+                        >
+                          <Trash size={ACCION_ICONO_TAMANO} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -194,7 +202,7 @@ export default function HistorialOrdenesTrabajo() {
                     <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Número</th>
                     <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Fecha</th>
                     <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Cliente</th>
-                    {!esTecnico && (
+                    {!soloLoPropio && (
                       <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Técnico</th>
                     )}
                     <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Fotos</th>
@@ -224,7 +232,7 @@ export default function HistorialOrdenesTrabajo() {
                           <div className="text-sm text-gray-900">{orden.cliente?.nombre || 'N/A'}</div>
                           <div className="text-xs text-gray-400">{orden.cliente?.empresa || ''}</div>
                         </td>
-                        {!esTecnico && (
+                        {!soloLoPropio && (
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-500">{orden.usuarioCreador || '-'}</div>
                           </td>
@@ -244,27 +252,31 @@ export default function HistorialOrdenesTrabajo() {
                             <DescargarOrdenTrabajoPDF orden={orden} className={accionIconoClase('primary')}>
                               <Download size={ACCION_ICONO_TAMANO} />
                             </DescargarOrdenTrabajoPDF>
-                            <Link
-                              href={`/admin/ordenes-trabajo/editar/${orden.id}`}
-                              title="Editar"
-                              className={accionIconoClase('secondary')}
-                            >
-                              <Edit size={ACCION_ICONO_TAMANO} />
-                            </Link>
-                            <button
-                              onClick={() => handleEliminar(orden.id)}
-                              title="Eliminar"
-                              className={accionIconoClase('red')}
-                            >
-                              <Trash size={ACCION_ICONO_TAMANO} />
-                            </button>
+                            {puede('orden', 'gestionar', orden) && (
+                              <Link
+                                href={`/admin/ordenes-trabajo/editar/${orden.id}`}
+                                title="Editar"
+                                className={accionIconoClase('secondary')}
+                              >
+                                <Edit size={ACCION_ICONO_TAMANO} />
+                              </Link>
+                            )}
+                            {puede('orden', 'gestionar', orden) && (
+                              <button
+                                onClick={() => handleEliminar(orden.id)}
+                                title="Eliminar"
+                                className={accionIconoClase('red')}
+                              >
+                                <Trash size={ACCION_ICONO_TAMANO} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={esTecnico ? 6 : 7} className="px-6 py-4 text-center text-gray-500">
+                      <td colSpan={soloLoPropio ? 6 : 7} className="px-6 py-4 text-center text-gray-500">
                         No hay órdenes de trabajo que coincidan con su búsqueda
                       </td>
                     </tr>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FilePlus, Award, Home, Search, Edit, Trash, Eye, Download } from 'lucide-react';
 import { obtenerCertificados, eliminarCertificado } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
+import { soloPropios } from '../../lib/permisos';
 import ViewToggle from '../../components/admin/ViewToggle';
 import PortalDropdown from '../../components/PortalDropdown';
 import SedeLink from '../../components/admin/SedeLink';
@@ -12,7 +13,7 @@ import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/ac
 import { formatearFecha } from '../../lib/fecha';
 
 export default function HistorialCertificados() {
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, usuario, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'certificado', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [certificados, setCertificados] = useState([]);
   const [filtro, setFiltro] = useState('');
@@ -30,7 +31,7 @@ export default function HistorialCertificados() {
 
   const cargarCertificados = async () => {
     try {
-      setCertificados(await obtenerCertificados());
+      setCertificados(await obtenerCertificados(soloPropios(usuario, 'certificado') ? user.email : null));
     } catch (error) {
       console.error('Error al cargar certificados:', error);
       setCertificados([]);
@@ -97,12 +98,14 @@ export default function HistorialCertificados() {
             <span className="text-gray-700">Certificados</span>
           </div>
 
-          <Link
-            href="/admin/certificados/nuevo"
-            className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
-          >
-            <FilePlus size={18} className="mr-2" /> Nuevo Certificado
-          </Link>
+          {puede('certificado', 'crear') && (
+            <Link
+              href="/admin/certificados/nuevo"
+              className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
+            >
+              <FilePlus size={18} className="mr-2" /> Nuevo Certificado
+            </Link>
+          )}
         </div>
 
         <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
@@ -160,17 +163,21 @@ export default function HistorialCertificados() {
                         <Eye size={ACCION_ICONO_TAMANO} />
                       </Link>
                       <DescargarCertificado certificado={certificado} />
-                      <Link href={`/admin/certificados/editar/${certificado.id}`} title="Editar" className={accionIconoClase('secondary')}>
-                        <Edit size={ACCION_ICONO_TAMANO} />
-                      </Link>
-                      <button
-                        onClick={() => handleEliminarCertificado(certificado.id)}
-                        disabled={eliminandoId === certificado.id}
-                        title="Eliminar"
-                        className={accionIconoClase('red')}
-                      >
-                        <Trash size={ACCION_ICONO_TAMANO} />
-                      </button>
+                      {puede('certificado', 'gestionar', certificado) && (
+                        <Link href={`/admin/certificados/editar/${certificado.id}`} title="Editar" className={accionIconoClase('secondary')}>
+                          <Edit size={ACCION_ICONO_TAMANO} />
+                        </Link>
+                      )}
+                      {puede('certificado', 'gestionar', certificado) && (
+                        <button
+                          onClick={() => handleEliminarCertificado(certificado.id)}
+                          disabled={eliminandoId === certificado.id}
+                          title="Eliminar"
+                          className={accionIconoClase('red')}
+                        >
+                          <Trash size={ACCION_ICONO_TAMANO} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -216,17 +223,21 @@ export default function HistorialCertificados() {
                               <Eye size={ACCION_ICONO_TAMANO} />
                             </Link>
                             <DescargarCertificado certificado={certificado} />
-                            <Link href={`/admin/certificados/editar/${certificado.id}`} title="Editar" className={accionIconoClase('secondary')}>
-                              <Edit size={ACCION_ICONO_TAMANO} />
-                            </Link>
-                            <button
-                              onClick={() => handleEliminarCertificado(certificado.id)}
-                              disabled={eliminandoId === certificado.id}
-                              title="Eliminar"
-                              className={accionIconoClase('red')}
-                            >
-                              <Trash size={ACCION_ICONO_TAMANO} />
-                            </button>
+                            {puede('certificado', 'gestionar', certificado) && (
+                              <Link href={`/admin/certificados/editar/${certificado.id}`} title="Editar" className={accionIconoClase('secondary')}>
+                                <Edit size={ACCION_ICONO_TAMANO} />
+                              </Link>
+                            )}
+                            {puede('certificado', 'gestionar', certificado) && (
+                              <button
+                                onClick={() => handleEliminarCertificado(certificado.id)}
+                                disabled={eliminandoId === certificado.id}
+                                title="Eliminar"
+                                className={accionIconoClase('red')}
+                              >
+                                <Trash size={ACCION_ICONO_TAMANO} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

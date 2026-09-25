@@ -15,7 +15,7 @@ const TIPOS = [
 
 export default function NuevaPlantilla() {
   const router = useRouter();
-  const { user, loading } = useStaffAuth(['Admin']);
+  const { user, loading } = useStaffAuth({ modulo: 'plantillas', accion: 'gestionar' });
   const [guardando, setGuardando] = useState(false);
 
   const [plantilla, setPlantilla] = useState({

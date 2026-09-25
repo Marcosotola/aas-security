@@ -61,7 +61,7 @@ const ultimoDiaMes = (offsetMeses = 0) => {
 };
 
 function Finanzas() {
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'finanzas', accion: 'ver' });
   const searchParams = useSearchParams();
   const [loadingData, setLoadingData] = useState(true);
   const [recibos, setRecibos] = useState([]);
@@ -92,7 +92,8 @@ function Finanzas() {
   const cargarTodo = async () => {
     try {
       const [rec, mov, emp] = await Promise.all([
-        obtenerRecibos(),
+        // Personal con acceso a Finanzas pero no a Recibos: sin cobros.
+        obtenerRecibos().catch(() => []),
         obtenerMovimientos(),
         obtenerEmpresas()
       ]);
@@ -283,12 +284,14 @@ function Finanzas() {
             <span className="mx-2 text-gray-500">/</span>
             <span className="text-gray-700">Finanzas</span>
           </div>
-          <button
-            onClick={abrirModalNuevo}
-            className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
-          >
-            <PlusCircle size={18} className="mr-2" /> Nuevo movimiento
-          </button>
+          {puede('finanzas', 'gestionar') && (
+            <button
+              onClick={abrirModalNuevo}
+              className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
+            >
+              <PlusCircle size={18} className="mr-2" /> Nuevo movimiento
+            </button>
+          )}
         </div>
 
         <h2 className="mb-2 text-2xl font-bold font-montserrat text-primary">Finanzas</h2>
@@ -434,17 +437,21 @@ function Finanzas() {
                       <td className="px-4 py-2 text-sm text-right whitespace-nowrap">
                         {item.origen === 'manual' ? (
                           <div className="flex items-center justify-end gap-1">
-                            <button onClick={() => abrirModalEditar(item)} title="Editar" className={accionIconoClase('secondary')}>
-                              <Edit size={ACCION_ICONO_TAMANO} />
-                            </button>
-                            <button
-                              onClick={() => handleEliminarMovimiento(item.id)}
-                              disabled={eliminandoId === item.id}
-                              title="Eliminar"
-                              className={accionIconoClase('red')}
-                            >
-                              <Trash size={ACCION_ICONO_TAMANO} />
-                            </button>
+                            {puede('finanzas', 'gestionar') && (
+                              <button onClick={() => abrirModalEditar(item)} title="Editar" className={accionIconoClase('secondary')}>
+                                <Edit size={ACCION_ICONO_TAMANO} />
+                              </button>
+                            )}
+                            {puede('finanzas', 'gestionar') && (
+                              <button
+                                onClick={() => handleEliminarMovimiento(item.id)}
+                                disabled={eliminandoId === item.id}
+                                title="Eliminar"
+                                className={accionIconoClase('red')}
+                              >
+                                <Trash size={ACCION_ICONO_TAMANO} />
+                              </button>
+                            )}
                           </div>
                         ) : (
                           <span className="text-xs text-gray-400">Recibo</span>

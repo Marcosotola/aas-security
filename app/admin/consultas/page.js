@@ -16,7 +16,7 @@ const formatearFecha = (fechaCreacion) => {
 };
 
 export default function Consultas() {
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'consultas', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [consultas, setConsultas] = useState([]);
   const [filtro, setFiltro] = useState('');
@@ -183,20 +183,24 @@ export default function Consultas() {
                             WhatsApp
                           </a>
                         )}
-                        <button
-                          onClick={() => handleToggleLeida(consulta)}
-                          className="flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-lg text-secondary bg-secondary/10 active:bg-secondary/20"
-                        >
-                          {consulta.leida ? <Mail size={20} /> : <MailOpen size={20} />}
-                          {consulta.leida ? 'No leída' : 'Leída'}
-                        </button>
-                        <button
-                          onClick={() => handleEliminar(consulta.id)}
-                          className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-red-600 rounded-lg bg-red-50 active:bg-red-100"
-                        >
-                          <Trash size={20} />
-                          Eliminar
-                        </button>
+                        {puede('consultas', 'gestionar') && (
+                          <button
+                            onClick={() => handleToggleLeida(consulta)}
+                            className="flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-lg text-secondary bg-secondary/10 active:bg-secondary/20"
+                          >
+                            {consulta.leida ? <Mail size={20} /> : <MailOpen size={20} />}
+                            {consulta.leida ? 'No leída' : 'Leída'}
+                          </button>
+                        )}
+                        {puede('consultas', 'gestionar') && (
+                          <button
+                            onClick={() => handleEliminar(consulta.id)}
+                            className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-red-600 rounded-lg bg-red-50 active:bg-red-100"
+                          >
+                            <Trash size={20} />
+                            Eliminar
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -276,20 +280,24 @@ export default function Consultas() {
                                   <MessageCircle size={ACCION_ICONO_TAMANO} />
                                 </a>
                               )}
-                              <button
-                                onClick={() => handleToggleLeida(consulta)}
-                                title={consulta.leida ? 'Marcar como no leída' : 'Marcar como leída'}
-                                className={accionIconoClase('secondary')}
-                              >
-                                {consulta.leida ? <Mail size={ACCION_ICONO_TAMANO} /> : <MailOpen size={ACCION_ICONO_TAMANO} />}
-                              </button>
-                              <button
-                                onClick={() => handleEliminar(consulta.id)}
-                                title="Eliminar"
-                                className={accionIconoClase('red')}
-                              >
-                                <Trash size={ACCION_ICONO_TAMANO} />
-                              </button>
+                              {puede('consultas', 'gestionar') && (
+                                <button
+                                  onClick={() => handleToggleLeida(consulta)}
+                                  title={consulta.leida ? 'Marcar como no leída' : 'Marcar como leída'}
+                                  className={accionIconoClase('secondary')}
+                                >
+                                  {consulta.leida ? <Mail size={ACCION_ICONO_TAMANO} /> : <MailOpen size={ACCION_ICONO_TAMANO} />}
+                                </button>
+                              )}
+                              {puede('consultas', 'gestionar') && (
+                                <button
+                                  onClick={() => handleEliminar(consulta.id)}
+                                  title="Eliminar"
+                                  className={accionIconoClase('red')}
+                                >
+                                  <Trash size={ACCION_ICONO_TAMANO} />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -363,20 +371,24 @@ export default function Consultas() {
                   WhatsApp
                 </a>
               )}
-              <button
-                onClick={() => handleToggleLeida(consultaSeleccionada)}
-                className="flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-lg text-secondary bg-secondary/10 active:bg-secondary/20"
-              >
-                {consultaSeleccionada.leida ? <Mail size={20} /> : <MailOpen size={20} />}
-                {consultaSeleccionada.leida ? 'Marcar como no leída' : 'Marcar como leída'}
-              </button>
-              <button
-                onClick={() => handleEliminar(consultaSeleccionada.id)}
-                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-red-600 rounded-lg bg-red-50 active:bg-red-100"
-              >
-                <Trash size={20} />
-                Eliminar
-              </button>
+              {puede('consultas', 'gestionar') && (
+                <button
+                  onClick={() => handleToggleLeida(consultaSeleccionada)}
+                  className="flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-lg text-secondary bg-secondary/10 active:bg-secondary/20"
+                >
+                  {consultaSeleccionada.leida ? <Mail size={20} /> : <MailOpen size={20} />}
+                  {consultaSeleccionada.leida ? 'Marcar como no leída' : 'Marcar como leída'}
+                </button>
+              )}
+              {puede('consultas', 'gestionar') && (
+                <button
+                  onClick={() => handleEliminar(consultaSeleccionada.id)}
+                  className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-red-600 rounded-lg bg-red-50 active:bg-red-100"
+                >
+                  <Trash size={20} />
+                  Eliminar
+                </button>
+              )}
             </div>
           </div>
         </div>

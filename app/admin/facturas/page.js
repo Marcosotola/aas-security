@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FilePlus, FileText, Home, Search, Edit, Trash, Eye, Download } from 'lucide-react';
 import { obtenerFacturas, actualizarFactura, eliminarFactura } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
+import { soloPropios } from '../../lib/permisos';
 import ViewToggle from '../../components/admin/ViewToggle';
 import EstadoFacturaToggle from '../../components/ui/EstadoFactura';
 import PortalDropdown from '../../components/PortalDropdown';
@@ -19,7 +20,7 @@ const formatCurrency = (amount) => new Intl.NumberFormat('es-AR', {
 }).format(amount || 0);
 
 export default function HistorialFacturas() {
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, usuario, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'factura', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [facturas, setFacturas] = useState([]);
   const [filtro, setFiltro] = useState('');
@@ -38,7 +39,7 @@ export default function HistorialFacturas() {
 
   const cargarFacturas = async () => {
     try {
-      setFacturas(await obtenerFacturas());
+      setFacturas(await obtenerFacturas(soloPropios(usuario, 'factura') ? user.email : null));
     } catch (error) {
       console.error('Error al cargar facturas:', error);
       setFacturas([]);
@@ -118,12 +119,14 @@ export default function HistorialFacturas() {
             <span className="text-gray-700">Facturas</span>
           </div>
 
-          <Link
-            href="/admin/facturas/nueva"
-            className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
-          >
-            <FilePlus size={18} className="mr-2" /> Nueva Factura
-          </Link>
+          {puede('factura', 'crear') && (
+            <Link
+              href="/admin/facturas/nueva"
+              className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
+            >
+              <FilePlus size={18} className="mr-2" /> Nueva Factura
+            </Link>
+          )}
         </div>
 
         <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
@@ -185,7 +188,7 @@ export default function HistorialFacturas() {
                     <div className="mt-1 text-sm text-gray-500 line-clamp-2" title={factura.descripcion}>{factura.descripcion || '-'}</div>
                     <div className="mt-2 text-sm font-medium text-gray-900">{formatCurrency(factura.monto)}</div>
                     <div className="mt-2">
-                      <EstadoFacturaToggle estado={factura.estado} onChange={(nuevo) => handleCambiarEstado(factura.id, nuevo)} />
+                      <EstadoFacturaToggle estado={factura.estado} onChange={(nuevo) => handleCambiarEstado(factura.id, nuevo)} disabled={!puede('factura', 'gestionar', factura)} />
                     </div>
 
                     <div className="flex justify-end pt-3 mt-3 gap-1 border-t border-gray-100">
@@ -193,17 +196,21 @@ export default function HistorialFacturas() {
                         <Eye size={ACCION_ICONO_TAMANO} />
                       </Link>
                       <DescargarFactura factura={factura} />
-                      <Link href={`/admin/facturas/editar/${factura.id}`} title="Editar" className={accionIconoClase('secondary')}>
-                        <Edit size={ACCION_ICONO_TAMANO} />
-                      </Link>
-                      <button
-                        onClick={() => handleEliminarFactura(factura.id)}
-                        disabled={eliminandoId === factura.id}
-                        title="Eliminar"
-                        className={accionIconoClase('red')}
-                      >
-                        <Trash size={ACCION_ICONO_TAMANO} />
-                      </button>
+                      {puede('factura', 'gestionar', factura) && (
+                        <Link href={`/admin/facturas/editar/${factura.id}`} title="Editar" className={accionIconoClase('secondary')}>
+                          <Edit size={ACCION_ICONO_TAMANO} />
+                        </Link>
+                      )}
+                      {puede('factura', 'gestionar', factura) && (
+                        <button
+                          onClick={() => handleEliminarFactura(factura.id)}
+                          disabled={eliminandoId === factura.id}
+                          title="Eliminar"
+                          className={accionIconoClase('red')}
+                        >
+                          <Trash size={ACCION_ICONO_TAMANO} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -245,7 +252,7 @@ export default function HistorialFacturas() {
                           <div className="text-sm font-medium text-gray-900">{formatCurrency(factura.monto)}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <EstadoFacturaToggle estado={factura.estado} onChange={(nuevo) => handleCambiarEstado(factura.id, nuevo)} />
+                          <EstadoFacturaToggle estado={factura.estado} onChange={(nuevo) => handleCambiarEstado(factura.id, nuevo)} disabled={!puede('factura', 'gestionar', factura)} />
                         </td>
                         <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                           <div className="flex justify-end gap-1">
@@ -253,17 +260,21 @@ export default function HistorialFacturas() {
                               <Eye size={ACCION_ICONO_TAMANO} />
                             </Link>
                             <DescargarFactura factura={factura} />
-                            <Link href={`/admin/facturas/editar/${factura.id}`} title="Editar" className={accionIconoClase('secondary')}>
-                              <Edit size={ACCION_ICONO_TAMANO} />
-                            </Link>
-                            <button
-                              onClick={() => handleEliminarFactura(factura.id)}
-                              disabled={eliminandoId === factura.id}
-                              title="Eliminar"
-                              className={accionIconoClase('red')}
-                            >
-                              <Trash size={ACCION_ICONO_TAMANO} />
-                            </button>
+                            {puede('factura', 'gestionar', factura) && (
+                              <Link href={`/admin/facturas/editar/${factura.id}`} title="Editar" className={accionIconoClase('secondary')}>
+                                <Edit size={ACCION_ICONO_TAMANO} />
+                              </Link>
+                            )}
+                            {puede('factura', 'gestionar', factura) && (
+                              <button
+                                onClick={() => handleEliminarFactura(factura.id)}
+                                disabled={eliminandoId === factura.id}
+                                title="Eliminar"
+                                className={accionIconoClase('red')}
+                              >
+                                <Trash size={ACCION_ICONO_TAMANO} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye } from 'lucide-react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { eliminarRecibo } from '../../lib/firestore';
+import { eliminarRecibo, obtenerRecibos } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
+import { soloPropios } from '../../lib/permisos';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import ReciboPDF from '../../components/pdf/ReciboPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
@@ -15,7 +16,7 @@ import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/ac
 import { formatearFecha } from '../../lib/fecha';
 
 export default function HistorialRecibos() {
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, usuario, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'recibo', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [recibos, setRecibos] = useState([]);
   const [filtro, setFiltro] = useState('');
@@ -29,14 +30,7 @@ export default function HistorialRecibos() {
 
   const cargarRecibos = async () => {
     try {
-      const recibosRef = collection(db, 'recibos');
-      const q = query(recibosRef, orderBy('fechaCreacion', 'desc'));
-      const querySnapshot = await getDocs(q);
-
-      const recibosData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const recibosData = await obtenerRecibos(soloPropios(usuario, 'recibo') ? user.email : null);
 
       console.log("recibos cargados:", recibosData.length);
       setRecibos(recibosData);
@@ -104,12 +98,14 @@ export default function HistorialRecibos() {
             <span className="text-gray-700">Historial de Recibos</span>
           </div>
 
-          <Link
-            href="/admin/recibos/nuevo"
-            className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
-          >
-            <FilePlus size={18} className="mr-2" /> Nuevo Recibo
-          </Link>
+          {puede('recibo', 'crear') && (
+            <Link
+              href="/admin/recibos/nuevo"
+              className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
+            >
+              <FilePlus size={18} className="mr-2" /> Nuevo Recibo
+            </Link>
+          )}
         </div>
 
         <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
@@ -175,20 +171,24 @@ export default function HistorialRecibos() {
                           <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
                         }
                       </PDFDownloadLink>
-                      <Link
-                        href={`/admin/recibos/editar/${recibo.id}`}
-                        title="Editar"
-                        className={accionIconoClase('secondary')}
-                      >
-                        <Edit size={ACCION_ICONO_TAMANO} />
-                      </Link>
-                      <button
-                        onClick={() => handleDeleteRecibo(recibo.id)}
-                        title="Eliminar"
-                        className={accionIconoClase('red')}
-                      >
-                        <Trash size={ACCION_ICONO_TAMANO} />
-                      </button>
+                      {puede('recibo', 'gestionar', recibo) && (
+                        <Link
+                          href={`/admin/recibos/editar/${recibo.id}`}
+                          title="Editar"
+                          className={accionIconoClase('secondary')}
+                        >
+                          <Edit size={ACCION_ICONO_TAMANO} />
+                        </Link>
+                      )}
+                      {puede('recibo', 'gestionar', recibo) && (
+                        <button
+                          onClick={() => handleDeleteRecibo(recibo.id)}
+                          title="Eliminar"
+                          className={accionIconoClase('red')}
+                        >
+                          <Trash size={ACCION_ICONO_TAMANO} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -277,20 +277,24 @@ export default function HistorialRecibos() {
                               <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
                             }
                           </PDFDownloadLink>
-                          <Link
-                            href={`/admin/recibos/editar/${recibo.id}`}
-                            title="Editar"
-                            className={accionIconoClase('secondary')}
-                          >
-                            <Edit size={ACCION_ICONO_TAMANO} />
-                          </Link>
-                          <button
-                            onClick={() => handleDeleteRecibo(recibo.id)}
-                            title="Eliminar"
-                            className={accionIconoClase('red')}
-                          >
-                            <Trash size={ACCION_ICONO_TAMANO} />
-                          </button>
+                          {puede('recibo', 'gestionar', recibo) && (
+                            <Link
+                              href={`/admin/recibos/editar/${recibo.id}`}
+                              title="Editar"
+                              className={accionIconoClase('secondary')}
+                            >
+                              <Edit size={ACCION_ICONO_TAMANO} />
+                            </Link>
+                          )}
+                          {puede('recibo', 'gestionar', recibo) && (
+                            <button
+                              onClick={() => handleDeleteRecibo(recibo.id)}
+                              title="Eliminar"
+                              className={accionIconoClase('red')}
+                            >
+                              <Trash size={ACCION_ICONO_TAMANO} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

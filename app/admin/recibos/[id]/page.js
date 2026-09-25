@@ -16,7 +16,7 @@ export default function VerRecibo({ params }) {
   const id = resolvedParams.id;
 
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'recibo', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [recibo, setRecibo] = useState(null);
   const loading = loadingAuth || loadingData;
@@ -77,12 +77,14 @@ export default function VerRecibo({ params }) {
             >
               <ArrowLeft size={18} className="mr-2" /> Volver
             </Link>
-            <Link
-              href={`/admin/recibos/editar/${id}`}
-              className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
-            >
-              <Edit size={18} className="mr-2" /> Editar
-            </Link>
+            {puede('recibo', 'gestionar', recibo) && (
+              <Link
+                href={`/admin/recibos/editar/${id}`}
+                className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
+              >
+                <Edit size={18} className="mr-2" /> Editar
+              </Link>
+            )}
             <PDFDownloadLink
               document={<ReciboPDF recibo={recibo} />}
               fileName={`${recibo.numero}.pdf`}

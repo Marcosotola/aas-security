@@ -57,7 +57,7 @@ function FichaEmpresa() {
   const { id } = useParams();
   const searchParams = useSearchParams();
   const [usuariosConAcceso, setUsuariosConAcceso] = useState([]);
-  const { loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { loading: loadingAuth, puede } = useStaffAuth({ modulo: 'empresas', accion: 'ver' });
   const [empresa, setEmpresa] = useState(null);
   const [cargando, setCargando] = useState(true);
   // ?editar=1 (lápiz del listado de Empresas) abre directo en edición.
@@ -236,13 +236,15 @@ function FichaEmpresa() {
           <>
             <div className="flex items-start justify-between gap-4 mb-4">
               <h2 className="text-2xl font-bold font-montserrat text-primary">{empresa.nombre}</h2>
-              <button
-                type="button"
-                onClick={() => setEditandoDatos(true)}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100 shrink-0"
-              >
-                <Edit size={16} /> Editar
-              </button>
+              {puede('empresas', 'gestionar') && (
+                <button
+                  type="button"
+                  onClick={() => setEditandoDatos(true)}
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100 shrink-0"
+                >
+                  <Edit size={16} /> Editar
+                </button>
+              )}
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {DATOS.map(({ label, valor, icono: Icono }) => (
@@ -264,13 +266,15 @@ function FichaEmpresa() {
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
           <h3 className="text-lg font-semibold text-gray-700">Sedes ({activas.length})</h3>
           {!agregandoSede && (
-            <button
-              type="button"
-              onClick={() => { setAgregandoSede(true); setEditandoSedeId(null); }}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-white rounded-md bg-primary hover:bg-primary-light"
-            >
-              <PlusCircle size={16} /> Agregar sede
-            </button>
+            puede('empresas', 'gestionar') && (
+              <button
+                type="button"
+                onClick={() => { setAgregandoSede(true); setEditandoSedeId(null); }}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-white rounded-md bg-primary hover:bg-primary-light"
+              >
+                <PlusCircle size={16} /> Agregar sede
+              </button>
+            )
           )}
         </div>
 
@@ -309,23 +313,27 @@ function FichaEmpresa() {
                     <div className="text-sm text-gray-500 truncate">{sede.direccion || 'Sin dirección'}</div>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => { setEditandoSedeId(sede.id); setAgregandoSede(false); }}
-                      title="Editar"
-                      className={accionIconoClase('secondary')}
-                    >
-                      <Edit size={ACCION_ICONO_TAMANO} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuitarSede(sede)}
-                      disabled={procesandoSedeId === sede.id}
-                      title="Eliminar o archivar"
-                      className={accionIconoClase('red')}
-                    >
-                      <Trash size={ACCION_ICONO_TAMANO} />
-                    </button>
+                    {puede('empresas', 'gestionar') && (
+                      <button
+                        type="button"
+                        onClick={() => { setEditandoSedeId(sede.id); setAgregandoSede(false); }}
+                        title="Editar"
+                        className={accionIconoClase('secondary')}
+                      >
+                        <Edit size={ACCION_ICONO_TAMANO} />
+                      </button>
+                    )}
+                    {puede('empresas', 'gestionar') && (
+                      <button
+                        type="button"
+                        onClick={() => handleQuitarSede(sede)}
+                        disabled={procesandoSedeId === sede.id}
+                        title="Eliminar o archivar"
+                        className={accionIconoClase('red')}
+                      >
+                        <Trash size={ACCION_ICONO_TAMANO} />
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -353,15 +361,17 @@ function FichaEmpresa() {
                       <div className="text-sm font-medium text-gray-700 truncate">{sede.nombre}</div>
                       <div className="text-sm text-gray-500 truncate">{sede.direccion || 'Sin dirección'}</div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleReactivarSede(sede)}
-                      disabled={procesandoSedeId === sede.id}
-                      title="Reactivar"
-                      className={accionIconoClase('green')}
-                    >
-                      <ArchiveRestore size={ACCION_ICONO_TAMANO} />
-                    </button>
+                    {puede('empresas', 'gestionar') && (
+                      <button
+                        type="button"
+                        onClick={() => handleReactivarSede(sede)}
+                        disabled={procesandoSedeId === sede.id}
+                        title="Reactivar"
+                        className={accionIconoClase('green')}
+                      >
+                        <ArchiveRestore size={ACCION_ICONO_TAMANO} />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

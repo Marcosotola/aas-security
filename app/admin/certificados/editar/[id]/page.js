@@ -20,7 +20,7 @@ export default function EditarCertificado({ params }) {
   const { id } = use(params);
 
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, loading: loadingAuth } = useStaffAuth({ modulo: 'certificado', accion: 'crear' });
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [empresas, setEmpresas] = useState([]);

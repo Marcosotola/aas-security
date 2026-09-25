@@ -20,7 +20,7 @@ import { archivoABase64 } from '../../../lib/imagenes';
 
 export default function NuevoMantenimientoPreventivo() {
   const router = useRouter();
-  const { user, loading } = useStaffAuth(['Admin', 'Tecnico']);
+  const { user, loading } = useStaffAuth({ modulo: 'mantenimiento', accion: 'crear' });
   const [guardando, setGuardando] = useState(false);
   const [documentoGuardado, setDocumentoGuardado] = useState(null);
   const [empresas, setEmpresas] = useState([]);

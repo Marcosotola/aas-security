@@ -36,7 +36,7 @@ const formatMoney = (amount) => {
 
 export default function NuevoPresupuesto() {
     const router = useRouter();
-    const { user, loading } = useStaffAuth(['Admin']);
+    const { user, loading } = useStaffAuth({ modulo: 'presupuesto', accion: 'crear' });
     const [guardando, setGuardando] = useState(false);
     const [listaPrecios, setListaPrecios] = useState([]);
     const [empresas, setEmpresas] = useState([]);

@@ -15,7 +15,7 @@ export default function EditarRemito({ params }) {
   const id = resolvedParams.id;
 
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, loading: loadingAuth } = useStaffAuth({ modulo: 'remito', accion: 'crear' });
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [remitoOriginal, setRemitoOriginal] = useState(null);

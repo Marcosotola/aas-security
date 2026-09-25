@@ -24,7 +24,8 @@ export default function AdminLayout({ children }) {
   const esLogin = pathname === '/admin';
 
   const [user, setUser] = useState(null);
-  const [rol, setRol] = useState(null);
+  const [perfil, setPerfil] = useState(null);
+  const rol = perfil?.role || null;
   const [suscripcionVencida, setSuscripcionVencida] = useState(false);
 
   useEffect(() => {
@@ -34,12 +35,12 @@ export default function AdminLayout({ children }) {
 
   useEffect(() => {
     if (!user) {
-      setRol(null);
+      setPerfil(null);
       return;
     }
     resolverPerfilStaff(user.uid, user.email)
-      .then((perfil) => setRol(perfil?.role || null))
-      .catch(() => setRol(null));
+      .then((p) => setPerfil(p || null))
+      .catch(() => setPerfil(null));
   }, [user]);
 
   // Vía /api/estado-app (Admin SDK, sin auth) en vez de leer
@@ -67,7 +68,7 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
-      <AdminHeader user={user} suscripcionVencida={suscripcionVencida} />
+      <AdminHeader user={user} perfil={perfil} suscripcionVencida={suscripcionVencida} />
       {children}
     </div>
   );

@@ -12,7 +12,8 @@ import {
   orderBy,
   where,
   serverTimestamp,
-  getCountFromServer
+  getCountFromServer,
+  writeBatch
 } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { db, storage } from './firebase';
@@ -39,6 +40,11 @@ const plantillasCollection = db ? collection(db, 'plantillas') : null;
 const facturasCollection = db ? collection(db, 'facturas') : null;
 const certificadosCollection = db ? collection(db, 'certificados') : null;
 
+// Listados filtrados por creador (Personal con nivel "propios"): se piden
+// sin orderBy para no depender de un índice compuesto y se ordenan acá.
+const fechaMs = (d) => d.fechaCreacion?.toMillis?.() ?? 0;
+const ordenarSiFiltrado = (creador, docs) => (creador ? docs.sort((a, b) => fechaMs(b) - fechaMs(a)) : docs);
+
 // ========== FUNCIONES PARA PRESUPUESTOS ==========
 
 // Crear un nuevo presupuesto
@@ -57,16 +63,18 @@ export const crearPresupuesto = async (presupuestoData) => {
 };
 
 // Obtener todos los presupuestos
-export const obtenerPresupuestos = async () => {
+export const obtenerPresupuestos = async (creador = null) => {
   try {
     if (!db) throw new Error('Firebase no está configurado');
-    const q = query(presupuestosCollection, orderBy('fechaCreacion', 'desc'));
+    const q = creador
+      ? query(presupuestosCollection, where('usuarioCreador', '==', creador))
+      : query(presupuestosCollection, orderBy('fechaCreacion', 'desc'));
     const querySnapshot = await getDocs(q);
     
-    return querySnapshot.docs.map(doc => ({
+    return ordenarSiFiltrado(creador, querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })));
   } catch (error) {
     console.error('Error al obtener presupuestos:', error);
     throw error;
@@ -138,16 +146,18 @@ export const crearEstado = async (estadoData) => {
 };
 
 // Obtener todos los estados
-export const obtenerEstados = async () => {
+export const obtenerEstados = async (creador = null) => {
   try {
     if (!db) throw new Error('Firebase no está configurado');
-    const q = query(estadosCollection, orderBy('fechaCreacion', 'desc'));
+    const q = creador
+      ? query(estadosCollection, where('usuarioCreador', '==', creador))
+      : query(estadosCollection, orderBy('fechaCreacion', 'desc'));
     const querySnapshot = await getDocs(q);
     
-    return querySnapshot.docs.map(doc => ({
+    return ordenarSiFiltrado(creador, querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })));
   } catch (error) {
     console.error('Error al obtener estados:', error);
     throw error;
@@ -220,16 +230,18 @@ export const crearRemito = async (remitoData) => {
 };
 
 // Obtener todos los remitos
-export const obtenerRemitos = async () => {
+export const obtenerRemitos = async (creador = null) => {
   try {
     if (!db) throw new Error('Firebase no está configurado');
-    const q = query(remitosCollection, orderBy('fechaCreacion', 'desc'));
+    const q = creador
+      ? query(remitosCollection, where('usuarioCreador', '==', creador))
+      : query(remitosCollection, orderBy('fechaCreacion', 'desc'));
     const querySnapshot = await getDocs(q);
     
-    return querySnapshot.docs.map(doc => ({
+    return ordenarSiFiltrado(creador, querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })));
   } catch (error) {
     console.error('Error al obtener remitos:', error);
     throw error;
@@ -297,15 +309,17 @@ export const crearRecibo = async (reciboData) => {
 };
 
 // Función para obtener todos los recibos
-export const obtenerRecibos = async () => {
+export const obtenerRecibos = async (creador = null) => {
   try {
     if (!db) throw new Error('Firebase no está configurado');
-    const q = query(collection(db, 'recibos'), orderBy('fechaCreacion', 'desc'));
+    const q = creador
+      ? query(collection(db, 'recibos'), where('usuarioCreador', '==', creador))
+      : query(collection(db, 'recibos'), orderBy('fechaCreacion', 'desc'));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
+    return ordenarSiFiltrado(creador, querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })));
   } catch (error) {
     console.error('Error al obtener recibos:', error);
     throw error;
@@ -371,15 +385,17 @@ export const crearDocumento = async (documentoData) => {
 };
 
 // Función para obtener todos los documentos
-export const obtenerDocumentos = async () => {
+export const obtenerDocumentos = async (creador = null) => {
   try {
     if (!db) throw new Error('Firebase no está configurado');
-    const q = query(collection(db, 'documentos'), orderBy('fechaCreacion', 'desc'));
+    const q = creador
+      ? query(collection(db, 'documentos'), where('usuarioCreador', '==', creador))
+      : query(collection(db, 'documentos'), orderBy('fechaCreacion', 'desc'));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
+    return ordenarSiFiltrado(creador, querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })));
   } catch (error) {
     console.error('Error al obtener documentos:', error);
     throw error;
@@ -451,15 +467,17 @@ export const crearOrdenTrabajo = async (id, otData) => {
 };
 
 // Obtener todas las órdenes de trabajo
-export const obtenerOrdenesTrabajo = async () => {
+export const obtenerOrdenesTrabajo = async (creador = null) => {
   try {
     if (!db) throw new Error('Firebase no está configurado');
-    const q = query(ordenesTrabajoCollection, orderBy('fechaCreacion', 'desc'));
+    const q = creador
+      ? query(ordenesTrabajoCollection, where('usuarioCreador', '==', creador))
+      : query(ordenesTrabajoCollection, orderBy('fechaCreacion', 'desc'));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
+    return ordenarSiFiltrado(creador, querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })));
   } catch (error) {
     console.error('Error al obtener las órdenes de trabajo:', error);
     throw error;
@@ -544,15 +562,17 @@ export const crearMantenimientoPreventivo = async (id, mpData) => {
   }
 };
 
-export const obtenerMantenimientosPreventivos = async () => {
+export const obtenerMantenimientosPreventivos = async (creador = null) => {
   try {
     if (!db) throw new Error('Firebase no está configurado');
-    const q = query(mantenimientosPreventivosCollection, orderBy('fechaCreacion', 'desc'));
+    const q = creador
+      ? query(mantenimientosPreventivosCollection, where('usuarioCreador', '==', creador))
+      : query(mantenimientosPreventivosCollection, orderBy('fechaCreacion', 'desc'));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
+    return ordenarSiFiltrado(creador, querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })));
   } catch (error) {
     console.error('Error al obtener los mantenimientos preventivos:', error);
     throw error;
@@ -691,12 +711,14 @@ export const crearFactura = async (id, facturaData) => {
   }
 };
 
-export const obtenerFacturas = async () => {
+export const obtenerFacturas = async (creador = null) => {
   try {
     if (!db) throw new Error('Firebase no está configurado');
-    const q = query(facturasCollection, orderBy('fechaCreacion', 'desc'));
+    const q = creador
+      ? query(facturasCollection, where('usuarioCreador', '==', creador))
+      : query(facturasCollection, orderBy('fechaCreacion', 'desc'));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return ordenarSiFiltrado(creador, querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
   } catch (error) {
     console.error('Error al obtener las facturas:', error);
     throw error;
@@ -768,12 +790,14 @@ export const crearCertificado = async (id, certificadoData) => {
   }
 };
 
-export const obtenerCertificados = async () => {
+export const obtenerCertificados = async (creador = null) => {
   try {
     if (!db) throw new Error('Firebase no está configurado');
-    const q = query(certificadosCollection, orderBy('fechaCreacion', 'desc'));
+    const q = creador
+      ? query(certificadosCollection, where('usuarioCreador', '==', creador))
+      : query(certificadosCollection, orderBy('fechaCreacion', 'desc'));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return ordenarSiFiltrado(creador, querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
   } catch (error) {
     console.error('Error al obtener los certificados:', error);
     throw error;
@@ -1131,6 +1155,56 @@ export const eliminarUsuario = async (uid) => {
     console.error('Error al eliminar usuario:', error);
     throw error;
   }
+};
+
+// ========== PERFILES DE PERMISOS DEL PERSONAL ==========
+// Un perfil es un nombre + { modulo: nivel } (ver app/lib/permisos.js). Los
+// permisos se copian al usuario (role Personal) para que las reglas lean un
+// solo documento; al editar un perfil se actualizan todas sus personas.
+
+export const obtenerPerfiles = async () => {
+  if (!db) throw new Error('Firebase no está configurado');
+  const querySnapshot = await getDocs(query(getCollection('perfiles'), orderBy('nombre')));
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};
+
+export const crearPerfil = async (perfilData) => {
+  if (!db) throw new Error('Firebase no está configurado');
+  const docRef = await addDoc(getCollection('perfiles'), { ...perfilData, fechaCreacion: serverTimestamp() });
+  return { id: docRef.id };
+};
+
+// Guarda el perfil y copia sus permisos a cada persona que lo tiene, todo en
+// un mismo lote (o se aplica completo o no se aplica).
+export const actualizarPerfil = async (id, perfilData) => {
+  if (!db) throw new Error('Firebase no está configurado');
+  const conPerfil = await getDocs(query(getCollection('usuarios'), where('perfilId', '==', id)));
+  const lote = writeBatch(db);
+  lote.update(doc(db, 'perfiles', id), { ...perfilData, fechaActualizacion: serverTimestamp() });
+  conPerfil.docs.forEach((u) => lote.update(u.ref, { permisos: perfilData.permisos, fechaActualizacion: serverTimestamp() }));
+  await lote.commit();
+  return { id, personas: conPerfil.size };
+};
+
+export const contarPersonasConPerfil = async (id) => {
+  if (!db) throw new Error('Firebase no está configurado');
+  return (await getCountFromServer(query(getCollection('usuarios'), where('perfilId', '==', id)))).data().count;
+};
+
+export const eliminarPerfil = async (id) => {
+  if (!db) throw new Error('Firebase no está configurado');
+  await deleteDoc(doc(db, 'perfiles', id));
+};
+
+// Pasa a una persona a Personal con ese perfil (o le cambia el perfil).
+export const asignarPerfil = async (uid, perfil) => {
+  if (!db) throw new Error('Firebase no está configurado');
+  await updateDoc(doc(db, 'usuarios', uid), {
+    role: 'Personal',
+    perfilId: perfil.id,
+    permisos: perfil.permisos,
+    fechaActualizacion: serverTimestamp()
+  });
 };
 
 // ========== EMPRESAS Y SEDES ==========

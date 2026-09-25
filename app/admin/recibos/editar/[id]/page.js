@@ -68,7 +68,7 @@ export default function EditarRecibo({ params }) {
   const id = resolvedParams.id;
 
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, loading: loadingAuth } = useStaffAuth({ modulo: 'recibo', accion: 'crear' });
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [mostrarCanvas, setMostrarCanvas] = useState(false);

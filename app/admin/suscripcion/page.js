@@ -19,7 +19,7 @@ const formatMoney = (amount) => {
 };
 
 export default function Suscripcion() {
-  const { user, usuario, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, usuario, loading: loadingAuth } = useStaffAuth('admin');
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [cambiandoEstado, setCambiandoEstado] = useState(false);

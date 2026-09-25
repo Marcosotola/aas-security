@@ -20,7 +20,7 @@ export default function VerOrdenTrabajo({ params }) {
   const { id } = use(params);
 
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin', 'Tecnico']);
+  const { user, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'orden', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [orden, setOrden] = useState(null);
   const loading = loadingAuth || loadingData;
@@ -101,18 +101,22 @@ export default function VerOrdenTrabajo({ params }) {
               >
                 <ArrowLeft size={18} className="mr-2" /> Volver
               </Link>
-              <Link
-                href={`/admin/ordenes-trabajo/editar/${id}`}
-                className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
-              >
-                <Edit size={18} className="mr-2" /> Editar
-              </Link>
-              <button
-                onClick={handleEliminar}
-                className="flex items-center px-4 py-2 text-white transition-colors bg-red-500 rounded-md hover:bg-red-600"
-              >
-                <Trash size={18} className="mr-2" /> Eliminar
-              </button>
+              {puede('orden', 'gestionar', orden) && (
+                <Link
+                  href={`/admin/ordenes-trabajo/editar/${id}`}
+                  className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
+                >
+                  <Edit size={18} className="mr-2" /> Editar
+                </Link>
+              )}
+              {puede('orden', 'gestionar', orden) && (
+                <button
+                  onClick={handleEliminar}
+                  className="flex items-center px-4 py-2 text-white transition-colors bg-red-500 rounded-md hover:bg-red-600"
+                >
+                  <Trash size={18} className="mr-2" /> Eliminar
+                </button>
+              )}
               <DescargarOrdenTrabajoPDF
                 orden={orden}
                 className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"

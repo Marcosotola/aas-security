@@ -19,7 +19,7 @@ export default function VerFactura({ params }) {
   const { id } = use(params);
 
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'factura', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [factura, setFactura] = useState(null);
   const loading = loadingAuth || loadingData;
@@ -82,9 +82,11 @@ export default function VerFactura({ params }) {
             <Link href="/admin/facturas" className="flex items-center px-4 py-2 text-gray-700 transition-colors bg-gray-200 rounded-md hover:bg-gray-300">
               <ArrowLeft size={18} className="mr-2" /> Volver
             </Link>
-            <Link href={`/admin/facturas/editar/${id}`} className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600">
-              <Edit size={18} className="mr-2" /> Editar
-            </Link>
+            {puede('factura', 'gestionar', factura) && (
+              <Link href={`/admin/facturas/editar/${id}`} className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600">
+                <Edit size={18} className="mr-2" /> Editar
+              </Link>
+            )}
           </div>
         </div>
 
@@ -115,7 +117,7 @@ export default function VerFactura({ params }) {
                 </div>
                 <div className="mb-4">
                   <span className="block mb-1 text-sm font-medium text-gray-600">Estado:</span>
-                  <EstadoFacturaToggle estado={factura.estado} onChange={handleCambiarEstado} />
+                  <EstadoFacturaToggle estado={factura.estado} onChange={handleCambiarEstado} disabled={!puede('factura', 'gestionar', factura)} />
                 </div>
               </div>
             </div>

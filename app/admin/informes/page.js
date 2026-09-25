@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye } from 'lucide-react';
 import { obtenerDocumentos, eliminarDocumento } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
+import { soloPropios } from '../../lib/permisos';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import DocumentoPDF from '../../components/pdf/DocumentoPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
@@ -13,7 +14,7 @@ import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/ac
 import { formatearFecha } from '../../lib/fecha';
 
 export default function HistorialDocumentos() {
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, usuario, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'informe', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [documentos, setDocumentos] = useState([]);
   const [filtro, setFiltro] = useState('');
@@ -27,7 +28,7 @@ export default function HistorialDocumentos() {
 
   const cargarDocumentos = async () => {
     try {
-      const documentosData = await obtenerDocumentos();
+      const documentosData = await obtenerDocumentos(soloPropios(usuario, 'informe') ? user.email : null);
       console.log("documentos cargados:", documentosData.length);
       setDocumentos(documentosData);
     } catch (error) {
@@ -86,12 +87,14 @@ export default function HistorialDocumentos() {
             <span className="text-gray-700">Historial de Informes</span>
           </div>
 
-          <Link
-            href="/admin/informes/nuevo"
-            className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
-          >
-            <FilePlus size={18} className="mr-2" /> Nuevo Informe
-          </Link>
+          {puede('informe', 'crear') && (
+            <Link
+              href="/admin/informes/nuevo"
+              className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
+            >
+              <FilePlus size={18} className="mr-2" /> Nuevo Informe
+            </Link>
+          )}
         </div>
 
         <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
@@ -154,20 +157,24 @@ export default function HistorialDocumentos() {
                           <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
                         }
                       </PDFDownloadLink>
-                      <Link
-                        href={`/admin/informes/editar/${documento.id}`}
-                        title="Editar"
-                        className={accionIconoClase('secondary')}
-                      >
-                        <Edit size={ACCION_ICONO_TAMANO} />
-                      </Link>
-                      <button
-                        onClick={() => handleDeleteDocumento(documento.id)}
-                        title="Eliminar"
-                        className={accionIconoClase('red')}
-                      >
-                        <Trash size={ACCION_ICONO_TAMANO} />
-                      </button>
+                      {puede('informe', 'gestionar', documento) && (
+                        <Link
+                          href={`/admin/informes/editar/${documento.id}`}
+                          title="Editar"
+                          className={accionIconoClase('secondary')}
+                        >
+                          <Edit size={ACCION_ICONO_TAMANO} />
+                        </Link>
+                      )}
+                      {puede('informe', 'gestionar', documento) && (
+                        <button
+                          onClick={() => handleDeleteDocumento(documento.id)}
+                          title="Eliminar"
+                          className={accionIconoClase('red')}
+                        >
+                          <Trash size={ACCION_ICONO_TAMANO} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -249,20 +256,24 @@ export default function HistorialDocumentos() {
                               <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
                             }
                           </PDFDownloadLink>
-                          <Link
-                            href={`/admin/informes/editar/${documento.id}`}
-                            title="Editar"
-                            className={accionIconoClase('secondary')}
-                          >
-                            <Edit size={ACCION_ICONO_TAMANO} />
-                          </Link>
-                          <button
-                            onClick={() => handleDeleteDocumento(documento.id)}
-                            title="Eliminar"
-                            className={accionIconoClase('red')}
-                          >
-                            <Trash size={ACCION_ICONO_TAMANO} />
-                          </button>
+                          {puede('informe', 'gestionar', documento) && (
+                            <Link
+                              href={`/admin/informes/editar/${documento.id}`}
+                              title="Editar"
+                              className={accionIconoClase('secondary')}
+                            >
+                              <Edit size={ACCION_ICONO_TAMANO} />
+                            </Link>
+                          )}
+                          {puede('informe', 'gestionar', documento) && (
+                            <button
+                              onClick={() => handleDeleteDocumento(documento.id)}
+                              title="Eliminar"
+                              className={accionIconoClase('red')}
+                            >
+                              <Trash size={ACCION_ICONO_TAMANO} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

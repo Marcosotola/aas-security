@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye } from 'lucide-react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { eliminarRemito } from '../../lib/firestore';
+import { eliminarRemito, obtenerRemitos } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
+import { soloPropios } from '../../lib/permisos';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import RemitoPDF from '../../components/pdf/RemitoPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
@@ -15,7 +16,7 @@ import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/ac
 import { formatearFecha } from '../../lib/fecha';
 
 export default function HistorialRemitos() {
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, usuario, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'remito', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [remitos, setRemitos] = useState([]);
   const [filtro, setFiltro] = useState('');
@@ -29,14 +30,7 @@ export default function HistorialRemitos() {
 
   const cargarRemitos = async () => {
     try {
-      const remitosRef = collection(db, 'remitos');
-      const q = query(remitosRef, orderBy('fechaCreacion', 'desc'));
-      const querySnapshot = await getDocs(q);
-
-      const remitosData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const remitosData = await obtenerRemitos(soloPropios(usuario, 'remito') ? user.email : null);
 
       console.log("remitos cargados:", remitosData.length);
       setRemitos(remitosData);
@@ -95,12 +89,14 @@ export default function HistorialRemitos() {
             <span className="text-gray-700">Historial de Remitos</span>
           </div>
 
-          <Link
-            href="/admin/remitos/nuevo"
-            className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
-          >
-            <FilePlus size={18} className="mr-2" /> Nuevo Remito
-          </Link>
+          {puede('remito', 'crear') && (
+            <Link
+              href="/admin/remitos/nuevo"
+              className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
+            >
+              <FilePlus size={18} className="mr-2" /> Nuevo Remito
+            </Link>
+          )}
         </div>
 
         <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
@@ -162,20 +158,24 @@ export default function HistorialRemitos() {
                           <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
                         }
                       </PDFDownloadLink>
-                      <Link
-                        href={`/admin/remitos/editar/${remito.id}`}
-                        title="Editar"
-                        className={accionIconoClase('secondary')}
-                      >
-                        <Edit size={ACCION_ICONO_TAMANO} />
-                      </Link>
-                      <button
-                        onClick={() => handleDeleteRemito(remito.id)}
-                        title="Eliminar"
-                        className={accionIconoClase('red')}
-                      >
-                        <Trash size={ACCION_ICONO_TAMANO} />
-                      </button>
+                      {puede('remito', 'gestionar', remito) && (
+                        <Link
+                          href={`/admin/remitos/editar/${remito.id}`}
+                          title="Editar"
+                          className={accionIconoClase('secondary')}
+                        >
+                          <Edit size={ACCION_ICONO_TAMANO} />
+                        </Link>
+                      )}
+                      {puede('remito', 'gestionar', remito) && (
+                        <button
+                          onClick={() => handleDeleteRemito(remito.id)}
+                          title="Eliminar"
+                          className={accionIconoClase('red')}
+                        >
+                          <Trash size={ACCION_ICONO_TAMANO} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -260,20 +260,24 @@ export default function HistorialRemitos() {
                               <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
                             }
                           </PDFDownloadLink>
-                          <Link
-                            href={`/admin/remitos/editar/${remito.id}`}
-                            title="Editar"
-                            className={accionIconoClase('secondary')}
-                          >
-                            <Edit size={ACCION_ICONO_TAMANO} />
-                          </Link>
-                          <button
-                            onClick={() => handleDeleteRemito(remito.id)}
-                            title="Eliminar"
-                            className={accionIconoClase('red')}
-                          >
-                            <Trash size={ACCION_ICONO_TAMANO} />
-                          </button>
+                          {puede('remito', 'gestionar', remito) && (
+                            <Link
+                              href={`/admin/remitos/editar/${remito.id}`}
+                              title="Editar"
+                              className={accionIconoClase('secondary')}
+                            >
+                              <Edit size={ACCION_ICONO_TAMANO} />
+                            </Link>
+                          )}
+                          {puede('remito', 'gestionar', remito) && (
+                            <button
+                              onClick={() => handleDeleteRemito(remito.id)}
+                              title="Eliminar"
+                              className={accionIconoClase('red')}
+                            >
+                              <Trash size={ACCION_ICONO_TAMANO} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

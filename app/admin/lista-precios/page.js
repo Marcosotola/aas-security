@@ -29,7 +29,7 @@ const formatMoney = (amount) => {
 const ITEM_VACIO = { descripcion: '', precioUnitario: '' };
 
 function ListaPrecios() {
-    const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+    const { user, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'listaPrecios', accion: 'ver' });
     const searchParams = useSearchParams();
     const [loadingData, setLoadingData] = useState(true);
     const [guardando, setGuardando] = useState(false);
@@ -156,12 +156,14 @@ function ListaPrecios() {
                         <span className="text-gray-700">Lista de Precios</span>
                     </div>
 
-                    <button
-                        onClick={abrirModalNuevo}
-                        className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
-                    >
-                        <PlusCircle size={18} className="mr-2" /> Nuevo Item
-                    </button>
+                    {puede('listaPrecios', 'gestionar') && (
+                      <button
+                          onClick={abrirModalNuevo}
+                          className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
+                      >
+                          <PlusCircle size={18} className="mr-2" /> Nuevo Item
+                      </button>
+                    )}
                 </div>
 
                 <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
@@ -194,20 +196,24 @@ function ListaPrecios() {
                                         <div className="mb-3 text-sm font-medium text-gray-900">{item.descripcion}</div>
                                         <div className="mt-auto text-lg font-semibold text-primary">{formatMoney(item.precioUnitario)}</div>
                                         <div className="flex justify-end pt-3 mt-3 gap-1 border-t border-gray-100">
-                                            <button
-                                                onClick={() => abrirModalEditar(item)}
-                                                title="Editar"
-                                                className={accionIconoClase('secondary')}
-                                            >
-                                                <Edit size={ACCION_ICONO_TAMANO} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleEliminarItem(item.id)}
-                                                title="Eliminar"
-                                                className={accionIconoClase('red')}
-                                            >
-                                                <Trash size={ACCION_ICONO_TAMANO} />
-                                            </button>
+                                            {puede('listaPrecios', 'gestionar') && (
+                                              <button
+                                                  onClick={() => abrirModalEditar(item)}
+                                                  title="Editar"
+                                                  className={accionIconoClase('secondary')}
+                                              >
+                                                  <Edit size={ACCION_ICONO_TAMANO} />
+                                              </button>
+                                            )}
+                                            {puede('listaPrecios', 'gestionar') && (
+                                              <button
+                                                  onClick={() => handleEliminarItem(item.id)}
+                                                  title="Eliminar"
+                                                  className={accionIconoClase('red')}
+                                              >
+                                                  <Trash size={ACCION_ICONO_TAMANO} />
+                                              </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -247,20 +253,24 @@ function ListaPrecios() {
                                             </td>
                                             <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                                                 <div className="flex justify-end gap-1">
-                                                    <button
-                                                        onClick={() => abrirModalEditar(item)}
-                                                        title="Editar"
-                                                        className={accionIconoClase('secondary')}
-                                                    >
-                                                        <Edit size={ACCION_ICONO_TAMANO} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleEliminarItem(item.id)}
-                                                        title="Eliminar"
-                                                        className={accionIconoClase('red')}
-                                                    >
-                                                        <Trash size={ACCION_ICONO_TAMANO} />
-                                                    </button>
+                                                    {puede('listaPrecios', 'gestionar') && (
+                                                      <button
+                                                          onClick={() => abrirModalEditar(item)}
+                                                          title="Editar"
+                                                          className={accionIconoClase('secondary')}
+                                                      >
+                                                          <Edit size={ACCION_ICONO_TAMANO} />
+                                                      </button>
+                                                    )}
+                                                    {puede('listaPrecios', 'gestionar') && (
+                                                      <button
+                                                          onClick={() => handleEliminarItem(item.id)}
+                                                          title="Eliminar"
+                                                          className={accionIconoClase('red')}
+                                                      >
+                                                          <Trash size={ACCION_ICONO_TAMANO} />
+                                                      </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>

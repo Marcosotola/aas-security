@@ -14,7 +14,7 @@ const GRUPOS = ['Relevamiento', 'Detección', 'Extinción'];
 // que después se adjuntan y completan dentro de una Orden de Trabajo. Se
 // organizan en 3 grupos fijos, cada uno con sus propias plantillas.
 export default function Planillas() {
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'plantillas', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [plantillas, setPlantillas] = useState([]);
   const loading = loadingAuth || loadingData;
@@ -68,12 +68,14 @@ export default function Planillas() {
             <span className="text-gray-700">Planillas</span>
           </div>
 
-          <Link
-            href="/admin/planillas/nueva"
-            className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
-          >
-            <FilePlus size={18} className="mr-2" /> Nueva Plantilla
-          </Link>
+          {puede('plantillas', 'gestionar') && (
+            <Link
+              href="/admin/planillas/nueva"
+              className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
+            >
+              <FilePlus size={18} className="mr-2" /> Nueva Plantilla
+            </Link>
+          )}
         </div>
 
         <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
@@ -113,20 +115,24 @@ export default function Planillas() {
                           </div>
                         </div>
                         <div className="flex justify-end gap-1 pt-3 mt-3 border-t border-gray-100">
-                          <Link
-                            href={`/admin/planillas/editar/${plantilla.id}`}
-                            title="Editar"
-                            className={accionIconoClase('secondary')}
-                          >
-                            <Edit size={ACCION_ICONO_TAMANO} />
-                          </Link>
-                          <button
-                            onClick={() => handleEliminar(plantilla.id)}
-                            title="Eliminar"
-                            className={accionIconoClase('red')}
-                          >
-                            <Trash size={ACCION_ICONO_TAMANO} />
-                          </button>
+                          {puede('plantillas', 'gestionar') && (
+                            <Link
+                              href={`/admin/planillas/editar/${plantilla.id}`}
+                              title="Editar"
+                              className={accionIconoClase('secondary')}
+                            >
+                              <Edit size={ACCION_ICONO_TAMANO} />
+                            </Link>
+                          )}
+                          {puede('plantillas', 'gestionar') && (
+                            <button
+                              onClick={() => handleEliminar(plantilla.id)}
+                              title="Eliminar"
+                              className={accionIconoClase('red')}
+                            >
+                              <Trash size={ACCION_ICONO_TAMANO} />
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}

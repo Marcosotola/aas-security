@@ -7,6 +7,7 @@ import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { eliminarMantenimientoPreventivo } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
+import { soloPropios } from '../../lib/permisos';
 import DescargarMantenimientoPreventivoPDF from '../../components/pdf/DescargarMantenimientoPreventivoPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
 import SedeLink from '../../components/admin/SedeLink';
@@ -14,13 +15,14 @@ import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/ac
 import { formatearFecha } from '../../lib/fecha';
 
 export default function HistorialMantenimientosPreventivos() {
-  const { user, usuario, loading: loadingAuth } = useStaffAuth(['Admin', 'Tecnico']);
+  const { user, usuario, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'mantenimiento', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [mantenimientos, setMantenimientos] = useState([]);
   const [filtro, setFiltro] = useState('');
   const [vista, setVista] = useState('tabla');
   const loading = loadingAuth || loadingData;
-  const esTecnico = usuario?.role === 'Tecnico';
+  // Con nivel "propios" solo ve lo que creó (mismo criterio que firestore.rules).
+  const soloLoPropio = soloPropios(usuario, 'mantenimiento');
 
   useEffect(() => {
     if (!user || !usuario) return;
@@ -34,7 +36,7 @@ export default function HistorialMantenimientosPreventivos() {
   const cargarMantenimientos = async () => {
     try {
       const mantenimientosRef = collection(db, 'mantenimientosPreventivos');
-      if (esTecnico) {
+      if (soloLoPropio) {
         const q = query(mantenimientosRef, where('usuarioCreador', '==', user.email));
         const querySnapshot = await getDocs(q);
         const datos = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -96,19 +98,21 @@ export default function HistorialMantenimientosPreventivos() {
             <span className="text-gray-700">Mantenimiento Preventivo</span>
           </div>
 
-          <Link
-            href="/admin/mantenimiento-preventivo/nueva"
-            className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
-          >
-            <FilePlus size={18} className="mr-2" /> Nuevo Mantenimiento Preventivo
-          </Link>
+          {puede('mantenimiento', 'crear') && (
+            <Link
+              href="/admin/mantenimiento-preventivo/nueva"
+              className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
+            >
+              <FilePlus size={18} className="mr-2" /> Nuevo Mantenimiento Preventivo
+            </Link>
+          )}
         </div>
 
         <h2 className="mb-1 text-2xl font-bold font-montserrat text-primary">
           Mantenimiento Preventivo
         </h2>
         <p className="mb-6 text-sm text-gray-500">
-          {esTecnico ? 'Mostrando solo los mantenimientos preventivos que vos creaste.' : ' '}
+          {soloLoPropio ? 'Mostrando solo los mantenimientos preventivos que vos creaste.' : ' '}
         </p>
 
         <div className="p-6 mb-8 bg-white rounded-lg shadow-md">
@@ -146,7 +150,7 @@ export default function HistorialMantenimientosPreventivos() {
                     </div>
                     <div className="mt-1 text-sm text-gray-900">{mantenimiento.cliente?.nombre || 'N/A'}</div>
                     <div className="mt-1 text-sm text-gray-500">{mantenimiento.cliente?.empresa || 'N/A'}</div>
-                    {!esTecnico && mantenimiento.usuarioCreador && (
+                    {!soloLoPropio && mantenimiento.usuarioCreador && (
                       <div className="text-xs text-gray-400">Técnico: {mantenimiento.usuarioCreador}</div>
                     )}
                     <div className="mt-2 text-sm text-gray-500">{mantenimiento.fotos?.length || 0} foto(s)</div>
@@ -162,20 +166,24 @@ export default function HistorialMantenimientosPreventivos() {
                       <DescargarMantenimientoPreventivoPDF mantenimiento={mantenimiento} className={accionIconoClase('primary')}>
                         <Download size={ACCION_ICONO_TAMANO} />
                       </DescargarMantenimientoPreventivoPDF>
-                      <Link
-                        href={`/admin/mantenimiento-preventivo/editar/${mantenimiento.id}`}
-                        title="Editar"
-                        className={accionIconoClase('secondary')}
-                      >
-                        <Edit size={ACCION_ICONO_TAMANO} />
-                      </Link>
-                      <button
-                        onClick={() => handleEliminar(mantenimiento.id)}
-                        title="Eliminar"
-                        className={accionIconoClase('red')}
-                      >
-                        <Trash size={ACCION_ICONO_TAMANO} />
-                      </button>
+                      {puede('mantenimiento', 'gestionar', mantenimiento) && (
+                        <Link
+                          href={`/admin/mantenimiento-preventivo/editar/${mantenimiento.id}`}
+                          title="Editar"
+                          className={accionIconoClase('secondary')}
+                        >
+                          <Edit size={ACCION_ICONO_TAMANO} />
+                        </Link>
+                      )}
+                      {puede('mantenimiento', 'gestionar', mantenimiento) && (
+                        <button
+                          onClick={() => handleEliminar(mantenimiento.id)}
+                          title="Eliminar"
+                          className={accionIconoClase('red')}
+                        >
+                          <Trash size={ACCION_ICONO_TAMANO} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -194,7 +202,7 @@ export default function HistorialMantenimientosPreventivos() {
                     <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Número</th>
                     <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Fecha</th>
                     <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Cliente</th>
-                    {!esTecnico && (
+                    {!soloLoPropio && (
                       <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Técnico</th>
                     )}
                     <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Fotos</th>
@@ -224,7 +232,7 @@ export default function HistorialMantenimientosPreventivos() {
                           <div className="text-sm text-gray-900">{mantenimiento.cliente?.nombre || 'N/A'}</div>
                           <div className="text-xs text-gray-400">{mantenimiento.cliente?.empresa || ''}</div>
                         </td>
-                        {!esTecnico && (
+                        {!soloLoPropio && (
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-500">{mantenimiento.usuarioCreador || '-'}</div>
                           </td>
@@ -244,27 +252,31 @@ export default function HistorialMantenimientosPreventivos() {
                             <DescargarMantenimientoPreventivoPDF mantenimiento={mantenimiento} className={accionIconoClase('primary')}>
                               <Download size={ACCION_ICONO_TAMANO} />
                             </DescargarMantenimientoPreventivoPDF>
-                            <Link
-                              href={`/admin/mantenimiento-preventivo/editar/${mantenimiento.id}`}
-                              title="Editar"
-                              className={accionIconoClase('secondary')}
-                            >
-                              <Edit size={ACCION_ICONO_TAMANO} />
-                            </Link>
-                            <button
-                              onClick={() => handleEliminar(mantenimiento.id)}
-                              title="Eliminar"
-                              className={accionIconoClase('red')}
-                            >
-                              <Trash size={ACCION_ICONO_TAMANO} />
-                            </button>
+                            {puede('mantenimiento', 'gestionar', mantenimiento) && (
+                              <Link
+                                href={`/admin/mantenimiento-preventivo/editar/${mantenimiento.id}`}
+                                title="Editar"
+                                className={accionIconoClase('secondary')}
+                              >
+                                <Edit size={ACCION_ICONO_TAMANO} />
+                              </Link>
+                            )}
+                            {puede('mantenimiento', 'gestionar', mantenimiento) && (
+                              <button
+                                onClick={() => handleEliminar(mantenimiento.id)}
+                                title="Eliminar"
+                                className={accionIconoClase('red')}
+                              >
+                                <Trash size={ACCION_ICONO_TAMANO} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={esTecnico ? 6 : 7} className="px-6 py-4 text-center text-gray-500">
+                      <td colSpan={soloLoPropio ? 6 : 7} className="px-6 py-4 text-center text-gray-500">
                         No hay mantenimientos preventivos que coincidan con su búsqueda
                       </td>
                     </tr>

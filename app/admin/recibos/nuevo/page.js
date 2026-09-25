@@ -68,7 +68,7 @@ const numeroALetras = (numero) => {
 
 export default function NuevoRecibo() {
   const router = useRouter();
-  const { user, loading } = useStaffAuth(['Admin']);
+  const { user, loading } = useStaffAuth({ modulo: 'recibo', accion: 'crear' });
   const [guardando, setGuardando] = useState(false);
   const [documentoGuardado, setDocumentoGuardado] = useState(null);
   const [showCanvas, setShowCanvas] = useState(true);

@@ -7,8 +7,9 @@ import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye, ChevronDo
 import SedeLink from '../../components/admin/SedeLink';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { actualizarPresupuesto, eliminarPresupuesto } from '../../lib/firestore';
+import { actualizarPresupuesto, eliminarPresupuesto, obtenerPresupuestos } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
+import { soloPropios } from '../../lib/permisos';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import PresupuestoPDF from '../../components/pdf/PresupuestoPDF';
 import PortalDropdown from '../../components/PortalDropdown';
@@ -19,7 +20,7 @@ import { formatearFecha, fechaHoyLocal } from '../../lib/fecha';
 const ESTADOS_PRESUPUESTO = ['Pendiente', 'Aprobado', 'Rechazado'];
 
 export default function HistorialPresupuestos() {
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, usuario, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'presupuesto', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [presupuestos, setPresupuestos] = useState([]);
   const [filtro, setFiltro] = useState('');
@@ -59,14 +60,7 @@ export default function HistorialPresupuestos() {
 
   const cargarPresupuestos = async () => {
     try {
-      const presupuestosRef = collection(db, 'presupuestos');
-      const q = query(presupuestosRef, orderBy('fechaCreacion', 'desc'));
-      const querySnapshot = await getDocs(q);
-
-      const presupuestosData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const presupuestosData = await obtenerPresupuestos(soloPropios(usuario, 'presupuesto') ? user.email : null);
 
       console.log("Presupuestos cargados:", presupuestosData.length);
       setPresupuestos(presupuestosData);
@@ -150,12 +144,14 @@ export default function HistorialPresupuestos() {
             <span className="text-gray-700">Historial de Presupuestos</span>
           </div>
 
-          <Link
-            href="/admin/presupuestos/nuevo"
-            className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
-          >
-            <FilePlus size={18} className="mr-2" /> Nuevo Presupuesto
-          </Link>
+          {puede('presupuesto', 'crear') && (
+            <Link
+              href="/admin/presupuestos/nuevo"
+              className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
+            >
+              <FilePlus size={18} className="mr-2" /> Nuevo Presupuesto
+            </Link>
+          )}
         </div>
 
         <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
@@ -210,7 +206,7 @@ export default function HistorialPresupuestos() {
                         type="button"
                         ref={(el) => { estadoBtnRefs.current[presupuesto.id] = el; }}
                         onClick={() => setEstadoMenuAbierto(estadoMenuAbierto === presupuesto.id ? null : presupuesto.id)}
-                        disabled={actualizandoEstado === presupuesto.id}
+                        disabled={actualizandoEstado === presupuesto.id || !puede('presupuesto', 'gestionar', presupuesto)}
                         className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs leading-5 font-semibold rounded-full transition-opacity hover:opacity-80 disabled:opacity-50
                           ${presupuesto.estado === 'Aprobado' ? 'bg-green-100 text-green-800' :
                             presupuesto.estado === 'Rechazado' ? 'bg-red-100 text-red-800' :
@@ -260,20 +256,24 @@ export default function HistorialPresupuestos() {
                         }
                       </PDFDownloadLink>
 
-                      <Link
-                        href={`/admin/presupuestos/editar/${presupuesto.id}`}
-                        title="Editar"
-                        className={accionIconoClase('secondary')}
-                      >
-                        <Edit size={ACCION_ICONO_TAMANO} />
-                      </Link>
-                      <button
-                        onClick={() => handleDeletePresupuesto(presupuesto.id)}
-                        title="Eliminar"
-                        className={accionIconoClase('red')}
-                      >
-                        <Trash size={ACCION_ICONO_TAMANO} />
-                      </button>
+                      {puede('presupuesto', 'gestionar', presupuesto) && (
+                        <Link
+                          href={`/admin/presupuestos/editar/${presupuesto.id}`}
+                          title="Editar"
+                          className={accionIconoClase('secondary')}
+                        >
+                          <Edit size={ACCION_ICONO_TAMANO} />
+                        </Link>
+                      )}
+                      {puede('presupuesto', 'gestionar', presupuesto) && (
+                        <button
+                          onClick={() => handleDeletePresupuesto(presupuesto.id)}
+                          title="Eliminar"
+                          className={accionIconoClase('red')}
+                        >
+                          <Trash size={ACCION_ICONO_TAMANO} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -349,7 +349,7 @@ export default function HistorialPresupuestos() {
                           type="button"
                           ref={(el) => { estadoBtnRefs.current[presupuesto.id] = el; }}
                           onClick={() => setEstadoMenuAbierto(estadoMenuAbierto === presupuesto.id ? null : presupuesto.id)}
-                          disabled={actualizandoEstado === presupuesto.id}
+                          disabled={actualizandoEstado === presupuesto.id || !puede('presupuesto', 'gestionar', presupuesto)}
                           className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs leading-5 font-semibold rounded-full transition-opacity hover:opacity-80 disabled:opacity-50
                             ${presupuesto.estado === 'Aprobado' ? 'bg-green-100 text-green-800' :
                               presupuesto.estado === 'Rechazado' ? 'bg-red-100 text-red-800' :
@@ -399,20 +399,24 @@ export default function HistorialPresupuestos() {
                             }
                           </PDFDownloadLink>
 
-                          <Link
-                            href={`/admin/presupuestos/editar/${presupuesto.id}`}
-                            title="Editar"
-                            className={accionIconoClase('secondary')}
-                          >
-                            <Edit size={ACCION_ICONO_TAMANO} />
-                          </Link>
-                          <button
-                            onClick={() => handleDeletePresupuesto(presupuesto.id)}
-                            title="Eliminar"
-                            className={accionIconoClase('red')}
-                          >
-                            <Trash size={ACCION_ICONO_TAMANO} />
-                          </button>
+                          {puede('presupuesto', 'gestionar', presupuesto) && (
+                            <Link
+                              href={`/admin/presupuestos/editar/${presupuesto.id}`}
+                              title="Editar"
+                              className={accionIconoClase('secondary')}
+                            >
+                              <Edit size={ACCION_ICONO_TAMANO} />
+                            </Link>
+                          )}
+                          {puede('presupuesto', 'gestionar', presupuesto) && (
+                            <button
+                              onClick={() => handleDeletePresupuesto(presupuesto.id)}
+                              title="Eliminar"
+                              className={accionIconoClase('red')}
+                            >
+                              <Trash size={ACCION_ICONO_TAMANO} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

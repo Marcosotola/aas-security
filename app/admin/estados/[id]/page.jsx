@@ -28,7 +28,7 @@ export default function VerEstado({ params }) {
   const id = resolvedParams.id;
 
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'estado', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [estado, setEstado] = useState(null);
   const loading = loadingAuth || loadingData;
@@ -95,12 +95,14 @@ export default function VerEstado({ params }) {
             >
               <ArrowLeft size={18} className="mr-2" /> Volver
             </Link>
-            <Link
-              href={`/admin/estados/editar/${id}`}
-              className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
-            >
-              <Edit size={18} className="mr-2" /> Editar
-            </Link>
+            {puede('estado', 'gestionar', estado) && (
+              <Link
+                href={`/admin/estados/editar/${id}`}
+                className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
+              >
+                <Edit size={18} className="mr-2" /> Editar
+              </Link>
+            )}
 
             <PDFDownloadLink
               document={<EstadoPDF estado={estado} />}

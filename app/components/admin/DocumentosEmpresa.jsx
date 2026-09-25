@@ -313,7 +313,9 @@ export default function DocumentosEmpresa({ empresa, sedeInicial = 'todas' }) {
 
   useEffect(() => {
     const tipos = Object.keys(TIPOS_DOC);
-    Promise.all(tipos.map((t) => obtenerDocumentosDeEmpresa(t, empresa.id)))
+    // Un tipo que la persona no puede ver completo (sin acceso o nivel
+    // "propios") queda vacío en vez de cortar la carga de los demás.
+    Promise.all(tipos.map((t) => obtenerDocumentosDeEmpresa(t, empresa.id).catch(() => [])))
       .then((resultados) => {
         const porTipo = Object.fromEntries(tipos.map((t, i) => [t, resultados[i]]));
         // Los informes no tienen número correlativo, solo un título de texto

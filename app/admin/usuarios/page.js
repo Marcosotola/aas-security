@@ -3,24 +3,29 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Home, Search, ChevronDown, Users as UsersIcon, MapPin, UserPlus, Edit, Trash, Eye, X, Phone, Building2, IdCard, KeyRound } from 'lucide-react';
-import { obtenerUsuarios, actualizarUsuario, obtenerEmpresas } from '../../lib/firestore';
+import { useRouter } from 'next/navigation';
+import { Home, Search, ChevronDown, Users as UsersIcon, MapPin, UserPlus, Edit, Trash, Eye, X, Phone, Building2, IdCard, KeyRound, ShieldCheck } from 'lucide-react';
+import { obtenerUsuarios, actualizarUsuario, obtenerEmpresas, obtenerPerfiles } from '../../lib/firestore';
 import { auth } from '../../lib/firebase';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import PortalDropdown from '../../components/PortalDropdown';
 import ViewToggle from '../../components/admin/ViewToggle';
 import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/accionIcono';
 
-const ROLES = ['Cliente', 'Tecnico', 'Admin'];
+// "Personal" necesita un perfil de permisos: al elegirlo se va a la ficha para
+// asignarlo (ver handleCambiarRol).
+const ROLES = ['Cliente', 'Personal', 'Admin'];
 
 export default function GestionUsuarios() {
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const router = useRouter();
+  const { user, loading: loadingAuth } = useStaffAuth('admin');
   const [usuarios, setUsuarios] = useState([]);
   const [loadingUsuarios, setLoadingUsuarios] = useState(true);
   const [filtro, setFiltro] = useState('');
   const [rolMenuAbierto, setRolMenuAbierto] = useState(null);
   const [actualizandoRol, setActualizandoRol] = useState(null);
   const [empresasPorId, setEmpresasPorId] = useState(new Map());
+  const [perfilesPorId, setPerfilesPorId] = useState(new Map());
   const [vista, setVista] = useState('tabla');
   const [eliminandoUsuario, setEliminandoUsuario] = useState(null);
   const [usuarioViendo, setUsuarioViendo] = useState(null);
@@ -33,9 +38,14 @@ export default function GestionUsuarios() {
 
   const cargarUsuarios = async () => {
     try {
-      const [data, empresas] = await Promise.all([obtenerUsuarios(), obtenerEmpresas().catch(() => [])]);
+      const [data, empresas, perfiles] = await Promise.all([
+        obtenerUsuarios(),
+        obtenerEmpresas().catch(() => []),
+        obtenerPerfiles().catch(() => [])
+      ]);
       setUsuarios(data);
       setEmpresasPorId(new Map(empresas.map((e) => [e.id, e])));
+      setPerfilesPorId(new Map(perfiles.map((p) => [p.id, p])));
     } catch (error) {
       console.error('Error al cargar usuarios:', error);
       setUsuarios([]);
@@ -48,6 +58,12 @@ export default function GestionUsuarios() {
     const actual = usuarios.find(u => u.id === uid);
     if (!actual || actual.role === nuevoRol) {
       setRolMenuAbierto(null);
+      return;
+    }
+    // Personal sin perfil no puede hacer nada: se elige el perfil en la ficha.
+    if (nuevoRol === 'Personal') {
+      setRolMenuAbierto(null);
+      router.push(`/admin/usuarios/${uid}?perfil=1`);
       return;
     }
 
@@ -115,7 +131,9 @@ export default function GestionUsuarios() {
   }
 
   const textoAccesos = (u) => {
-    if ((u.role || 'Cliente') !== 'Cliente') return '-';
+    if (u.role === 'Admin') return 'Acceso total';
+    if (u.role === 'Personal') return `Perfil: ${perfilesPorId.get(u.perfilId)?.nombre || 'sin asignar'}`;
+    if (u.role === 'Tecnico') return 'Técnico (sin perfil)';
     const empresas = empresasDeAccesos(u);
     return empresas.length > 0 ? empresas.map((e) => e.nombre).join(', ') : 'Sin accesos';
   };
@@ -146,13 +164,22 @@ export default function GestionUsuarios() {
           <h2 className="text-2xl font-bold font-montserrat text-primary">
             Usuarios
           </h2>
-          <Link
-            href="/registro?origen=admin"
-            className="flex items-center gap-2 px-4 py-2 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
-          >
-            <UserPlus size={18} />
-            Agregar usuario
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/admin/usuarios/perfiles"
+              className="flex items-center gap-2 px-4 py-2 text-gray-700 transition-colors border border-gray-300 rounded-md hover:bg-gray-100"
+            >
+              <ShieldCheck size={18} />
+              Perfiles del personal
+            </Link>
+            <Link
+              href="/registro?origen=admin"
+              className="flex items-center gap-2 px-4 py-2 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
+            >
+              <UserPlus size={18} />
+              Agregar usuario
+            </Link>
+          </div>
         </div>
 
         <div className="p-6 mb-8 bg-white rounded-lg shadow-md">
@@ -195,7 +222,7 @@ export default function GestionUsuarios() {
                           disabled={actualizandoRol === u.id}
                           className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full transition-opacity hover:opacity-80 disabled:opacity-50
                             ${u.role === 'Admin' ? 'bg-blue-100 text-blue-800' :
-                              u.role === 'Tecnico' ? 'bg-purple-100 text-purple-800' :
+                              ['Personal', 'Tecnico'].includes(u.role) ? 'bg-purple-100 text-purple-800' :
                                 'bg-green-100 text-green-800'}`}
                         >
                           {u.role || 'Cliente'}
@@ -296,7 +323,7 @@ export default function GestionUsuarios() {
                           disabled={actualizandoRol === u.id}
                           className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full transition-opacity hover:opacity-80 disabled:opacity-50
                             ${u.role === 'Admin' ? 'bg-blue-100 text-blue-800' :
-                              u.role === 'Tecnico' ? 'bg-purple-100 text-purple-800' :
+                              ['Personal', 'Tecnico'].includes(u.role) ? 'bg-purple-100 text-purple-800' :
                                 'bg-green-100 text-green-800'}`}
                         >
                           {u.role || 'Cliente'}

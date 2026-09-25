@@ -15,7 +15,7 @@ import { fechaHoyLocal } from '../../../lib/fecha';
 
 export default function NuevoDocumento() {
   const router = useRouter();
-  const { user, loading } = useStaffAuth(['Admin']);
+  const { user, loading } = useStaffAuth({ modulo: 'informe', accion: 'crear' });
   const [guardando, setGuardando] = useState(false);
   const [documentoGuardado, setDocumentoGuardado] = useState(null);
   const [empresas, setEmpresas] = useState([]);

@@ -20,7 +20,7 @@ export default function VerRemito({ params }) {
   const id = resolvedParams.id;
 
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'remito', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [remito, setRemito] = useState(null);
   const loading = loadingAuth || loadingData;
@@ -104,18 +104,22 @@ export default function VerRemito({ params }) {
               >
                 <ArrowLeft size={18} className="mr-2" /> Volver
               </Link>
-              <Link
-                href={`/admin/remitos/editar/${id}`}
-                className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
-              >
-                <Edit size={18} className="mr-2" /> Editar
-              </Link>
-              <button
-                onClick={handleDeleteRemito}
-                className="flex items-center px-4 py-2 text-white transition-colors bg-red-500 rounded-md hover:bg-red-600"
-              >
-                <Trash size={18} className="mr-2" /> Eliminar
-              </button>
+              {puede('remito', 'gestionar', remito) && (
+                <Link
+                  href={`/admin/remitos/editar/${id}`}
+                  className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
+                >
+                  <Edit size={18} className="mr-2" /> Editar
+                </Link>
+              )}
+              {puede('remito', 'gestionar', remito) && (
+                <button
+                  onClick={handleDeleteRemito}
+                  className="flex items-center px-4 py-2 text-white transition-colors bg-red-500 rounded-md hover:bg-red-600"
+                >
+                  <Trash size={18} className="mr-2" /> Eliminar
+                </button>
+              )}
               <button
                 title="Descargar PDF"
                 className="flex px-4 py-2 text-white rounded-md bg-primary hover:bg-primary-dark"

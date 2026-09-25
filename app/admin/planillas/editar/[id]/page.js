@@ -17,7 +17,7 @@ export default function EditarPlantilla({ params }) {
   const { id } = use(params);
 
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, loading: loadingAuth } = useStaffAuth({ modulo: 'plantillas', accion: 'gestionar' });
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const loading = loadingAuth || loadingData;

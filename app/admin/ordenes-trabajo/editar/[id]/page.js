@@ -24,7 +24,7 @@ export default function EditarOrdenTrabajo({ params }) {
   const { id } = use(params);
 
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin', 'Tecnico']);
+  const { user, loading: loadingAuth } = useStaffAuth({ modulo: 'orden', accion: 'crear' });
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [empresas, setEmpresas] = useState([]);

@@ -32,32 +32,35 @@ import {
 import { signOut } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 import { esSuperAdmin } from '../../lib/superAdmin';
+import { puede, esAdmin as esAdminPerfil } from '../../lib/permisos';
 import PortalDropdown from '../PortalDropdown';
 
 // Presupuestos, Recibos, Remitos, Estados de cuenta, Informes, Facturas y
 // Certificados viven agrupados bajo el menú "Documentos" (nav de escritorio
 // como dropdown, mobile como sublista) para no saturar la barra de
 // navegación con tantos ítems sueltos.
+// `modulo` es la clave de permisos (app/lib/permisos.js) que hace falta
+// poder "ver" para que el ítem aparezca; 'admin' = solo Admin.
 const DOCUMENTOS_SUBMENU = [
-  { id: 'presupuestos', label: 'Presupuestos', icono: FileText, href: '/admin/presupuestos' },
-  { id: 'estados', label: 'Estados de cuenta', icono: DollarSign, href: '/admin/estados' },
-  { id: 'remitos', label: 'Remitos', icono: FileCheck, href: '/admin/remitos' },
-  { id: 'recibos', label: 'Recibos', icono: Receipt, href: '/admin/recibos' },
-  { id: 'informes', label: 'Informes', icono: File, href: '/admin/informes' },
-  { id: 'facturas', label: 'Facturas', icono: Banknote, href: '/admin/facturas' },
-  { id: 'certificados', label: 'Certificados', icono: Award, href: '/admin/certificados' },
+  { id: 'presupuestos', label: 'Presupuestos', icono: FileText, href: '/admin/presupuestos', modulo: 'presupuesto' },
+  { id: 'estados', label: 'Estados de cuenta', icono: DollarSign, href: '/admin/estados', modulo: 'estado' },
+  { id: 'remitos', label: 'Remitos', icono: FileCheck, href: '/admin/remitos', modulo: 'remito' },
+  { id: 'recibos', label: 'Recibos', icono: Receipt, href: '/admin/recibos', modulo: 'recibo' },
+  { id: 'informes', label: 'Informes', icono: File, href: '/admin/informes', modulo: 'informe' },
+  { id: 'facturas', label: 'Facturas', icono: Banknote, href: '/admin/facturas', modulo: 'factura' },
+  { id: 'certificados', label: 'Certificados', icono: Award, href: '/admin/certificados', modulo: 'certificado' },
 ];
 
 const MODULOS_NAV = [
-  { id: 'ordenes-trabajo', label: 'Órdenes de Trabajo', icono: ClipboardList, href: '/admin/ordenes-trabajo' },
-  { id: 'mantenimiento-preventivo', label: 'Mantenimiento Preventivo', icono: Wrench, href: '/admin/mantenimiento-preventivo' },
-  { id: 'planillas', label: 'Planillas', icono: ListChecks, href: '/admin/planillas' },
-  { id: 'finanzas', label: 'Finanzas', icono: Wallet, href: '/admin/finanzas' },
-  { id: 'lista-precios', label: 'Lista de precios', icono: Tag, href: '/admin/lista-precios' },
-  { id: 'empresas', label: 'Empresas', icono: Building2, href: '/admin/empresas' },
-  { id: 'usuarios', label: 'Usuarios', icono: UserCog, href: '/admin/usuarios' },
-  { id: 'consultas', label: 'Consultas', icono: MessageCircle, href: '/admin/consultas' },
-  { id: 'suscripcion', label: 'Suscripción', icono: CreditCard, href: '/admin/suscripcion' },
+  { id: 'ordenes-trabajo', label: 'Órdenes de Trabajo', icono: ClipboardList, href: '/admin/ordenes-trabajo', modulo: 'orden' },
+  { id: 'mantenimiento-preventivo', label: 'Mantenimiento Preventivo', icono: Wrench, href: '/admin/mantenimiento-preventivo', modulo: 'mantenimiento' },
+  { id: 'planillas', label: 'Planillas', icono: ListChecks, href: '/admin/planillas', modulo: 'plantillas' },
+  { id: 'finanzas', label: 'Finanzas', icono: Wallet, href: '/admin/finanzas', modulo: 'finanzas' },
+  { id: 'lista-precios', label: 'Lista de precios', icono: Tag, href: '/admin/lista-precios', modulo: 'listaPrecios' },
+  { id: 'empresas', label: 'Empresas', icono: Building2, href: '/admin/empresas', modulo: 'empresas' },
+  { id: 'usuarios', label: 'Usuarios', icono: UserCog, href: '/admin/usuarios', modulo: 'admin' },
+  { id: 'consultas', label: 'Consultas', icono: MessageCircle, href: '/admin/consultas', modulo: 'consultas' },
+  { id: 'suscripcion', label: 'Suscripción', icono: CreditCard, href: '/admin/suscripcion', modulo: 'admin' },
 ];
 
 // Accesos rápidos de la barra inferior (solo mobile): los 4 destinos de uso
@@ -66,12 +69,12 @@ const MODULOS_NAV = [
 // cualquier submódulo de DOCUMENTOS_SUBMENU (documentosActivo).
 const BOTTOM_NAV_ITEMS = [
   { id: 'inicio', label: 'Inicio', icono: Home, href: '/admin/dashboard' },
-  { id: 'documentos', label: 'Documentos', icono: FileText, href: '/admin/documentos' },
-  { id: 'ordenes-trabajo', label: 'Órdenes', icono: ClipboardList, href: '/admin/ordenes-trabajo' },
-  { id: 'usuarios', label: 'Usuarios', icono: UserCog, href: '/admin/usuarios' },
+  { id: 'documentos', label: 'Documentos', icono: FileText, href: '/admin/documentos', modulo: 'documentos' },
+  { id: 'ordenes-trabajo', label: 'Órdenes', icono: ClipboardList, href: '/admin/ordenes-trabajo', modulo: 'orden' },
+  { id: 'usuarios', label: 'Usuarios', icono: UserCog, href: '/admin/usuarios', modulo: 'admin' },
 ];
 
-export default function AdminHeader({ user, suscripcionVencida }) {
+export default function AdminHeader({ user, perfil, suscripcionVencida }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [documentosMenuAbierto, setDocumentosMenuAbierto] = useState(false);
   const [redirigiendoAPago, setRedirigiendoAPago] = useState(false);
@@ -158,6 +161,16 @@ export default function AdminHeader({ user, suscripcionVencida }) {
 
   const esActivo = (href) => pathname === href || pathname.startsWith(`${href}/`);
   const documentosActivo = DOCUMENTOS_SUBMENU.some((item) => esActivo(item.href));
+
+  // Solo lo que esta persona puede ver (mientras carga el perfil, nada).
+  const visible = (item) => {
+    if (!item.modulo) return true;
+    if (item.modulo === 'admin') return esAdminPerfil(perfil);
+    return puede(perfil, item.modulo, 'ver');
+  };
+  const documentosSubmenu = DOCUMENTOS_SUBMENU.filter(visible);
+  const modulosNav = MODULOS_NAV.filter(visible);
+  const bottomNav = BOTTOM_NAV_ITEMS.filter((item) => (item.modulo === 'documentos' ? documentosSubmenu.length > 0 : visible(item)));
 
   if (redirigiendoAPago) {
     return (
@@ -277,7 +290,7 @@ export default function AdminHeader({ user, suscripcionVencida }) {
             Inicio
           </Link>
 
-          <div className="relative flex-shrink-0">
+          <div className={`relative flex-shrink-0 ${documentosSubmenu.length === 0 ? 'hidden' : ''}`}>
             <button
               type="button"
               ref={documentosBtnRef}
@@ -299,7 +312,7 @@ export default function AdminHeader({ user, suscripcionVencida }) {
               onClose={() => setDocumentosMenuAbierto(false)}
               width={200}
             >
-              {DOCUMENTOS_SUBMENU.map((item) => {
+              {documentosSubmenu.map((item) => {
                 const Icono = item.icono;
                 return (
                   <Link
@@ -318,7 +331,7 @@ export default function AdminHeader({ user, suscripcionVencida }) {
             </PortalDropdown>
           </div>
 
-          {MODULOS_NAV.map((modulo) => {
+          {modulosNav.map((modulo) => {
             const Icono = modulo.icono;
             const activo = esActivo(modulo.href);
             return (
@@ -378,8 +391,10 @@ export default function AdminHeader({ user, suscripcionVencida }) {
               Inicio
             </Link>
 
-            <span className="pt-3 pb-1 text-xs font-semibold tracking-wide text-gray-400 uppercase">Documentos</span>
-            {DOCUMENTOS_SUBMENU.map((item) => {
+            {documentosSubmenu.length > 0 && (
+              <span className="pt-3 pb-1 text-xs font-semibold tracking-wide text-gray-400 uppercase">Documentos</span>
+            )}
+            {documentosSubmenu.map((item) => {
               const Icono = item.icono;
               return (
                 <Link
@@ -394,7 +409,7 @@ export default function AdminHeader({ user, suscripcionVencida }) {
               );
             })}
 
-            {MODULOS_NAV.map((modulo) => {
+            {modulosNav.map((modulo) => {
               const Icono = modulo.icono;
               return (
                 <Link
@@ -419,7 +434,7 @@ export default function AdminHeader({ user, suscripcionVencida }) {
         className="fixed inset-x-0 bottom-0 z-40 flex bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.08)] md:hidden"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        {BOTTOM_NAV_ITEMS.map((item) => {
+        {bottomNav.map((item) => {
           const Icono = item.icono;
           const activo = item.id === 'documentos' ? (esActivo(item.href) || documentosActivo) : esActivo(item.href);
           return (

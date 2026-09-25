@@ -12,7 +12,7 @@ export default function VerCertificado({ params }) {
   const { id } = use(params);
 
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { user, loading: loadingAuth, puede } = useStaffAuth({ modulo: 'certificado', accion: 'ver' });
   const [loadingData, setLoadingData] = useState(true);
   const [certificado, setCertificado] = useState(null);
   const loading = loadingAuth || loadingData;
@@ -63,9 +63,11 @@ export default function VerCertificado({ params }) {
             <Link href="/admin/certificados" className="flex items-center px-4 py-2 text-gray-700 transition-colors bg-gray-200 rounded-md hover:bg-gray-300">
               <ArrowLeft size={18} className="mr-2" /> Volver
             </Link>
-            <Link href={`/admin/certificados/editar/${id}`} className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600">
-              <Edit size={18} className="mr-2" /> Editar
-            </Link>
+            {puede('certificado', 'gestionar', certificado) && (
+              <Link href={`/admin/certificados/editar/${id}`} className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600">
+                <Edit size={18} className="mr-2" /> Editar
+              </Link>
+            )}
           </div>
         </div>
 

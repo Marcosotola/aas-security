@@ -14,7 +14,7 @@ import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/ac
 
 export default function EmpresasPage() {
   const router = useRouter();
-  const { loading: loadingAuth } = useStaffAuth(['Admin']);
+  const { loading: loadingAuth, puede } = useStaffAuth({ modulo: 'empresas', accion: 'ver' });
   const [empresas, setEmpresas] = useState([]);
   const [loadingEmpresas, setLoadingEmpresas] = useState(true);
   const [filtro, setFiltro] = useState('');
@@ -86,18 +86,22 @@ export default function EmpresasPage() {
       <Link href={`/admin/empresas/${empresa.id}`} title="Ver ficha (sedes y documentos)" className={accionIconoClase('primary')}>
         <ChevronRight size={ACCION_ICONO_TAMANO} />
       </Link>
-      <Link href={`/admin/empresas/${empresa.id}?editar=1`} title="Editar datos" className={accionIconoClase('secondary')}>
-        <Edit size={ACCION_ICONO_TAMANO} />
-      </Link>
-      <button
-        type="button"
-        onClick={() => handleEliminar(empresa)}
-        disabled={eliminandoId === empresa.id}
-        title="Eliminar"
-        className={accionIconoClase('red')}
-      >
-        <Trash size={ACCION_ICONO_TAMANO} />
-      </button>
+      {puede('empresas', 'gestionar') && (
+        <Link href={`/admin/empresas/${empresa.id}?editar=1`} title="Editar datos" className={accionIconoClase('secondary')}>
+          <Edit size={ACCION_ICONO_TAMANO} />
+        </Link>
+      )}
+      {puede('empresas', 'gestionar') && (
+        <button
+          type="button"
+          onClick={() => handleEliminar(empresa)}
+          disabled={eliminandoId === empresa.id}
+          title="Eliminar"
+          className={accionIconoClase('red')}
+        >
+          <Trash size={ACCION_ICONO_TAMANO} />
+        </button>
+      )}
     </div>
   );
 
@@ -125,14 +129,16 @@ export default function EmpresasPage() {
 
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <h2 className="text-2xl font-bold font-montserrat text-primary">Empresas</h2>
-          <button
-            type="button"
-            onClick={() => setCreando(true)}
-            className="flex items-center gap-2 px-4 py-2 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
-          >
-            <PlusCircle size={18} />
-            Nueva empresa
-          </button>
+          {puede('empresas', 'gestionar') && (
+            <button
+              type="button"
+              onClick={() => setCreando(true)}
+              className="flex items-center gap-2 px-4 py-2 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
+            >
+              <PlusCircle size={18} />
+              Nueva empresa
+            </button>
+          )}
         </div>
 
         <div className="p-6 mb-8 bg-white rounded-lg shadow-md">
