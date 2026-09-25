@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Home, Search, Building2, PlusCircle, Trash, MapPin, X, ChevronRight } from 'lucide-react';
+import { Home, Search, Building2, PlusCircle, Trash, MapPin, X, ChevronRight, Edit } from 'lucide-react';
 import { obtenerEmpresas, crearEmpresa, eliminarEmpresa, contarDocumentosDeEmpresa } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { buscarEmpresasSimilares, normalizarNombreEmpresa, sedesActivas } from '../../lib/empresas';
@@ -83,8 +83,11 @@ export default function EmpresasPage() {
 
   const acciones = (empresa) => (
     <div className="flex items-center justify-end gap-1">
-      <Link href={`/admin/empresas/${empresa.id}`} title="Ver ficha" className={accionIconoClase('primary')}>
+      <Link href={`/admin/empresas/${empresa.id}`} title="Ver ficha (sedes y documentos)" className={accionIconoClase('primary')}>
         <ChevronRight size={ACCION_ICONO_TAMANO} />
+      </Link>
+      <Link href={`/admin/empresas/${empresa.id}?editar=1`} title="Editar datos" className={accionIconoClase('secondary')}>
+        <Edit size={ACCION_ICONO_TAMANO} />
       </Link>
       <button
         type="button"

@@ -60,7 +60,8 @@ function FichaEmpresa() {
   const { loading: loadingAuth } = useStaffAuth(['Admin']);
   const [empresa, setEmpresa] = useState(null);
   const [cargando, setCargando] = useState(true);
-  const [editandoDatos, setEditandoDatos] = useState(false);
+  // ?editar=1 (lápiz del listado de Empresas) abre directo en edición.
+  const [editandoDatos, setEditandoDatos] = useState(() => searchParams.get('editar') === '1');
   const [guardandoDatos, setGuardandoDatos] = useState(false);
 
   const [agregandoSede, setAgregandoSede] = useState(false);
