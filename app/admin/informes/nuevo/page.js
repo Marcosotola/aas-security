@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Save, Download } from 'lucide-react';
-import { crearDocumento, obtenerClientes } from '../../../lib/firestore';
+import { crearDocumento, obtenerEmpresas } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import DocumentoPDF from '../../../components/pdf/DocumentoPDF';
-import ClienteSelector from '../../../components/ClienteSelector';
+import EmpresaSelector from '../../../components/EmpresaSelector';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
 import RichTextEditor from '../../../components/ui/RichTextEditor';
 import { fechaHoyLocal } from '../../../lib/fecha';
@@ -18,7 +18,7 @@ export default function NuevoDocumento() {
   const { user, loading } = useStaffAuth(['Admin']);
   const [guardando, setGuardando] = useState(false);
   const [documentoGuardado, setDocumentoGuardado] = useState(null);
-  const [clientes, setClientes] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
 
   // Estado del cliente
   const [cliente, setCliente] = useState({
@@ -36,14 +36,16 @@ export default function NuevoDocumento() {
     titulo: '',
     fecha: fechaHoyLocal(),
     clienteId: null,
+    empresaId: null,
+    sedeId: null,
     contenido: ''
   });
 
   useEffect(() => {
     if (!user) return;
-    obtenerClientes()
-      .then(setClientes)
-      .catch((error) => console.error('Error al cargar los clientes:', error));
+    obtenerEmpresas()
+      .then(setEmpresas)
+      .catch((error) => console.error('Error al cargar las empresas:', error));
   }, [user]);
 
   const handleClienteChange = (e) => {
@@ -178,13 +180,16 @@ export default function NuevoDocumento() {
           {/* Información del cliente */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
-            <ClienteSelector
-              clientes={clientes}
-              onSelect={({ clienteId, nombre, empresa, email, telefono, direccion, sedeId, sedeNombre }) => {
-                setDocumento({ ...documento, clienteId });
-                setCliente({ nombre, empresa, email, telefono, direccion, sedeId, sedeNombre });
+            <EmpresaSelector
+              empresas={empresas}
+              empresaId={documento.empresaId}
+              sedeId={documento.sedeId}
+              onSelect={({ empresaId, sedeId, empresa, email, telefono, direccion, sedeNombre }) => {
+                setDocumento({ ...documento, clienteId: null, empresaId, sedeId });
+                setCliente({ ...cliente, empresa, email, telefono, direccion, sedeId, sedeNombre });
               }}
-              placeholder="Buscar cliente registrado (opcional)..."
+              onQuitar={() => setDocumento({ ...documento, clienteId: null, empresaId: null, sedeId: null })}
+              placeholder="Buscar empresa registrada (opcional)..."
             />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>

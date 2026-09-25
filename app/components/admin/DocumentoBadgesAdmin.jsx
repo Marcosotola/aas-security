@@ -37,13 +37,13 @@ const PDF_COMPONENTS = {
   informe: { Component: DocumentoPDF, propName: 'documento' }
 };
 
-// Badge con el nombre del cliente, linkeado a su ficha (con clienteId) —
-// mismo criterio que SedeLink.jsx, pero para el nombre en vez de la sede.
+// Badge con el nombre del cliente, linkeado a la ficha de su empresa (con
+// empresaId) — mismo criterio que SedeLink.jsx, pero para el nombre.
 export function BadgeCliente({ doc }) {
   if (!doc.clienteNombre) return <span className="text-sm text-gray-400">-</span>;
-  if (!doc.clienteId) return <span className="text-sm text-gray-700">{doc.clienteNombre}</span>;
+  if (!doc.empresaId) return <span className="text-sm text-gray-700">{doc.clienteNombre}</span>;
   return (
-    <Link href={`/admin/usuarios/${doc.clienteId}`} className="text-sm text-gray-700 hover:text-primary hover:underline">
+    <Link href={`/admin/empresas/${doc.empresaId}`} className="text-sm text-gray-700 hover:text-primary hover:underline">
       {doc.clienteNombre}
     </Link>
   );

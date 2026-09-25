@@ -10,10 +10,10 @@ import {
   obtenerFacturaPorId,
   actualizarFactura,
   eliminarFotosStorage,
-  obtenerClientes
+  obtenerEmpresas
 } from '../../../../lib/firestore';
 import { useStaffAuth } from '../../../../lib/useStaffAuth';
-import ClienteSelector from '../../../../components/ClienteSelector';
+import EmpresaSelector from '../../../../components/EmpresaSelector';
 import ArchivosPdfUploader from '../../../../components/ui/ArchivosPdfUploader';
 import EstadoFacturaToggle from '../../../../components/ui/EstadoFactura';
 
@@ -24,13 +24,14 @@ export default function EditarFactura({ params }) {
   const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
-  const [clientes, setClientes] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
   const loading = loadingAuth || loadingData;
 
   const [factura, setFactura] = useState({
     numero: '',
     fecha: '',
     clienteId: null,
+    empresaId: null,
     sedeId: null,
     sedeNombre: '',
     clienteNombre: '',
@@ -56,6 +57,7 @@ export default function EditarFactura({ params }) {
           numero: facturaData.numero || '',
           fecha: facturaData.fecha || '',
           clienteId: facturaData.clienteId || null,
+          empresaId: facturaData.empresaId || null,
           sedeId: facturaData.sedeId || null,
           sedeNombre: facturaData.sedeNombre || '',
           clienteNombre: facturaData.clienteNombre || '',
@@ -66,9 +68,9 @@ export default function EditarFactura({ params }) {
         setArchivosActuales(facturaData.archivos || []);
 
         try {
-          setClientes(await obtenerClientes());
+          setEmpresas(await obtenerEmpresas());
         } catch (error) {
-          console.error('Error al cargar los clientes:', error);
+          console.error('Error al cargar las empresas:', error);
         }
 
         setLoadingData(false);
@@ -204,12 +206,15 @@ export default function EditarFactura({ params }) {
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Cliente</label>
-                <ClienteSelector
-                  clientes={clientes}
-                  onSelect={({ clienteId, nombre, empresa, sedeId, sedeNombre }) => {
-                    setFactura({ ...factura, clienteId, sedeId, sedeNombre, clienteNombre: empresa ? `${nombre} - ${empresa}` : nombre });
+                <EmpresaSelector
+                  empresas={empresas}
+                  empresaId={factura.empresaId}
+                  sedeId={factura.sedeId}
+                  onSelect={({ empresaId, sedeId, empresa, sedeNombre }) => {
+                    setFactura({ ...factura, clienteId: null, empresaId, sedeId, sedeNombre, clienteNombre: empresa });
                   }}
-                  placeholder="Buscar cliente registrado (opcional)..."
+                  onQuitar={() => setFactura({ ...factura, clienteId: null, empresaId: null, sedeId: null })}
+                  placeholder="Buscar empresa registrada (opcional)..."
                 />
                 <input
                   type="text"

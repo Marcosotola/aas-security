@@ -6,12 +6,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Save, Download, Eye, PlusCircle, Trash2, Percent, DollarSign } from 'lucide-react';
-import { crearPresupuesto, obtenerListaPrecios, obtenerClientes } from '../../../lib/firestore';
+import { crearPresupuesto, obtenerListaPrecios, obtenerEmpresas } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import PresupuestoPDF from '../../../components/pdf/PresupuestoPDF';
 import DescargarPresupuestoPDF from '../../../components/pdf/DescargarPresupuestoPDF';
 import BuscadorPrecio from '../../../components/BuscadorPrecio';
-import ClienteSelector from '../../../components/ClienteSelector';
+import EmpresaSelector from '../../../components/EmpresaSelector';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
 import { fechaHoyLocal } from '../../../lib/fecha';
 
@@ -39,7 +39,7 @@ export default function NuevoPresupuesto() {
     const { user, loading } = useStaffAuth(['Admin']);
     const [guardando, setGuardando] = useState(false);
     const [listaPrecios, setListaPrecios] = useState([]);
-    const [clientes, setClientes] = useState([]);
+    const [empresas, setEmpresas] = useState([]);
     const [documentoGuardado, setDocumentoGuardado] = useState(null);
 
     // Estado del formulario
@@ -59,6 +59,8 @@ export default function NuevoPresupuesto() {
         fecha: fechaHoyLocal(),
         validez: '30 días',
         clienteId: null, // uid del cliente registrado seleccionado (null = cliente manual, sin cuenta)
+        empresaId: null,
+        sedeId: null,
         modo: 'items', // 'items' (detalle por ítem) o 'global' (una sola descripción y un precio)
         items: [
             { id: 1, descripcion: '', cantidad: '', precioUnitario: '', subtotal: 0 }
@@ -79,9 +81,9 @@ export default function NuevoPresupuesto() {
             .then(setListaPrecios)
             .catch((error) => console.error('Error al cargar la lista de precios:', error));
 
-        obtenerClientes()
-            .then(setClientes)
-            .catch((error) => console.error('Error al cargar los clientes:', error));
+        obtenerEmpresas()
+            .then(setEmpresas)
+            .catch((error) => console.error('Error al cargar las empresas:', error));
     }, [user]);
 
     // Función para calcular totales incluyendo descuentos
@@ -236,6 +238,8 @@ export default function NuevoPresupuesto() {
                 validez: presupuesto.validez,
                 modo: presupuesto.modo,
                 clienteId: presupuesto.clienteId || null,
+                empresaId: presupuesto.empresaId || null,
+                sedeId: presupuesto.empresaId ? presupuesto.sedeId || null : null,
                 cliente: cliente,
                 items: presupuesto.items,
                 notas: presupuesto.notas,
@@ -385,13 +389,16 @@ export default function NuevoPresupuesto() {
                     {/* Información del cliente */}
                     <div className="p-6 bg-white rounded-lg shadow-md">
                         <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
-                        <ClienteSelector
-                            clientes={clientes}
-                            onSelect={({ clienteId, nombre, empresa, email, telefono, direccion, sedeId, sedeNombre }) => {
-                                setPresupuesto({ ...presupuesto, clienteId });
-                                setCliente({ nombre, empresa, email, telefono, direccion, sedeId, sedeNombre });
+                        <EmpresaSelector
+                            empresas={empresas}
+                            empresaId={presupuesto.empresaId}
+                            sedeId={presupuesto.sedeId}
+                            onSelect={({ empresaId, sedeId, empresa, email, telefono, direccion, sedeNombre }) => {
+                                setPresupuesto({ ...presupuesto, clienteId: null, empresaId, sedeId });
+                                setCliente({ ...cliente, empresa, email, telefono, direccion, sedeId, sedeNombre });
                             }}
-                            placeholder="Buscar cliente registrado (opcional)..."
+                            onQuitar={() => setPresupuesto({ ...presupuesto, clienteId: null, empresaId: null, sedeId: null })}
+                            placeholder="Buscar empresa registrada (opcional)..."
                         />
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>

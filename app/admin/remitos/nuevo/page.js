@@ -4,11 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Save, Download, Eye, PlusCircle, Trash2, RefreshCw } from 'lucide-react';
-import { crearRemito, obtenerClientes } from '../../../lib/firestore';
+import { crearRemito, obtenerEmpresas } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import RemitoPDF from '../../../components/pdf/RemitoPDF';
-import ClienteSelector from '../../../components/ClienteSelector';
+import EmpresaSelector from '../../../components/EmpresaSelector';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
 import SignatureCanvas from 'react-signature-canvas';
 import { fechaHoyLocal } from '../../../lib/fecha';
@@ -18,7 +18,7 @@ export default function NuevoRemito() {
     const { user, loading } = useStaffAuth(['Admin']);
     const [guardando, setGuardando] = useState(false);
     const [documentoGuardado, setDocumentoGuardado] = useState(null);
-    const [clientes, setClientes] = useState([]);
+    const [empresas, setEmpresas] = useState([]);
     const [showCanvas, setShowCanvas] = useState(true);
     const [canvasSize, setCanvasSize] = useState({ width: 500, height: 200 });
     const sigCanvas = useRef({});
@@ -45,6 +45,8 @@ export default function NuevoRemito() {
         numero: `R-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
         fecha: fechaHoyLocal(),
         clienteId: null,
+        empresaId: null,
+        sedeId: null,
         items: [
             { id: 1, descripcion: '', cantidad: '', unidad: 'UN' }
         ],
@@ -55,9 +57,9 @@ export default function NuevoRemito() {
 
     useEffect(() => {
         if (!user) return;
-        obtenerClientes()
-            .then(setClientes)
-            .catch((error) => console.error('Error al cargar los clientes:', error));
+        obtenerEmpresas()
+            .then(setEmpresas)
+            .catch((error) => console.error('Error al cargar las empresas:', error));
     }, [user]);
 
     useEffect(() => {
@@ -176,6 +178,8 @@ export default function NuevoRemito() {
                 numero: remito.numero,
                 fecha: remito.fecha,
                 clienteId: remito.clienteId || null,
+                empresaId: remito.empresaId || null,
+                sedeId: remito.empresaId ? remito.sedeId || null : null,
                 cliente: cliente,
                 items: remito.items,
                 observaciones: remito.observaciones,
@@ -291,13 +295,16 @@ export default function NuevoRemito() {
                     {/* Información del cliente */}
                     <div className="p-6 bg-white rounded-lg shadow-md">
                         <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
-                        <ClienteSelector
-                            clientes={clientes}
-                            onSelect={({ clienteId, nombre, empresa, email, telefono, direccion, sedeId, sedeNombre }) => {
-                                setRemito({ ...remito, clienteId });
-                                setCliente({ nombre, empresa, email, telefono, direccion, sedeId, sedeNombre });
+                        <EmpresaSelector
+                            empresas={empresas}
+                            empresaId={remito.empresaId}
+                            sedeId={remito.sedeId}
+                            onSelect={({ empresaId, sedeId, empresa, email, telefono, direccion, sedeNombre }) => {
+                                setRemito({ ...remito, clienteId: null, empresaId, sedeId });
+                                setCliente({ ...cliente, empresa, email, telefono, direccion, sedeId, sedeNombre });
                             }}
-                            placeholder="Buscar cliente registrado (opcional)..."
+                            onQuitar={() => setRemito({ ...remito, clienteId: null, empresaId: null, sedeId: null })}
+                            placeholder="Buscar empresa registrada (opcional)..."
                         />
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>

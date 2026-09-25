@@ -119,7 +119,7 @@ export default function HistorialDocumentos() {
                 {documentosFiltrados.map((documento) => (
                   <div key={documento.id} className="p-4 border border-gray-200 rounded-lg">
                     <div className="mb-1">
-                      <SedeLink clienteId={documento.clienteId} sede={documento.cliente?.sedeNombre} />
+                      <SedeLink empresaId={documento.empresaId} sedeId={documento.sedeId} sede={documento.cliente?.sedeNombre} />
                     </div>
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-medium text-gray-900">{documento.titulo || 'Sin título'}</div>
@@ -207,7 +207,7 @@ export default function HistorialDocumentos() {
                   documentosFiltrados.map((documento) => (
                     <tr key={documento.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <SedeLink clienteId={documento.clienteId} sede={documento.cliente?.sedeNombre} />
+                        <SedeLink empresaId={documento.empresaId} sedeId={documento.sedeId} sede={documento.cliente?.sedeNombre} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{documento.titulo || 'Sin título'}</div>

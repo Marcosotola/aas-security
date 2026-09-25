@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Save, Download, Eye, PlusCircle, Trash2 } from 'lucide-react';
-import { crearEstado, obtenerClientes } from '../../../lib/firestore';
+import { crearEstado, obtenerEmpresas } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import EstadoPDF from '../../../components/pdf/EstadoPDF';
-import ClienteSelector from '../../../components/ClienteSelector';
+import EmpresaSelector from '../../../components/EmpresaSelector';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
 import { fechaHoyLocal } from '../../../lib/fecha';
 
@@ -34,7 +34,7 @@ export default function NuevoEstado() {
     const { user, loading } = useStaffAuth(['Admin']);
     const [guardando, setGuardando] = useState(false);
     const [documentoGuardado, setDocumentoGuardado] = useState(null);
-    const [clientes, setClientes] = useState([]);
+    const [empresas, setEmpresas] = useState([]);
 
     // Estado para el modal de descripción
     const [modalDescripcion, setModalDescripcion] = useState({
@@ -65,6 +65,8 @@ export default function NuevoEstado() {
         numero: `E-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
         fecha: fechaHoyLocal(),
         clienteId: null,
+        empresaId: null,
+        sedeId: null,
         items: [
             { id: 1, fecha: fechaHoyLocal(), descripcion: '', precio: '', comentarios: '' }
         ],
@@ -73,9 +75,9 @@ export default function NuevoEstado() {
 
     useEffect(() => {
         if (!user) return;
-        obtenerClientes()
-            .then(setClientes)
-            .catch((error) => console.error('Error al cargar los clientes:', error));
+        obtenerEmpresas()
+            .then(setEmpresas)
+            .catch((error) => console.error('Error al cargar las empresas:', error));
     }, [user]);
 
     // Función para abrir el modal de descripción
@@ -175,6 +177,8 @@ export default function NuevoEstado() {
                 numero: estado.numero,
                 fecha: estado.fecha,
                 clienteId: estado.clienteId || null,
+                empresaId: estado.empresaId || null,
+                sedeId: estado.empresaId ? estado.sedeId || null : null,
                 cliente: cliente,
                 items: estado.items,
                 total: estado.total,
@@ -289,13 +293,16 @@ export default function NuevoEstado() {
                     {/* Información del cliente */}
                     <div className="p-6 bg-white rounded-lg shadow-md">
                         <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
-                        <ClienteSelector
-                            clientes={clientes}
-                            onSelect={({ clienteId, nombre, empresa, email, telefono, direccion, sedeId, sedeNombre }) => {
-                                setEstado({ ...estado, clienteId });
-                                setCliente({ nombre, empresa, email, telefono, direccion, sedeId, sedeNombre });
+                        <EmpresaSelector
+                            empresas={empresas}
+                            empresaId={estado.empresaId}
+                            sedeId={estado.sedeId}
+                            onSelect={({ empresaId, sedeId, empresa, email, telefono, direccion, sedeNombre }) => {
+                                setEstado({ ...estado, clienteId: null, empresaId, sedeId });
+                                setCliente({ ...cliente, empresa, email, telefono, direccion, sedeId, sedeNombre });
                             }}
-                            placeholder="Buscar cliente registrado (opcional)..."
+                            onQuitar={() => setEstado({ ...estado, clienteId: null, empresaId: null, sedeId: null })}
+                            placeholder="Buscar empresa registrada (opcional)..."
                         />
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>

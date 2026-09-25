@@ -6,9 +6,9 @@ import Link from 'next/link';
 import { Home, Save } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../../lib/firebase';
-import { crearFactura, generarIdFactura, obtenerClientes } from '../../../lib/firestore';
+import { crearFactura, generarIdFactura, obtenerEmpresas } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
-import ClienteSelector from '../../../components/ClienteSelector';
+import EmpresaSelector from '../../../components/EmpresaSelector';
 import ArchivosPdfUploader from '../../../components/ui/ArchivosPdfUploader';
 import { fechaHoyLocal } from '../../../lib/fecha';
 
@@ -16,13 +16,14 @@ export default function NuevaFactura() {
   const router = useRouter();
   const { user, loading } = useStaffAuth(['Admin']);
   const [guardando, setGuardando] = useState(false);
-  const [clientes, setClientes] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
   const [archivosNuevos, setArchivosNuevos] = useState([]);
 
   const [factura, setFactura] = useState({
     numero: `FAC-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
     fecha: fechaHoyLocal(),
     clienteId: null,
+    empresaId: null,
     sedeId: null,
     sedeNombre: '',
     clienteNombre: '',
@@ -33,9 +34,9 @@ export default function NuevaFactura() {
 
   useEffect(() => {
     if (!user) return;
-    obtenerClientes()
-      .then(setClientes)
-      .catch((error) => console.error('Error al cargar los clientes:', error));
+    obtenerEmpresas()
+      .then(setEmpresas)
+      .catch((error) => console.error('Error al cargar las empresas:', error));
   }, [user]);
 
   const handleGuardarFactura = async () => {
@@ -155,12 +156,15 @@ export default function NuevaFactura() {
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Cliente</label>
-                <ClienteSelector
-                  clientes={clientes}
-                  onSelect={({ clienteId, nombre, empresa, sedeId, sedeNombre }) => {
-                    setFactura({ ...factura, clienteId, sedeId, sedeNombre, clienteNombre: empresa ? `${nombre} - ${empresa}` : nombre });
+                <EmpresaSelector
+                  empresas={empresas}
+                  empresaId={factura.empresaId}
+                  sedeId={factura.sedeId}
+                  onSelect={({ empresaId, sedeId, empresa, sedeNombre }) => {
+                    setFactura({ ...factura, clienteId: null, empresaId, sedeId, sedeNombre, clienteNombre: empresa });
                   }}
-                  placeholder="Buscar cliente registrado (opcional)..."
+                  onQuitar={() => setFactura({ ...factura, clienteId: null, empresaId: null, sedeId: null })}
+                  placeholder="Buscar empresa registrada (opcional)..."
                 />
                 <input
                   type="text"

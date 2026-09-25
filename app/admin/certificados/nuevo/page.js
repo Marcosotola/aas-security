@@ -6,9 +6,9 @@ import Link from 'next/link';
 import { Home, Save } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../../lib/firebase';
-import { crearCertificado, generarIdCertificado, obtenerClientes } from '../../../lib/firestore';
+import { crearCertificado, generarIdCertificado, obtenerEmpresas } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
-import ClienteSelector from '../../../components/ClienteSelector';
+import EmpresaSelector from '../../../components/EmpresaSelector';
 import ArchivosCertificadoUploader from '../../../components/ui/ArchivosCertificadoUploader';
 import { fechaHoyLocal } from '../../../lib/fecha';
 
@@ -16,13 +16,14 @@ export default function NuevoCertificado() {
   const router = useRouter();
   const { user, loading } = useStaffAuth(['Admin']);
   const [guardando, setGuardando] = useState(false);
-  const [clientes, setClientes] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
   const [archivosNuevos, setArchivosNuevos] = useState([]);
 
   const [certificado, setCertificado] = useState({
     nombre: '',
     fecha: fechaHoyLocal(),
     clienteId: null,
+    empresaId: null,
     sedeId: null,
     sedeNombre: '',
     clienteNombre: '',
@@ -31,9 +32,9 @@ export default function NuevoCertificado() {
 
   useEffect(() => {
     if (!user) return;
-    obtenerClientes()
-      .then(setClientes)
-      .catch((error) => console.error('Error al cargar los clientes:', error));
+    obtenerEmpresas()
+      .then(setEmpresas)
+      .catch((error) => console.error('Error al cargar las empresas:', error));
   }, [user]);
 
   const handleGuardarCertificado = async () => {
@@ -158,12 +159,15 @@ export default function NuevoCertificado() {
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Cliente</label>
-                <ClienteSelector
-                  clientes={clientes}
-                  onSelect={({ clienteId, nombre, empresa, sedeId, sedeNombre }) => {
-                    setCertificado({ ...certificado, clienteId, sedeId, sedeNombre, clienteNombre: empresa ? `${nombre} - ${empresa}` : nombre });
+                <EmpresaSelector
+                  empresas={empresas}
+                  empresaId={certificado.empresaId}
+                  sedeId={certificado.sedeId}
+                  onSelect={({ empresaId, sedeId, empresa, sedeNombre }) => {
+                    setCertificado({ ...certificado, clienteId: null, empresaId, sedeId, sedeNombre, clienteNombre: empresa });
                   }}
-                  placeholder="Buscar cliente registrado (opcional)..."
+                  onQuitar={() => setCertificado({ ...certificado, clienteId: null, empresaId: null, sedeId: null })}
+                  placeholder="Buscar empresa registrada (opcional)..."
                 />
                 <input
                   type="text"

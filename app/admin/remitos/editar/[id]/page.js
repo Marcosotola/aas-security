@@ -4,10 +4,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Save, Download, Eye, PlusCircle, Trash2, RefreshCw } from 'lucide-react';
-import { obtenerRemitoPorId, actualizarRemito, obtenerClientes } from '../../../../lib/firestore';
+import { obtenerRemitoPorId, actualizarRemito, obtenerEmpresas } from '../../../../lib/firestore';
 import { useStaffAuth } from '../../../../lib/useStaffAuth';
 import { use } from 'react';
-import ClienteSelector from '../../../../components/ClienteSelector';
+import EmpresaSelector from '../../../../components/EmpresaSelector';
 import SignatureCanvas from 'react-signature-canvas';
 
 export default function EditarRemito({ params }) {
@@ -19,7 +19,7 @@ export default function EditarRemito({ params }) {
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [remitoOriginal, setRemitoOriginal] = useState(null);
-  const [clientes, setClientes] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
   const loading = loadingAuth || loadingData;
   const [mostrarCanvas, setMostrarCanvas] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 500, height: 200 });
@@ -47,6 +47,8 @@ export default function EditarRemito({ params }) {
     numero: '',
     fecha: '',
     clienteId: null,
+    empresaId: null,
+    sedeId: null,
     items: [
         { id: 1, descripcion: '', cantidad: '', unidad: 'UN' }
     ],
@@ -88,6 +90,8 @@ export default function EditarRemito({ params }) {
           numero: remitoData.numero,
           fecha: remitoData.fecha,
           clienteId: remitoData.clienteId || null,
+          empresaId: remitoData.empresaId || null,
+          sedeId: remitoData.sedeId || null,
           items: remitoData.items || [],
           observaciones: remitoData.observaciones || '',
           firma: remitoData.firma || null,
@@ -97,9 +101,9 @@ export default function EditarRemito({ params }) {
         setCliente({ sedeId: null, sedeNombre: '', ...remitoData.cliente });
 
         try {
-          setClientes(await obtenerClientes());
+          setEmpresas(await obtenerEmpresas());
         } catch (error) {
-          console.error('Error al cargar los clientes:', error);
+          console.error('Error al cargar las empresas:', error);
         }
 
         setLoadingData(false);
@@ -205,6 +209,8 @@ export default function EditarRemito({ params }) {
         numero: remito.numero,
         fecha: remito.fecha,
         clienteId: remito.clienteId || null,
+        empresaId: remito.empresaId || null,
+        sedeId: remito.empresaId ? remito.sedeId || null : null,
         cliente: cliente,
         items: remito.items,
         observaciones: remito.observaciones,
@@ -300,13 +306,16 @@ export default function EditarRemito({ params }) {
           {/* Información del cliente */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
-            <ClienteSelector
-              clientes={clientes}
-              onSelect={({ clienteId, nombre, empresa, email, telefono, direccion, sedeId, sedeNombre }) => {
-                setRemito({ ...remito, clienteId });
-                setCliente({ nombre, empresa, email, telefono, direccion, sedeId, sedeNombre });
+            <EmpresaSelector
+              empresas={empresas}
+              empresaId={remito.empresaId}
+              sedeId={remito.sedeId}
+              onSelect={({ empresaId, sedeId, empresa, email, telefono, direccion, sedeNombre }) => {
+                setRemito({ ...remito, clienteId: null, empresaId, sedeId });
+                setCliente({ ...cliente, empresa, email, telefono, direccion, sedeId, sedeNombre });
               }}
-              placeholder="Buscar cliente registrado (opcional)..."
+              onQuitar={() => setRemito({ ...remito, clienteId: null, empresaId: null, sedeId: null })}
+              placeholder="Buscar empresa registrada (opcional)..."
             />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>

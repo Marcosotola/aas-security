@@ -5,7 +5,7 @@ import { ClienteAuthProvider, useCliente } from '../lib/useClienteAuth';
 import ClienteHeader from '../components/cliente/ClienteHeader';
 
 function CuentaShell({ children }) {
-  const { user, perfil, loading } = useCliente();
+  const { user, empresas, loading } = useCliente();
 
   if (loading) {
     return (
@@ -20,7 +20,7 @@ function CuentaShell({ children }) {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
-      <ClienteHeader user={user} perfil={perfil} />
+      <ClienteHeader user={user} cantidadSedes={empresas.reduce((total, e) => total + e.sedes.length, 0)} />
       {children}
     </div>
   );

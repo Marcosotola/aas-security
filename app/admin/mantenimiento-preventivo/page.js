@@ -132,7 +132,7 @@ export default function HistorialMantenimientosPreventivos() {
                 {mantenimientosFiltrados.map((mantenimiento) => (
                   <div key={mantenimiento.id} className="p-4 border border-gray-200 rounded-lg">
                     <div className="mb-1">
-                      <SedeLink clienteId={mantenimiento.clienteId} sede={mantenimiento.cliente?.sedeNombre} />
+                      <SedeLink empresaId={mantenimiento.empresaId} sedeId={mantenimiento.sedeId} sede={mantenimiento.cliente?.sedeNombre} />
                     </div>
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-medium text-gray-900">{mantenimiento.numero}</div>
@@ -206,7 +206,7 @@ export default function HistorialMantenimientosPreventivos() {
                     mantenimientosFiltrados.map((mantenimiento) => (
                       <tr key={mantenimiento.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <SedeLink clienteId={mantenimiento.clienteId} sede={mantenimiento.cliente?.sedeNombre} />
+                          <SedeLink empresaId={mantenimiento.empresaId} sedeId={mantenimiento.sedeId} sede={mantenimiento.cliente?.sedeNombre} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">{mantenimiento.numero}</div>

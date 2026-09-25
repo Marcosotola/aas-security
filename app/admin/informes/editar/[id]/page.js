@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Save } from 'lucide-react';
-import { obtenerDocumentoPorId, actualizarDocumento, obtenerClientes } from '../../../../lib/firestore';
+import { obtenerDocumentoPorId, actualizarDocumento, obtenerEmpresas } from '../../../../lib/firestore';
 import { useStaffAuth } from '../../../../lib/useStaffAuth';
 import { use } from 'react';
-import ClienteSelector from '../../../../components/ClienteSelector';
+import EmpresaSelector from '../../../../components/EmpresaSelector';
 import RichTextEditor from '../../../../components/ui/RichTextEditor';
 
 export default function EditarDocumento({ params }) {
@@ -18,7 +18,7 @@ export default function EditarDocumento({ params }) {
   const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
-  const [clientes, setClientes] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
   const loading = loadingAuth || loadingData;
 
   // Estado del cliente
@@ -37,6 +37,8 @@ export default function EditarDocumento({ params }) {
     titulo: '',
     fecha: '',
     clienteId: null,
+    empresaId: null,
+    sedeId: null,
     contenido: ''
   });
 
@@ -50,15 +52,17 @@ export default function EditarDocumento({ params }) {
           titulo: data.titulo || '',
           fecha: data.fecha || '',
           clienteId: data.clienteId || null,
+          empresaId: data.empresaId || null,
+          sedeId: data.sedeId || null,
           contenido: data.contenido || ''
         });
         setCliente({ sedeId: null, sedeNombre: '', nombre: '', empresa: '', email: '', telefono: '', direccion: '', ...data.cliente });
 
         try {
-          const clientesData = await obtenerClientes();
-          setClientes(clientesData);
+          const empresasData = await obtenerEmpresas();
+          setEmpresas(empresasData);
         } catch (error) {
-          console.error('Error al cargar clientes:', error);
+          console.error('Error al cargar empresas:', error);
         }
 
         setLoadingData(false);
@@ -179,13 +183,16 @@ export default function EditarDocumento({ params }) {
           {/* Información del cliente */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
-            <ClienteSelector
-              clientes={clientes}
-              onSelect={({ clienteId, nombre, empresa, email, telefono, direccion, sedeId, sedeNombre }) => {
-                setDocumento({ ...documento, clienteId });
-                setCliente({ nombre, empresa, email, telefono, direccion, sedeId, sedeNombre });
+            <EmpresaSelector
+              empresas={empresas}
+              empresaId={documento.empresaId}
+              sedeId={documento.sedeId}
+              onSelect={({ empresaId, sedeId, empresa, email, telefono, direccion, sedeNombre }) => {
+                setDocumento({ ...documento, clienteId: null, empresaId, sedeId });
+                setCliente({ ...cliente, empresa, email, telefono, direccion, sedeId, sedeNombre });
               }}
-              placeholder="Buscar cliente registrado (opcional)..."
+              onQuitar={() => setDocumento({ ...documento, clienteId: null, empresaId: null, sedeId: null })}
+              placeholder="Buscar empresa registrada (opcional)..."
             />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>

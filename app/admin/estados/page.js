@@ -143,7 +143,7 @@ export default function HistorialEstados() {
                 {estadosFiltrados.map((estado) => (
                   <div key={estado.id} className="p-4 border border-gray-200 rounded-lg">
                     <div className="mb-1">
-                      <SedeLink clienteId={estado.clienteId} sede={estado.cliente?.sedeNombre} />
+                      <SedeLink empresaId={estado.empresaId} sedeId={estado.sedeId} sede={estado.cliente?.sedeNombre} />
                     </div>
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-medium text-gray-900">{estado.numero}</div>
@@ -235,7 +235,7 @@ export default function HistorialEstados() {
                   estadosFiltrados.map((estado) => (
                     <tr key={estado.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <SedeLink clienteId={estado.clienteId} sede={estado.cliente?.sedeNombre} />
+                        <SedeLink empresaId={estado.empresaId} sedeId={estado.sedeId} sede={estado.cliente?.sedeNombre} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{estado.numero}</div>

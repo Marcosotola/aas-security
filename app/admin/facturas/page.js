@@ -175,7 +175,7 @@ export default function HistorialFacturas() {
                 {facturasFiltradas.map((factura) => (
                   <div key={factura.id} className="p-4 border border-gray-200 rounded-lg">
                     <div className="mb-1">
-                      <SedeLink clienteId={factura.clienteId} sede={factura.sedeNombre} />
+                      <SedeLink empresaId={factura.empresaId} sedeId={factura.sedeId} sede={factura.sedeNombre} />
                     </div>
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-medium text-gray-900">{factura.numero}</div>
@@ -230,7 +230,7 @@ export default function HistorialFacturas() {
                     facturasFiltradas.map((factura) => (
                       <tr key={factura.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <SedeLink clienteId={factura.clienteId} sede={factura.sedeNombre} />
+                          <SedeLink empresaId={factura.empresaId} sedeId={factura.sedeId} sede={factura.sedeNombre} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">{factura.numero}</div>

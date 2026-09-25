@@ -3,8 +3,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Home, Search, ChevronDown, Users as UsersIcon, MapPin, UserPlus, Edit, Trash, Eye, X, Phone, Building2, IdCard, Files } from 'lucide-react';
-import { obtenerUsuarios, actualizarUsuario } from '../../lib/firestore';
+import { Home, Search, ChevronDown, Users as UsersIcon, MapPin, UserPlus, Edit, Trash, Eye, X, Phone, Building2, IdCard, KeyRound } from 'lucide-react';
+import { obtenerUsuarios, actualizarUsuario, obtenerEmpresas } from '../../lib/firestore';
 import { auth } from '../../lib/firebase';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import PortalDropdown from '../../components/PortalDropdown';
@@ -20,12 +20,11 @@ export default function GestionUsuarios() {
   const [filtro, setFiltro] = useState('');
   const [rolMenuAbierto, setRolMenuAbierto] = useState(null);
   const [actualizandoRol, setActualizandoRol] = useState(null);
-  const [sedesAbiertas, setSedesAbiertas] = useState(null);
+  const [empresasPorId, setEmpresasPorId] = useState(new Map());
   const [vista, setVista] = useState('tabla');
   const [eliminandoUsuario, setEliminandoUsuario] = useState(null);
   const [usuarioViendo, setUsuarioViendo] = useState(null);
   const rolBtnRefs = useRef({});
-  const sedesBtnRefs = useRef({});
 
   useEffect(() => {
     if (loadingAuth) return;
@@ -34,8 +33,9 @@ export default function GestionUsuarios() {
 
   const cargarUsuarios = async () => {
     try {
-      const data = await obtenerUsuarios();
+      const [data, empresas] = await Promise.all([obtenerUsuarios(), obtenerEmpresas().catch(() => [])]);
       setUsuarios(data);
+      setEmpresasPorId(new Map(empresas.map((e) => [e.id, e])));
     } catch (error) {
       console.error('Error al cargar usuarios:', error);
       setUsuarios([]);
@@ -97,9 +97,28 @@ export default function GestionUsuarios() {
       u.nombre?.toLowerCase().includes(termino) ||
       u.apellido?.toLowerCase().includes(termino) ||
       u.email?.toLowerCase().includes(termino) ||
-      u.empresa?.toLowerCase().includes(termino)
+      u.empresa?.toLowerCase().includes(termino) ||
+      empresasDeAccesos(u).some((e) => e.nombre.toLowerCase().includes(termino))
     );
   });
+
+  // Empresas a las que accede un Cliente, con cuántas sedes (o "todas").
+  function empresasDeAccesos(u) {
+    return Object.entries(u.accesos || {}).map(([empresaId, porSede]) => {
+      const sedes = Object.keys(porSede);
+      return {
+        id: empresaId,
+        nombre: empresasPorId.get(empresaId)?.nombre || 'Empresa eliminada',
+        detalle: sedes.includes('*') ? 'todas las sedes' : `${sedes.length} ${sedes.length === 1 ? 'sede' : 'sedes'}`
+      };
+    });
+  }
+
+  const textoAccesos = (u) => {
+    if ((u.role || 'Cliente') !== 'Cliente') return '-';
+    const empresas = empresasDeAccesos(u);
+    return empresas.length > 0 ? empresas.map((e) => e.nombre).join(', ') : 'Sin accesos';
+  };
 
   if (loadingAuth || loadingUsuarios) {
     return (
@@ -162,34 +181,11 @@ export default function GestionUsuarios() {
                     <div className="mt-1 text-sm text-gray-500">{u.email}</div>
                     <div className="mt-1 text-sm text-gray-500">{u.empresa || '-'}</div>
 
-                    <div className="flex items-center justify-between pt-3 mt-3 border-t border-gray-100">
-                      <div>
-                        {(u.sedes || []).length > 0 ? (
-                          <button
-                            type="button"
-                            ref={(el) => { sedesBtnRefs.current[u.id] = el; }}
-                            onClick={() => setSedesAbiertas(sedesAbiertas === u.id ? null : u.id)}
-                            className="flex items-center gap-1 text-sm text-primary hover:underline"
-                          >
-                            <MapPin size={14} /> {u.sedes.length} {u.sedes.length === 1 ? 'sede' : 'sedes'}
-                          </button>
-                        ) : (
-                          <span className="text-sm text-gray-400">Sin sedes</span>
-                        )}
-                        <PortalDropdown
-                          open={sedesAbiertas === u.id}
-                          anchorRef={{ current: sedesBtnRefs.current[u.id] }}
-                          onClose={() => setSedesAbiertas(null)}
-                          width={224}
-                        >
-                          {(u.sedes || []).map((s) => (
-                            <div key={s.id} className="px-3 py-2 text-xs text-left border-b border-gray-100 last:border-0">
-                              <div className="font-medium text-gray-800">{s.nombre}</div>
-                              <div className="text-gray-500">{s.direccion}</div>
-                            </div>
-                          ))}
-                        </PortalDropdown>
-                      </div>
+                    <div className="flex items-center justify-between gap-2 pt-3 mt-3 border-t border-gray-100">
+                      <span className="flex items-center min-w-0 gap-1 text-sm text-gray-500">
+                        <KeyRound size={14} className="shrink-0" />
+                        <span className="truncate">{textoAccesos(u)}</span>
+                      </span>
 
                       <div>
                         <button
@@ -229,10 +225,10 @@ export default function GestionUsuarios() {
                     <div className="flex items-center justify-end gap-1 pt-3 mt-3 border-t border-gray-100">
                       <Link
                         href={`/admin/usuarios/${u.id}`}
-                        title="Ver documentos"
+                        title="Accesos"
                         className={accionIconoClase('primary')}
                       >
-                        <Files size={ACCION_ICONO_TAMANO} />
+                        <KeyRound size={ACCION_ICONO_TAMANO} />
                       </Link>
                       <button
                         type="button"
@@ -275,7 +271,7 @@ export default function GestionUsuarios() {
                   <th className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Nombre</th>
                   <th className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Email</th>
                   <th className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Empresa</th>
-                  <th className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Sedes</th>
+                  <th className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Accesos</th>
                   <th className="px-4 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Rol</th>
                   <th className="px-4 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Acciones</th>
                 </tr>
@@ -289,30 +285,8 @@ export default function GestionUsuarios() {
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">{u.email}</td>
                       <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">{u.empresa || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">
-                        {(u.sedes || []).length > 0 ? (
-                          <button
-                            type="button"
-                            ref={(el) => { sedesBtnRefs.current[u.id] = el; }}
-                            onClick={() => setSedesAbiertas(sedesAbiertas === u.id ? null : u.id)}
-                            className="flex items-center gap-1 text-primary hover:underline"
-                          >
-                            <MapPin size={14} /> {u.sedes.length}
-                          </button>
-                        ) : '-'}
-                        <PortalDropdown
-                          open={sedesAbiertas === u.id}
-                          anchorRef={{ current: sedesBtnRefs.current[u.id] }}
-                          onClose={() => setSedesAbiertas(null)}
-                          width={224}
-                        >
-                          {(u.sedes || []).map((s) => (
-                            <div key={s.id} className="px-3 py-2 text-xs text-left border-b border-gray-100 last:border-0">
-                              <div className="font-medium text-gray-800">{s.nombre}</div>
-                              <div className="text-gray-500">{s.direccion}</div>
-                            </div>
-                          ))}
-                        </PortalDropdown>
+                      <td className="max-w-xs px-4 py-3 text-sm text-gray-500 truncate" title={textoAccesos(u)}>
+                        {textoAccesos(u)}
                       </td>
                       <td className="px-4 py-3 text-sm whitespace-nowrap">
                         <button
@@ -351,10 +325,10 @@ export default function GestionUsuarios() {
                         <div className="flex items-center justify-end gap-1">
                           <Link
                             href={`/admin/usuarios/${u.id}`}
-                            title="Ver documentos"
+                            title="Accesos"
                             className={accionIconoClase('primary')}
                           >
-                            <Files size={ACCION_ICONO_TAMANO} />
+                            <KeyRound size={ACCION_ICONO_TAMANO} />
                           </Link>
                           <button
                             type="button"
@@ -405,7 +379,7 @@ export default function GestionUsuarios() {
         </div>
       </div>
 
-      {/* Modal con el detalle completo del usuario, incluidas todas sus sedes */}
+      {/* Modal con el detalle completo del usuario, incluidos sus accesos */}
       {usuarioViendo && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center p-0 bg-black/50 sm:items-center sm:p-4"
@@ -468,26 +442,24 @@ export default function GestionUsuarios() {
               </div>
             </div>
 
-            <div className="mb-2">
-              <p className="mb-2 text-xs font-semibold tracking-wider text-gray-400 uppercase">
-                Sedes ({(usuarioViendo.sedes || []).length})
-              </p>
-              {(usuarioViendo.sedes || []).length > 0 ? (
-                <div className="space-y-2">
-                  {usuarioViendo.sedes.map((s) => (
-                    <div key={s.id} className="flex items-start gap-2 p-3 border border-gray-200 rounded-md bg-gray-50">
-                      <MapPin size={16} className="mt-0.5 text-primary shrink-0" />
-                      <div>
-                        <div className="text-sm font-medium text-gray-800">{s.nombre}</div>
-                        <div className="text-sm text-gray-500">{s.direccion}</div>
+            {(usuarioViendo.role || 'Cliente') === 'Cliente' && (
+              <div className="mb-2">
+                <p className="mb-2 text-xs font-semibold tracking-wider text-gray-400 uppercase">Accesos</p>
+                {empresasDeAccesos(usuarioViendo).length > 0 ? (
+                  <div className="space-y-2">
+                    {empresasDeAccesos(usuarioViendo).map((e) => (
+                      <div key={e.id} className="flex items-center gap-2 p-3 border border-gray-200 rounded-md bg-gray-50">
+                        <Building2 size={16} className="text-primary shrink-0" />
+                        <span className="text-sm font-medium text-gray-800">{e.nombre}</span>
+                        <span className="text-sm text-gray-500">· {e.detalle}</span>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-400">Este usuario todavía no cargó ninguna sede.</p>
-              )}
-            </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400">Sin accesos: no ve ningún documento en su portal.</p>
+                )}
+              </div>
+            )}
 
             <div className="flex justify-end pt-4 mt-4 border-t border-gray-100">
               <Link

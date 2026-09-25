@@ -11,11 +11,13 @@ import {
   query,
   orderBy,
   where,
-  serverTimestamp
+  serverTimestamp,
+  getCountFromServer
 } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { db, storage } from './firebase';
 import { esSuperAdmin } from './superAdmin';
+import { TIPOS_DOC } from './documentosCliente';
 
 const getCollection = (name) => {
   if (!db) {
@@ -1129,6 +1131,114 @@ export const eliminarUsuario = async (uid) => {
     console.error('Error al eliminar usuario:', error);
     throw error;
   }
+};
+
+// ========== EMPRESAS Y SEDES ==========
+// Una empresa agrupa sus sedes ({ id, nombre, direccion, activa }) en un
+// array dentro del mismo documento. Los documentos emitidos guardan
+// empresaId/sedeId; qué ve cada cliente lo deciden sus `accesos` (ver
+// firestore.rules). Solo el Admin escribe esta colección.
+
+export const crearEmpresa = async (empresaData) => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const docRef = await addDoc(getCollection('empresas'), {
+      ...empresaData,
+      sedes: empresaData.sedes || [],
+      fechaCreacion: serverTimestamp()
+    });
+    return { id: docRef.id };
+  } catch (error) {
+    console.error('Error al crear empresa:', error);
+    throw error;
+  }
+};
+
+export const obtenerEmpresas = async () => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const querySnapshot = await getDocs(query(getCollection('empresas'), orderBy('nombre')));
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error al obtener empresas:', error);
+    throw error;
+  }
+};
+
+export const obtenerEmpresaPorId = async (id) => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    const docSnap = await getDoc(doc(db, 'empresas', id));
+    return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null;
+  } catch (error) {
+    console.error('Error al obtener empresa:', error);
+    throw error;
+  }
+};
+
+export const actualizarEmpresa = async (id, datosActualizados) => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    await updateDoc(doc(db, 'empresas', id), {
+      ...datosActualizados,
+      fechaActualizacion: serverTimestamp()
+    });
+    return { id };
+  } catch (error) {
+    console.error('Error al actualizar empresa:', error);
+    throw error;
+  }
+};
+
+export const eliminarEmpresa = async (id) => {
+  try {
+    if (!db) throw new Error('Firebase no está configurado');
+    await deleteDoc(doc(db, 'empresas', id));
+  } catch (error) {
+    console.error('Error al eliminar empresa:', error);
+    throw error;
+  }
+};
+
+// Cantidad de documentos (de todos los tipos) emitidos a una empresa, o a
+// una sede puntual si se pasa sedeId. Se usa para no borrar empresas ni
+// sedes que tengan documentos: en ese caso la sede se archiva.
+export const contarDocumentosDeEmpresa = async (empresaId, sedeId = null) => {
+  if (!db) throw new Error('Firebase no está configurado');
+  const conteos = await Promise.all(Object.values(TIPOS_DOC).map(async ({ coleccion }) => {
+    const filtros = [where('empresaId', '==', empresaId)];
+    if (sedeId) filtros.push(where('sedeId', '==', sedeId));
+    return (await getCountFromServer(query(getCollection(coleccion), ...filtros))).data().count;
+  }));
+  return conteos.reduce((total, n) => total + n, 0);
+};
+
+// Documentos de un tipo emitidos a una empresa (ficha de la empresa en el
+// panel). `tipo` es una clave de TIPOS_DOC.
+export const obtenerDocumentosDeEmpresa = async (tipo, empresaId) => {
+  if (!db) throw new Error('Firebase no está configurado');
+  const q = query(getCollection(TIPOS_DOC[tipo].coleccion), where('empresaId', '==', empresaId));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};
+
+// Documentos de un tipo que un cliente puede ver en una empresa, según sus
+// accesos: `sedeIds` null = todas las sedes; si no, solo esas. Cada consulta
+// queda acotada igual que la regla puedeVer (firestore.rules), que es lo que
+// Firestore exige para aceptarla. `in` admite hasta 30 valores por consulta.
+export const obtenerDocumentosConAcceso = async (tipo, empresaId, sedeIds = null) => {
+  if (!db) throw new Error('Firebase no está configurado');
+  const coleccion = getCollection(TIPOS_DOC[tipo].coleccion);
+  const consultas = [];
+  if (sedeIds === null) {
+    consultas.push(query(coleccion, where('empresaId', '==', empresaId)));
+  } else {
+    for (let i = 0; i < sedeIds.length; i += 30) {
+      consultas.push(query(coleccion, where('empresaId', '==', empresaId), where('sedeId', 'in', sedeIds.slice(i, i + 30))));
+    }
+  }
+  const snapshots = await Promise.all(consultas.map((q) => getDocs(q)));
+  return snapshots.flatMap((s) => s.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 };
 
 // ========== DOCUMENTOS DE UN CLIENTE (portal /cuenta) ==========

@@ -10,10 +10,10 @@ import {
   obtenerCertificadoPorId,
   actualizarCertificado,
   eliminarFotosStorage,
-  obtenerClientes
+  obtenerEmpresas
 } from '../../../../lib/firestore';
 import { useStaffAuth } from '../../../../lib/useStaffAuth';
-import ClienteSelector from '../../../../components/ClienteSelector';
+import EmpresaSelector from '../../../../components/EmpresaSelector';
 import ArchivosCertificadoUploader from '../../../../components/ui/ArchivosCertificadoUploader';
 
 export default function EditarCertificado({ params }) {
@@ -23,13 +23,14 @@ export default function EditarCertificado({ params }) {
   const { user, loading: loadingAuth } = useStaffAuth(['Admin']);
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
-  const [clientes, setClientes] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
   const loading = loadingAuth || loadingData;
 
   const [certificado, setCertificado] = useState({
     nombre: '',
     fecha: '',
     clienteId: null,
+    empresaId: null,
     sedeId: null,
     sedeNombre: '',
     clienteNombre: '',
@@ -53,6 +54,7 @@ export default function EditarCertificado({ params }) {
           nombre: certificadoData.nombre || '',
           fecha: certificadoData.fecha || '',
           clienteId: certificadoData.clienteId || null,
+          empresaId: certificadoData.empresaId || null,
           sedeId: certificadoData.sedeId || null,
           sedeNombre: certificadoData.sedeNombre || '',
           clienteNombre: certificadoData.clienteNombre || '',
@@ -61,9 +63,9 @@ export default function EditarCertificado({ params }) {
         setArchivosActuales(certificadoData.archivos || []);
 
         try {
-          setClientes(await obtenerClientes());
+          setEmpresas(await obtenerEmpresas());
         } catch (error) {
-          console.error('Error al cargar los clientes:', error);
+          console.error('Error al cargar las empresas:', error);
         }
 
         setLoadingData(false);
@@ -199,12 +201,15 @@ export default function EditarCertificado({ params }) {
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Cliente</label>
-                <ClienteSelector
-                  clientes={clientes}
-                  onSelect={({ clienteId, nombre, empresa, sedeId, sedeNombre }) => {
-                    setCertificado({ ...certificado, clienteId, sedeId, sedeNombre, clienteNombre: empresa ? `${nombre} - ${empresa}` : nombre });
+                <EmpresaSelector
+                  empresas={empresas}
+                  empresaId={certificado.empresaId}
+                  sedeId={certificado.sedeId}
+                  onSelect={({ empresaId, sedeId, empresa, sedeNombre }) => {
+                    setCertificado({ ...certificado, clienteId: null, empresaId, sedeId, sedeNombre, clienteNombre: empresa });
                   }}
-                  placeholder="Buscar cliente registrado (opcional)..."
+                  onQuitar={() => setCertificado({ ...certificado, clienteId: null, empresaId: null, sedeId: null })}
+                  placeholder="Buscar empresa registrada (opcional)..."
                 />
                 <input
                   type="text"

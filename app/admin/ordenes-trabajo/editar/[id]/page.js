@@ -10,11 +10,11 @@ import {
   obtenerOrdenTrabajoPorId,
   actualizarOrdenTrabajo,
   eliminarFotosStorage,
-  obtenerClientes,
+  obtenerEmpresas,
   obtenerPlantillas
 } from '../../../../lib/firestore';
 import { useStaffAuth } from '../../../../lib/useStaffAuth';
-import ClienteSelector from '../../../../components/ClienteSelector';
+import EmpresaSelector from '../../../../components/EmpresaSelector';
 import FotosUploader from '../../../../components/ui/FotosUploader';
 import FirmaCanvas from '../../../../components/ui/FirmaCanvas';
 import RichTextEditor from '../../../../components/ui/RichTextEditor';
@@ -27,7 +27,7 @@ export default function EditarOrdenTrabajo({ params }) {
   const { user, loading: loadingAuth } = useStaffAuth(['Admin', 'Tecnico']);
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
-  const [clientes, setClientes] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
   const [plantillasDisponibles, setPlantillasDisponibles] = useState([]);
   const [planillasAdjuntas, setPlanillasAdjuntas] = useState([]);
   const loading = loadingAuth || loadingData;
@@ -46,6 +46,8 @@ export default function EditarOrdenTrabajo({ params }) {
     numero: '',
     fecha: '',
     clienteId: null,
+    empresaId: null,
+    sedeId: null,
     descripcionTrabajo: '',
     observaciones: '',
     firmaTecnico: null,
@@ -72,6 +74,8 @@ export default function EditarOrdenTrabajo({ params }) {
           numero: otData.numero || '',
           fecha: otData.fecha || '',
           clienteId: otData.clienteId || null,
+          empresaId: otData.empresaId || null,
+          sedeId: otData.sedeId || null,
           descripcionTrabajo: otData.descripcionTrabajo || '',
           observaciones: otData.observaciones || '',
           firmaTecnico: otData.firmaTecnico || null,
@@ -84,9 +88,9 @@ export default function EditarOrdenTrabajo({ params }) {
         setPlanillasAdjuntas(otData.planillasAdjuntas || []);
 
         try {
-          setClientes(await obtenerClientes());
+          setEmpresas(await obtenerEmpresas());
         } catch (error) {
-          console.error('Error al cargar los clientes:', error);
+          console.error('Error al cargar las empresas:', error);
         }
         try {
           setPlantillasDisponibles(await obtenerPlantillas());
@@ -141,6 +145,8 @@ export default function EditarOrdenTrabajo({ params }) {
         numero: orden.numero,
         fecha: orden.fecha,
         clienteId: orden.clienteId || null,
+        empresaId: orden.empresaId || null,
+        sedeId: orden.empresaId ? orden.sedeId || null : null,
         cliente,
         descripcionTrabajo: orden.descripcionTrabajo,
         fotos: [...fotosActuales, ...fotosSubidas],
@@ -235,13 +241,16 @@ export default function EditarOrdenTrabajo({ params }) {
           {/* Información del cliente */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
-            <ClienteSelector
-              clientes={clientes}
-              onSelect={({ clienteId, nombre, empresa, email, telefono, direccion, sedeId, sedeNombre }) => {
-                setOrden({ ...orden, clienteId });
-                setCliente({ nombre, empresa, email, telefono, direccion, sedeId, sedeNombre });
+            <EmpresaSelector
+              empresas={empresas}
+              empresaId={orden.empresaId}
+              sedeId={orden.sedeId}
+              onSelect={({ empresaId, sedeId, empresa, email, telefono, direccion, sedeNombre }) => {
+                setOrden({ ...orden, clienteId: null, empresaId, sedeId });
+                setCliente({ ...cliente, empresa, email, telefono, direccion, sedeId, sedeNombre });
               }}
-              placeholder="Buscar cliente registrado (opcional)..."
+              onQuitar={() => setOrden({ ...orden, clienteId: null, empresaId: null, sedeId: null })}
+              placeholder="Buscar empresa registrada (opcional)..."
             />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>

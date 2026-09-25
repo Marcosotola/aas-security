@@ -2,14 +2,14 @@
 // Variante de documentosCliente.js para el panel admin: normaliza los mismos
 // 7 tipos de documento pero sin acotar por cliente (para el buscador que
 // cruza documentos de todos los clientes a la vez), sumando el nombre,
-// empresa y clienteId de cada uno.
+// empresa y empresaId/sedeId de cada uno.
 import { formatFecha, fechaOrdenDe, SEDE_ANIDADA } from './documentosCliente';
 
 // presupuesto/remito/estado/orden guardan el cliente denormalizado en
 // `cliente.{nombre,empresa}`; factura/certificado lo guardan flat en
 // `clienteNombre`; recibo no tiene un campo de nombre propio, así que se usa
 // `recibiDe` (texto libre que carga el admin al crearlo) como mejor esfuerzo.
-const clienteNombreDe = (doc) => doc.cliente?.nombre || doc.clienteNombre || doc.recibiDe || null;
+const clienteNombreDe = (doc) => doc.cliente?.nombre || doc.cliente?.empresa || doc.clienteNombre || doc.recibiDe || null;
 const clienteEmpresaDe = (doc) => doc.cliente?.empresa || null;
 
 const normalizarUno = (tipo, doc) => {
@@ -27,7 +27,8 @@ const normalizarUno = (tipo, doc) => {
     fecha: formatFecha(doc),
     fechaOrden: fechaOrdenDe(doc),
     sede,
-    clienteId: doc.clienteId || null,
+    empresaId: doc.empresaId || null,
+    sedeId: doc.sedeId || null,
     clienteNombre,
     clienteEmpresa,
     monto: doc.total ?? doc.monto,

@@ -10,7 +10,7 @@ import ListaDocumentos from '../components/cliente/ListaDocumentos';
 import ViewToggle from '../components/admin/ViewToggle';
 
 export default function Cuenta() {
-  const { perfil, documentos, cuentasVinculadas } = useCliente();
+  const { perfil, documentos, empresas } = useCliente();
   const [vista, setVista] = useState('tabla');
   const [busqueda, setBusqueda] = useState('');
   const [sedeFiltro, setSedeFiltro] = useState('todas');
@@ -18,10 +18,8 @@ export default function Cuenta() {
   const [hasta, setHasta] = useState('');
 
   const todos = useMemo(() => normalizarDocumentos(documentos), [documentos]);
-  // Una cuenta vinculada sin sedes cargadas cuenta como 1 (su "Principal"),
-  // igual que se muestra en app/cuenta/sedes/page.js.
-  const cantidadSedes = (perfil.sedes || []).length
-    + cuentasVinculadas.reduce((total, c) => total + Math.max((c.sedes || []).length, 1), 0);
+  // Sedes a las que tiene acceso, sumando todas sus empresas.
+  const cantidadSedes = empresas.reduce((total, e) => total + e.sedes.length, 0);
 
   const sedesDisponibles = useMemo(() => {
     const set = new Set(todos.map((d) => d.sede).filter(Boolean));
@@ -48,8 +46,14 @@ export default function Cuenta() {
         Hola, {perfil.nombre}
       </h2>
 
+      {empresas.length === 0 && (
+        <div className="p-4 text-sm text-blue-800 border border-blue-200 rounded-lg bg-blue-50">
+          Tu cuenta todavía no tiene empresas habilitadas. AAS te va a dar acceso a la brevedad.
+        </div>
+      )}
+
       {/* Accesos rápidos: Documentos es lo que se usa a diario, Sedes y
-          Perfil se abren poco (alta/baja de sede, corrección de datos), así
+          Perfil se abren poco (consultar sedes, corrección de datos), así
           que quedan acá como acceso ocasional en vez de ocupar la nav. */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Link href="/cuenta/documentos" className="flex items-center gap-4 p-5 transition-shadow bg-white rounded-lg shadow-md hover:shadow-lg">
@@ -69,7 +73,7 @@ export default function Cuenta() {
           </div>
           <div className="flex-1">
             <div className="font-semibold text-gray-800">Mis Sedes</div>
-            <div className="text-sm text-gray-500">{cantidadSedes} cargada{cantidadSedes === 1 ? '' : 's'}</div>
+            <div className="text-sm text-gray-500">{cantidadSedes} {cantidadSedes === 1 ? 'sede' : 'sedes'}</div>
           </div>
           <ChevronRight size={18} className="text-gray-300" />
         </Link>

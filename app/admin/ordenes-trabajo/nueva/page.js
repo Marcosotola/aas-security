@@ -6,10 +6,10 @@ import Link from 'next/link';
 import { Home, Save } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../../lib/firebase';
-import { crearOrdenTrabajo, generarIdOrdenTrabajo, obtenerClientes, obtenerPlantillas } from '../../../lib/firestore';
+import { crearOrdenTrabajo, generarIdOrdenTrabajo, obtenerEmpresas, obtenerPlantillas } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import OrdenTrabajoPDF from '../../../components/pdf/OrdenTrabajoPDF';
-import ClienteSelector from '../../../components/ClienteSelector';
+import EmpresaSelector from '../../../components/EmpresaSelector';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
 import FotosUploader from '../../../components/ui/FotosUploader';
 import FirmaCanvas from '../../../components/ui/FirmaCanvas';
@@ -23,7 +23,7 @@ export default function NuevaOrdenTrabajo() {
   const { user, loading } = useStaffAuth(['Admin', 'Tecnico']);
   const [guardando, setGuardando] = useState(false);
   const [documentoGuardado, setDocumentoGuardado] = useState(null);
-  const [clientes, setClientes] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
   const [plantillasDisponibles, setPlantillasDisponibles] = useState([]);
   const [fotos, setFotos] = useState([]);
   const [planillasAdjuntas, setPlanillasAdjuntas] = useState([]);
@@ -42,6 +42,8 @@ export default function NuevaOrdenTrabajo() {
     numero: `OT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
     fecha: fechaHoyLocal(),
     clienteId: null,
+    empresaId: null,
+    sedeId: null,
     descripcionTrabajo: '',
     observaciones: '',
     firmaTecnico: null,
@@ -52,9 +54,9 @@ export default function NuevaOrdenTrabajo() {
 
   useEffect(() => {
     if (!user) return;
-    obtenerClientes()
-      .then(setClientes)
-      .catch((error) => console.error('Error al cargar los clientes:', error));
+    obtenerEmpresas()
+      .then(setEmpresas)
+      .catch((error) => console.error('Error al cargar las empresas:', error));
     obtenerPlantillas()
       .then(setPlantillasDisponibles)
       .catch((error) => console.error('Error al cargar las plantillas:', error));
@@ -99,6 +101,8 @@ export default function NuevaOrdenTrabajo() {
         numero: orden.numero,
         fecha: orden.fecha,
         clienteId: orden.clienteId || null,
+        empresaId: orden.empresaId || null,
+        sedeId: orden.empresaId ? orden.sedeId || null : null,
         cliente,
         descripcionTrabajo: orden.descripcionTrabajo,
         fotos: fotosSubidas,
@@ -199,13 +203,16 @@ export default function NuevaOrdenTrabajo() {
           {/* Información del cliente */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
-            <ClienteSelector
-              clientes={clientes}
-              onSelect={({ clienteId, nombre, empresa, email, telefono, direccion, sedeId, sedeNombre }) => {
-                setOrden({ ...orden, clienteId });
-                setCliente({ nombre, empresa, email, telefono, direccion, sedeId, sedeNombre });
+            <EmpresaSelector
+              empresas={empresas}
+              empresaId={orden.empresaId}
+              sedeId={orden.sedeId}
+              onSelect={({ empresaId, sedeId, empresa, email, telefono, direccion, sedeNombre }) => {
+                setOrden({ ...orden, clienteId: null, empresaId, sedeId });
+                setCliente({ ...cliente, empresa, email, telefono, direccion, sedeId, sedeNombre });
               }}
-              placeholder="Buscar cliente registrado (opcional)..."
+              onQuitar={() => setOrden({ ...orden, clienteId: null, empresaId: null, sedeId: null })}
+              placeholder="Buscar empresa registrada (opcional)..."
             />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>

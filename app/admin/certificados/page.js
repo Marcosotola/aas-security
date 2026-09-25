@@ -146,7 +146,7 @@ export default function HistorialCertificados() {
                 {certificadosFiltrados.map((certificado) => (
                   <div key={certificado.id} className="p-4 border border-gray-200 rounded-lg">
                     <div className="mb-1">
-                      <SedeLink clienteId={certificado.clienteId} sede={certificado.sedeNombre} />
+                      <SedeLink empresaId={certificado.empresaId} sedeId={certificado.sedeId} sede={certificado.sedeNombre} />
                     </div>
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-medium text-gray-900">{certificado.nombre}</div>
@@ -196,7 +196,7 @@ export default function HistorialCertificados() {
                     certificadosFiltrados.map((certificado) => (
                       <tr key={certificado.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <SedeLink clienteId={certificado.clienteId} sede={certificado.sedeNombre} />
+                          <SedeLink empresaId={certificado.empresaId} sedeId={certificado.sedeId} sede={certificado.sedeNombre} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">{certificado.nombre}</div>

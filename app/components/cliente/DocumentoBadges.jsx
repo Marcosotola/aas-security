@@ -10,6 +10,7 @@ import PresupuestoPDF from '../pdf/PresupuestoPDF';
 import RemitoPDF from '../pdf/RemitoPDF';
 import ReciboPDF from '../pdf/ReciboPDF';
 import EstadoPDF from '../pdf/EstadoPDF';
+import DocumentoPDF from '../pdf/DocumentoPDF';
 import { EstadoFacturaBadge } from '../ui/EstadoFactura';
 
 // Solo los tipos generados con @react-pdf/renderer necesitan el componente
@@ -21,7 +22,8 @@ const PDF_COMPONENTS = {
   presupuesto: { Component: PresupuestoPDF, propName: 'presupuesto' },
   remito: { Component: RemitoPDF, propName: 'remito' },
   recibo: { Component: ReciboPDF, propName: 'recibo' },
-  estado: { Component: EstadoPDF, propName: 'estado' }
+  estado: { Component: EstadoPDF, propName: 'estado' },
+  informe: { Component: DocumentoPDF, propName: 'documento' }
 };
 
 export function BadgeSede({ nombre }) {

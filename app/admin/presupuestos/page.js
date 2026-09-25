@@ -183,7 +183,7 @@ export default function HistorialPresupuestos() {
                 {presupuestosFiltrados.map((presupuesto) => (
                   <div key={presupuesto.id} className="p-4 border border-gray-200 rounded-lg">
                     <div className="mb-1">
-                      <SedeLink clienteId={presupuesto.clienteId} sede={presupuesto.cliente?.sedeNombre} />
+                      <SedeLink empresaId={presupuesto.empresaId} sedeId={presupuesto.sedeId} sede={presupuesto.cliente?.sedeNombre} />
                     </div>
                     {presupuesto.titulo && (
                       <div className="mb-1 text-sm font-medium text-gray-700">{presupuesto.titulo}</div>
@@ -319,7 +319,7 @@ export default function HistorialPresupuestos() {
                   presupuestosFiltrados.map((presupuesto) => (
                     <tr key={presupuesto.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <SedeLink clienteId={presupuesto.clienteId} sede={presupuesto.cliente?.sedeNombre} />
+                        <SedeLink empresaId={presupuesto.empresaId} sedeId={presupuesto.sedeId} sede={presupuesto.cliente?.sedeNombre} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{presupuesto.titulo || ''}</div>

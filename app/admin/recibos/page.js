@@ -137,7 +137,7 @@ export default function HistorialRecibos() {
                 {recibosFiltrados.map((recibo) => (
                   <div key={recibo.id} className="p-4 border border-gray-200 rounded-lg">
                     <div className="mb-1">
-                      <SedeLink clienteId={recibo.clienteId} sede={recibo.sedeNombre} />
+                      <SedeLink empresaId={recibo.empresaId} sedeId={recibo.sedeId} sede={recibo.sedeNombre} />
                     </div>
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-medium text-gray-900">{recibo.numero}</div>
@@ -231,7 +231,7 @@ export default function HistorialRecibos() {
                   recibosFiltrados.map((recibo) => (
                     <tr key={recibo.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <SedeLink clienteId={recibo.clienteId} sede={recibo.sedeNombre} />
+                        <SedeLink empresaId={recibo.empresaId} sedeId={recibo.sedeId} sede={recibo.sedeNombre} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{recibo.numero}</div>

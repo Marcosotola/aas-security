@@ -13,10 +13,10 @@ import {
   crearMovimiento,
   actualizarMovimiento,
   eliminarMovimiento,
-  obtenerClientes
+  obtenerEmpresas
 } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
-import ClienteSelector from '../../components/ClienteSelector';
+import EmpresaSelector from '../../components/EmpresaSelector';
 import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/accionIcono';
 
 const formatMoney = (amount) => {
@@ -41,6 +41,7 @@ const MOVIMIENTO_VACIO = {
   monto: '',
   fecha: new Date().toISOString().split('T')[0],
   clienteId: null,
+  empresaId: null,
   clienteNombre: '',
   sedeId: null,
   sedeNombre: ''
@@ -65,7 +66,7 @@ function Finanzas() {
   const [loadingData, setLoadingData] = useState(true);
   const [recibos, setRecibos] = useState([]);
   const [movimientos, setMovimientos] = useState([]);
-  const [clientes, setClientes] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
   const [guardando, setGuardando] = useState(false);
   const [eliminandoId, setEliminandoId] = useState(null);
 
@@ -90,14 +91,14 @@ function Finanzas() {
 
   const cargarTodo = async () => {
     try {
-      const [rec, mov, cli] = await Promise.all([
+      const [rec, mov, emp] = await Promise.all([
         obtenerRecibos(),
         obtenerMovimientos(),
-        obtenerClientes()
+        obtenerEmpresas()
       ]);
       setRecibos(rec);
       setMovimientos(mov);
-      setClientes(cli);
+      setEmpresas(emp);
     } catch (error) {
       console.error('Error al cargar datos de finanzas:', error);
     } finally {
@@ -120,6 +121,7 @@ function Finanzas() {
         monto: item.monto ?? '',
         fecha: item.fecha || hoy(),
         clienteId: item.clienteId || null,
+        empresaId: item.empresaId || null,
         clienteNombre: item.clienteNombre || '',
         sedeId: item.sedeId || null,
         sedeNombre: item.sedeNombre || ''
@@ -145,6 +147,7 @@ function Finanzas() {
         monto: parseFloat(modal.data.monto) || 0,
         fecha: modal.data.fecha,
         clienteId: modal.data.clienteId || null,
+        empresaId: modal.data.empresaId || null,
         clienteNombre: modal.data.clienteNombre || '',
         sedeId: modal.data.sedeId || null,
         sedeNombre: modal.data.sedeNombre || ''
@@ -191,9 +194,10 @@ function Finanzas() {
       monto: parseFloat(r.monto) || 0,
       fecha: r.fecha || '',
       clienteId: r.clienteId || null,
+      empresaId: r.empresaId || null,
       clienteNombre: r.recibiDe || 'Sin cliente asociado',
       sedeId: r.sedeId || null,
-      sedeNombre: r.sedeNombre || (r.clienteId ? 'Principal' : ''),
+      sedeNombre: r.sedeNombre || (r.empresaId || r.clienteId ? 'Principal' : ''),
       origen: 'recibo'
     }));
 
@@ -205,6 +209,7 @@ function Finanzas() {
       monto: parseFloat(m.monto) || 0,
       fecha: m.fecha || '',
       clienteId: m.clienteId || null,
+      empresaId: m.empresaId || null,
       clienteNombre: m.clienteNombre || 'Sin cliente asociado',
       sedeId: m.sedeId || null,
       sedeNombre: m.sedeNombre || '',
@@ -231,7 +236,7 @@ function Finanzas() {
   const agrupadoPorClienteSede = useMemo(() => {
     const grupos = new Map();
     for (const item of itemsFiltrados) {
-      const key = `${item.clienteId || 'sin-cliente'}::${item.sedeId || 'sin-sede'}`;
+      const key = `${item.empresaId || item.clienteId || 'sin-cliente'}::${item.sedeId || 'sin-sede'}`;
       if (!grupos.has(key)) {
         grupos.set(key, {
           clienteNombre: item.clienteNombre || 'Sin cliente asociado',
@@ -543,24 +548,21 @@ function Finanzas() {
               </div>
 
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">Cliente / sede (opcional)</label>
-                <ClienteSelector
-                  clientes={clientes}
-                  onSelect={({ clienteId, nombre, empresa, sedeId, sedeNombre }) => {
+                <label className="block mb-1 text-sm font-medium text-gray-700">Empresa / sede (opcional)</label>
+                <EmpresaSelector
+                  empresas={empresas}
+                  empresaId={modal.data.empresaId}
+                  sedeId={modal.data.sedeId}
+                  onSelect={({ empresaId, empresa, sedeId, sedeNombre }) => {
                     setModal({
                       ...modal,
-                      data: {
-                        ...modal.data,
-                        clienteId,
-                        clienteNombre: empresa ? `${nombre} - ${empresa}` : nombre,
-                        sedeId,
-                        sedeNombre
-                      }
+                      data: { ...modal.data, clienteId: null, empresaId, clienteNombre: empresa, sedeId, sedeNombre }
                     });
                   }}
-                  placeholder="Buscar cliente registrado..."
+                  onQuitar={() => setModal({ ...modal, data: { ...modal.data, clienteId: null, empresaId: null, clienteNombre: '', sedeId: null, sedeNombre: '' } })}
+                  placeholder="Buscar empresa registrada..."
                 />
-                {modal.data.clienteId ? (
+                {modal.data.empresaId ? null : modal.data.clienteId ? (
                   <div className="flex items-center justify-between px-3 py-2 mt-1 text-sm border border-gray-200 rounded-md bg-gray-50">
                     <span>{modal.data.clienteNombre} · {modal.data.sedeNombre}</span>
                     <button
@@ -572,7 +574,7 @@ function Finanzas() {
                     </button>
                   </div>
                 ) : (
-                  <p className="mt-1 text-xs text-gray-400">Sin asociar a ningún cliente ni sede.</p>
+                  <p className="mt-1 text-xs text-gray-400">Sin asociar a ninguna empresa ni sede.</p>
                 )}
               </div>
 

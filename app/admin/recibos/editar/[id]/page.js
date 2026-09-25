@@ -4,10 +4,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Save, Download, RefreshCw } from 'lucide-react';
-import { obtenerReciboPorId, actualizarRecibo, obtenerClientes } from '../../../../lib/firestore';
+import { obtenerReciboPorId, actualizarRecibo, obtenerEmpresas } from '../../../../lib/firestore';
 import { useStaffAuth } from '../../../../lib/useStaffAuth';
 import { use } from 'react';
-import ClienteSelector from '../../../../components/ClienteSelector';
+import EmpresaSelector from '../../../../components/EmpresaSelector';
 import SignatureCanvas from 'react-signature-canvas';
 
 // Función para convertir números a letras
@@ -73,7 +73,7 @@ export default function EditarRecibo({ params }) {
   const [guardando, setGuardando] = useState(false);
   const [mostrarCanvas, setMostrarCanvas] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 500, height: 200 });
-  const [clientes, setClientes] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
   const sigCanvas = useRef({});
   const loading = loadingAuth || loadingData;
 
@@ -88,6 +88,7 @@ export default function EditarRecibo({ params }) {
     numero: '',
     fecha: '',
     clienteId: null,
+    empresaId: null,
     sedeId: null,
     sedeNombre: '',
     recibiDe: '',
@@ -129,6 +130,7 @@ export default function EditarRecibo({ params }) {
           numero: reciboData.numero || '',
           fecha: reciboData.fecha || '',
           clienteId: reciboData.clienteId || null,
+          empresaId: reciboData.empresaId || null,
           sedeId: reciboData.sedeId || null,
           sedeNombre: reciboData.sedeNombre || '',
           recibiDe: reciboData.recibiDe || '',
@@ -140,9 +142,9 @@ export default function EditarRecibo({ params }) {
         });
 
         try {
-          setClientes(await obtenerClientes());
+          setEmpresas(await obtenerEmpresas());
         } catch (error) {
-          console.error('Error al cargar los clientes:', error);
+          console.error('Error al cargar las empresas:', error);
         }
 
         setLoadingData(false);
@@ -307,12 +309,15 @@ export default function EditarRecibo({ params }) {
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Recibí de</label>
-                <ClienteSelector
-                  clientes={clientes}
-                  onSelect={({ clienteId, nombre, empresa, sedeId, sedeNombre }) => {
-                    setRecibo({ ...recibo, clienteId, sedeId, sedeNombre, recibiDe: empresa ? `${nombre} - ${empresa}` : nombre });
+                <EmpresaSelector
+                  empresas={empresas}
+                  empresaId={recibo.empresaId}
+                  sedeId={recibo.sedeId}
+                  onSelect={({ empresaId, sedeId, empresa, sedeNombre }) => {
+                    setRecibo({ ...recibo, clienteId: null, empresaId, sedeId, sedeNombre, recibiDe: empresa });
                   }}
-                  placeholder="Buscar cliente registrado (opcional)..."
+                  onQuitar={() => setRecibo({ ...recibo, clienteId: null, empresaId: null, sedeId: null })}
+                  placeholder="Buscar empresa registrada (opcional)..."
                 />
                 <input
                   type="text"

@@ -19,7 +19,8 @@ import {
   ListChecks,
   Wrench,
   Search,
-  X
+  X,
+  Building2
 } from 'lucide-react';
 import { collection, query, where, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -35,7 +36,7 @@ import {
   obtenerFacturas,
   obtenerCertificados,
   obtenerDocumentos,
-  obtenerClientes
+  obtenerEmpresas
 } from '../../lib/firestore';
 import { estaBloqueada } from '../../lib/suscripcion';
 import { normalizarDocumentosAdmin } from '../../lib/documentosAdmin';
@@ -91,14 +92,14 @@ export default function Dashboard() {
 
   // Buscador general: cruza los 9 tipos de documento de todos los clientes
   // (presupuesto, remito, recibo, factura, certificado, estado, orden,
-  // mantenimiento, informe), más los clientes y sedes en sí, para poder
+  // mantenimiento, informe), más las empresas y sedes en sí, para poder
   // buscar por número, cliente, empresa, sede, concepto o fechas y llegar
   // directo a lo que corresponda. Vivía en el hub /admin/documentos, pero
   // como ya buscaba en todos los tipos (no solo los agrupados ahí dentro) no
   // tenía sentido tenerlo separado del panel principal -- solo Admin (mismos
   // datos cross-cliente que antes solo se pedían en esa página Admin-only).
   const [todosDocumentos, setTodosDocumentos] = useState([]);
-  const [clientes, setClientes] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
   const [busqueda, setBusqueda] = useState('');
   const [sedeFiltro, setSedeFiltro] = useState('todas');
   const [desde, setDesde] = useState('');
@@ -106,10 +107,10 @@ export default function Dashboard() {
   const [tiposActivos, setTiposActivos] = useState(() => new Set(Object.keys(TIPOS_DOC)));
   const [vista, setVista] = useState('tabla');
   const [visibleDocs, setVisibleDocs] = useState(20);
-  const [visibleClientes, setVisibleClientes] = useState(20);
+  const [visibleEmpresas, setVisibleEmpresas] = useState(20);
   const [visibleSedes, setVisibleSedes] = useState(20);
 
-  // El cruce de los 9 tipos de documento + clientes es una lectura pesada
+  // El cruce de los 9 tipos de documento + empresas es una lectura pesada
   // (Firestore no tiene búsqueda de texto server-side, así que hay que traer
   // las colecciones enteras para poder filtrar en memoria). Antes se pedía
   // siempre al entrar al panel, se usara el buscador o no. Ahora se pide
@@ -125,7 +126,7 @@ export default function Dashboard() {
 
     (async () => {
       try {
-        const [presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo, mantenimientosPreventivos, informes, clientesData] = await Promise.all([
+        const [presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo, mantenimientosPreventivos, informes, empresasData] = await Promise.all([
           obtenerPresupuestos(),
           obtenerRemitos(),
           obtenerRecibos(),
@@ -135,10 +136,10 @@ export default function Dashboard() {
           obtenerOrdenesTrabajo(),
           obtenerMantenimientosPreventivos(),
           obtenerDocumentos(),
-          obtenerClientes()
+          obtenerEmpresas()
         ]);
         setTodosDocumentos(normalizarDocumentosAdmin({ presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo, mantenimientosPreventivos, documentos: informes }));
-        setClientes(clientesData);
+        setEmpresas(empresasData);
       } catch (error) {
         console.error('Error al cargar los documentos para el buscador:', error);
       } finally {
@@ -155,35 +156,34 @@ export default function Dashboard() {
   // si no, "Ver más" en una búsqueda podría quedar pedido de una anterior.
   useEffect(() => {
     setVisibleDocs(20);
-    setVisibleClientes(20);
+    setVisibleEmpresas(20);
     setVisibleSedes(20);
   }, [busqueda, sedeFiltro, desde, hasta, tiposActivos]);
 
-  const clientesFiltrados = useMemo(() => {
+  const empresasFiltradas = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
     if (!q) return [];
-    return clientes.filter((c) => {
-      const nombreCompleto = `${c.nombre || ''} ${c.apellido || ''}`.toLowerCase();
-      return nombreCompleto.includes(q)
-        || c.empresa?.toLowerCase().includes(q)
-        || c.email?.toLowerCase().includes(q)
-        || c.telefono?.toLowerCase().includes(q);
-    });
-  }, [clientes, busqueda]);
+    return empresas.filter((e) =>
+      e.nombre?.toLowerCase().includes(q)
+      || e.razonSocial?.toLowerCase().includes(q)
+      || e.cuit?.toLowerCase().includes(q)
+      || e.email?.toLowerCase().includes(q)
+      || e.telefono?.toLowerCase().includes(q));
+  }, [empresas, busqueda]);
 
   const sedesFiltradas = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
     if (!q) return [];
     const resultado = [];
-    clientes.forEach((c) => {
-      (c.sedes || []).forEach((s) => {
+    empresas.forEach((e) => {
+      (e.sedes || []).forEach((s) => {
         if (s.nombre?.toLowerCase().includes(q) || s.direccion?.toLowerCase().includes(q)) {
-          resultado.push({ clienteId: c.id, clienteNombre: `${c.nombre || ''} ${c.apellido || ''}`.trim(), sede: s });
+          resultado.push({ empresaId: e.id, empresaNombre: e.nombre, sede: s });
         }
       });
     });
     return resultado;
-  }, [clientes, busqueda]);
+  }, [empresas, busqueda]);
 
   const tiposPresentes = useMemo(() => {
     const set = new Set(todosDocumentos.map((d) => d.tipo));
@@ -318,6 +318,20 @@ export default function Dashboard() {
       activo: true
     },
     {
+      id: 'empresas',
+      titulo: 'Empresas',
+      icono: Building2,
+      color: 'bg-cyan-800', // Cian oscuro, distinto de los tonos ya usados
+      colorClaro: 'bg-cyan-100',
+      colorTexto: 'text-cyan-800',
+      descripcion: 'Empresas y sus sedes',
+      rutas: {
+        historial: '/admin/empresas'
+      },
+      sinNuevo: true,
+      activo: true
+    },
+    {
       id: 'usuarios',
       titulo: 'Usuarios',
       icono: UserCog,
@@ -401,7 +415,7 @@ export default function Dashboard() {
           <div className="mb-8">
             <h3 className="mb-1 text-lg font-semibold text-gray-700">Buscador general</h3>
             <p className="mb-4 text-sm text-gray-500">
-              Por cliente, sede, número, título o concepto — cruza clientes, sedes y los 9 tipos de documento a la vez.
+              Por cliente, sede, número, título o concepto — cruza empresas, sedes y los 9 tipos de documento a la vez.
             </p>
 
             <div className="p-4 space-y-4 bg-white rounded-lg shadow-md">
@@ -486,33 +500,33 @@ export default function Dashboard() {
               </div>
             ) : (
               <>
-                {busqueda.trim() && (clientesFiltrados.length > 0 || sedesFiltradas.length > 0) && (
+                {busqueda.trim() && (empresasFiltradas.length > 0 || sedesFiltradas.length > 0) && (
                   <div className="grid grid-cols-1 gap-4 mt-4 sm:grid-cols-2">
-                    {clientesFiltrados.length > 0 && (
+                    {empresasFiltradas.length > 0 && (
                       <div className="p-4 bg-white rounded-lg shadow-md">
-                        <h4 className="mb-3 text-sm font-semibold text-gray-700">Clientes ({clientesFiltrados.length})</h4>
+                        <h4 className="mb-3 text-sm font-semibold text-gray-700">Empresas ({empresasFiltradas.length})</h4>
                         <div className="space-y-1">
-                          {clientesFiltrados.slice(0, visibleClientes).map((c) => (
+                          {empresasFiltradas.slice(0, visibleEmpresas).map((e) => (
                             <Link
-                              key={c.id}
-                              href={`/admin/usuarios/${c.id}`}
+                              key={e.id}
+                              href={`/admin/empresas/${e.id}`}
                               className="flex items-center justify-between gap-2 p-2 -mx-2 text-sm rounded-md hover:bg-gray-50"
                             >
                               <span className="text-gray-900 truncate">
-                                {c.nombre ? `${c.nombre} ${c.apellido || ''}` : c.email}
-                                {c.empresa ? ` · ${c.empresa}` : ''}
+                                {e.nombre}
+                                {e.razonSocial ? ` · ${e.razonSocial}` : ''}
                               </span>
-                              <span className="text-xs text-gray-400 whitespace-nowrap">{c.email}</span>
+                              <span className="text-xs text-gray-400 whitespace-nowrap">{e.cuit}</span>
                             </Link>
                           ))}
                         </div>
-                        {clientesFiltrados.length > visibleClientes && (
+                        {empresasFiltradas.length > visibleEmpresas && (
                           <button
                             type="button"
-                            onClick={() => setVisibleClientes((v) => v + 20)}
+                            onClick={() => setVisibleEmpresas((v) => v + 20)}
                             className="w-full py-2 mt-2 text-xs font-medium text-center border rounded-md text-primary border-primary hover:bg-primary/5"
                           >
-                            Ver más ({clientesFiltrados.length - visibleClientes} más)
+                            Ver más ({empresasFiltradas.length - visibleEmpresas} más)
                           </button>
                         )}
                       </div>
@@ -521,16 +535,16 @@ export default function Dashboard() {
                       <div className="p-4 bg-white rounded-lg shadow-md">
                         <h4 className="mb-3 text-sm font-semibold text-gray-700">Sedes ({sedesFiltradas.length})</h4>
                         <div className="space-y-1">
-                          {sedesFiltradas.slice(0, visibleSedes).map(({ clienteId, clienteNombre, sede }) => (
+                          {sedesFiltradas.slice(0, visibleSedes).map(({ empresaId, empresaNombre, sede }) => (
                             <Link
-                              key={`${clienteId}-${sede.id}`}
-                              href={`/admin/usuarios/${clienteId}?sede=${encodeURIComponent(sede.nombre)}`}
+                              key={`${empresaId}-${sede.id}`}
+                              href={`/admin/empresas/${empresaId}?sede=${encodeURIComponent(sede.id)}`}
                               className="flex items-center justify-between gap-2 p-2 -mx-2 text-sm rounded-md hover:bg-gray-50"
                             >
                               <span className="text-gray-900 truncate">
                                 {sede.nombre} <span className="text-gray-400">— {sede.direccion}</span>
                               </span>
-                              <span className="text-xs text-gray-400 whitespace-nowrap">{clienteNombre}</span>
+                              <span className="text-xs text-gray-400 whitespace-nowrap">{empresaNombre}</span>
                             </Link>
                           ))}
                         </div>

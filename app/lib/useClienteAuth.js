@@ -5,50 +5,53 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
-import {
-  obtenerUsuarioPorId,
-  obtenerPresupuestosPorCliente,
-  obtenerRemitosPorCliente,
-  obtenerRecibosPorCliente,
-  obtenerFacturasPorCliente,
-  obtenerCertificadosPorCliente,
-  obtenerEstadosPorCliente,
-  obtenerOrdenesTrabajoPorCliente,
-  obtenerMantenimientosPreventivosPorCliente
-} from './firestore';
-import { nombreCuenta } from './documentosCliente';
+import { obtenerUsuarioPorId, obtenerEmpresaPorId, obtenerDocumentosConAcceso } from './firestore';
+import { TIPOS_DOC } from './documentosCliente';
 
 const ClienteAuthContext = createContext(null);
 
-const DOCUMENTOS_VACIOS = {
-  presupuestos: [], remitos: [], recibos: [], facturas: [],
-  certificados: [], estados: [], ordenesTrabajo: [], mantenimientosPreventivos: []
+// Clave en `documentos` -> tipo de TIPOS_DOC.
+const CLAVES = {
+  presupuestos: 'presupuesto',
+  remitos: 'remito',
+  recibos: 'recibo',
+  facturas: 'factura',
+  certificados: 'certificado',
+  estados: 'estado',
+  ordenesTrabajo: 'orden',
+  mantenimientosPreventivos: 'mantenimiento',
+  informes: 'informe'
 };
 
-// Clave en `documentos` -> consulta por clienteId.
-const TIPOS_CONSULTA = [
-  ['presupuestos', obtenerPresupuestosPorCliente],
-  ['remitos', obtenerRemitosPorCliente],
-  ['recibos', obtenerRecibosPorCliente],
-  ['facturas', obtenerFacturasPorCliente],
-  ['certificados', obtenerCertificadosPorCliente],
-  ['estados', obtenerEstadosPorCliente],
-  ['ordenesTrabajo', obtenerOrdenesTrabajoPorCliente],
-  ['mantenimientosPreventivos', obtenerMantenimientosPreventivosPorCliente]
-];
+const DOCUMENTOS_VACIOS = Object.fromEntries(Object.keys(CLAVES).map((clave) => [clave, []]));
 
-// Gatekeeper + fuente de datos única de /cuenta/*: resuelve sesión, perfil y
-// los 7 tipos de documento del cliente una sola vez en el layout, para que
-// cada página (Inicio, Documentos, Sedes, Perfil) los consuma vía useCliente()
-// sin repetir la lectura a Firestore en cada navegación. Mismo criterio de
-// guard que useStaffAuth.js para /admin, pero centralizado en vez de por
-// página porque acá casi todas las pantallas necesitan el mismo perfil/sedes.
+// Para cada tipo, qué sedes de la empresa puede ver: null = todas (acceso
+// '*'), o la lista de sedeIds. Los tipos sin ninguna sede no aparecen.
+function sedesPorTipo(porSede) {
+  const resultado = {};
+  for (const tipo of Object.keys(TIPOS_DOC)) {
+    if ((porSede['*'] || []).includes(tipo)) {
+      resultado[tipo] = null;
+      continue;
+    }
+    const sedes = Object.entries(porSede).filter(([id, tipos]) => id !== '*' && tipos.includes(tipo)).map(([id]) => id);
+    if (sedes.length > 0) resultado[tipo] = sedes;
+  }
+  return resultado;
+}
+
+// Gatekeeper + fuente de datos única de /cuenta/*: resuelve sesión, perfil,
+// las empresas a las que tiene acceso y sus documentos una sola vez en el
+// layout, para que cada página (Inicio, Documentos, Sedes, Perfil) los
+// consuma vía useCliente() sin repetir la lectura a Firestore en cada
+// navegación. Qué documentos ve lo deciden sus `accesos` (empresa → sede →
+// tipos), que asigna el Admin desde la ficha del usuario.
 export function ClienteAuthProvider({ children }) {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [perfil, setPerfil] = useState(null);
   const [documentos, setDocumentos] = useState(DOCUMENTOS_VACIOS);
-  const [cuentasVinculadas, setCuentasVinculadas] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -74,35 +77,52 @@ export function ClienteAuthProvider({ children }) {
           return;
         }
 
-        // Cuentas vinculadas (las asigna el Admin desde la ficha del usuario):
-        // esta cuenta ve también sus documentos y sedes. Si alguna se borró o
-        // no se puede leer, se ignora en vez de romper todo el portal.
-        const vinculadasIds = (perfilData.cuentasVinculadas || []).filter((id) => id && id !== currentUser.uid);
-        const vinculadas = (await Promise.all(
-          vinculadasIds.map((id) => obtenerUsuarioPorId(id).catch(() => null))
+        // Empresas con algún acceso. Si alguna se borró o no se puede leer,
+        // se ignora en vez de romper todo el portal.
+        const accesos = perfilData.accesos || {};
+        const empresasData = (await Promise.all(
+          Object.keys(accesos).map((id) => obtenerEmpresaPorId(id).catch(() => null))
         )).filter(Boolean);
 
-        const cuentas = [
-          { id: currentUser.uid, nombre: null },
-          ...vinculadas.map((c) => ({ id: c.id, nombre: nombreCuenta(c) }))
-        ];
+        // Por empresa: las sedes visibles (con los tipos habilitados en cada
+        // una) y los documentos de cada tipo que puede ver.
+        const variasEmpresas = empresasData.length > 1;
+        const porEmpresa = await Promise.all(empresasData.map(async (empresa) => {
+          const porSede = accesos[empresa.id] || {};
+          const tipos = sedesPorTipo(porSede);
+          const nombreSede = new Map((empresa.sedes || []).map((s) => [s.id, s.nombre]));
 
-        // Una consulta por cuenta y tipo (clienteId == uid, igual que antes):
-        // así las reglas de Firestore pueden validar cada consulta. Los
-        // documentos de una cuenta vinculada se marcan con `cuentaNombre`
-        // para mostrar de quién son (ver documentosCliente.js).
-        const porCuenta = await Promise.all(cuentas.map(async ({ id, nombre }) => {
-          const resultados = await Promise.all(TIPOS_CONSULTA.map(([, obtener]) => obtener(id)));
-          return resultados.map((docs) => (nombre ? docs.map((d) => ({ ...d, cuentaNombre: nombre })) : docs));
+          const resultados = await Promise.all(Object.entries(CLAVES).map(async ([clave, tipo]) => {
+            if (!(tipo in tipos)) return [clave, []];
+            const docs = await obtenerDocumentosConAcceso(tipo, empresa.id, tipos[tipo]).catch((error) => {
+              console.error(`Error al cargar ${clave} de ${empresa.nombre}:`, error);
+              return [];
+            });
+            // Nombre de sede actual de la empresa (no el que quedó copiado en
+            // el documento) y, si ve más de una empresa, también cuál.
+            return [clave, docs.map((d) => ({
+              ...d,
+              sedeActual: nombreSede.get(d.sedeId) || null,
+              empresaNombre: variasEmpresas ? empresa.nombre : null
+            }))];
+          }));
+
+          const tiposTodas = porSede['*'] || [];
+          const sedes = (empresa.sedes || [])
+            .map((s) => ({ ...s, tipos: [...new Set([...tiposTodas, ...(porSede[s.id] || [])])] }))
+            .filter((s) => s.tipos.length > 0 && (s.activa !== false || (porSede[s.id] || []).length > 0));
+
+          return { empresa: { id: empresa.id, nombre: empresa.nombre, sedes }, resultados };
         }));
 
-        const nuevosDocumentos = Object.fromEntries(
-          TIPOS_CONSULTA.map(([clave], i) => [clave, porCuenta.flatMap((resultados) => resultados[i])])
-        );
+        const nuevosDocumentos = Object.fromEntries(Object.keys(CLAVES).map((clave) => [
+          clave,
+          porEmpresa.flatMap(({ resultados }) => resultados.find(([c]) => c === clave)[1])
+        ]));
 
         setUser(currentUser);
         setPerfil(perfilData);
-        setCuentasVinculadas(vinculadas);
+        setEmpresas(porEmpresa.map(({ empresa }) => empresa));
         setDocumentos(nuevosDocumentos);
         setLoading(false);
       } catch (error) {
@@ -115,14 +135,15 @@ export function ClienteAuthProvider({ children }) {
   }, [router]);
 
   return (
-    <ClienteAuthContext.Provider value={{ user, perfil, setPerfil, documentos, cuentasVinculadas, loading }}>
+    <ClienteAuthContext.Provider value={{ user, perfil, setPerfil, documentos, empresas, loading }}>
       {children}
     </ClienteAuthContext.Provider>
   );
 }
 
 // Hook de acceso para las páginas de /cuenta/*: expone user/perfil/documentos
-// ya resueltos por ClienteAuthProvider (ver app/cuenta/layout.js).
+// y las empresas (con sus sedes visibles) ya resueltos por
+// ClienteAuthProvider (ver app/cuenta/layout.js).
 export function useCliente() {
   const ctx = useContext(ClienteAuthContext);
   if (!ctx) throw new Error('useCliente debe usarse dentro de /cuenta (falta ClienteAuthProvider)');

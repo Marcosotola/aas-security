@@ -4,16 +4,20 @@
 // poder listarlos juntos en un solo hub buscable (app/cuenta/documentos).
 import { FileText, FileCheck, Receipt, Banknote, Award, DollarSign, ClipboardList, File, Wrench } from 'lucide-react';
 
+// Registro único de tipos de documento. La clave es la que usan los accesos
+// por empresa/sede (usuarios.accesos) y la función puedeVer de
+// firestore.rules/storage.rules; `coleccion` es dónde vive en Firestore.
+// Un tipo nuevo se agrega acá y con su bloque en las reglas.
 export const TIPOS_DOC = {
-  presupuesto: { label: 'Presupuesto', icono: FileText },
-  remito: { label: 'Remito', icono: FileCheck },
-  recibo: { label: 'Recibo', icono: Receipt },
-  factura: { label: 'Factura', icono: Banknote },
-  certificado: { label: 'Certificado', icono: Award },
-  estado: { label: 'Estado de cuenta', icono: DollarSign },
-  orden: { label: 'Orden de trabajo', icono: ClipboardList },
-  mantenimiento: { label: 'Mantenimiento Preventivo', icono: Wrench },
-  informe: { label: 'Informe', icono: File }
+  presupuesto: { label: 'Presupuesto', icono: FileText, coleccion: 'presupuestos' },
+  remito: { label: 'Remito', icono: FileCheck, coleccion: 'remitos' },
+  recibo: { label: 'Recibo', icono: Receipt, coleccion: 'recibos' },
+  factura: { label: 'Factura', icono: Banknote, coleccion: 'facturas' },
+  certificado: { label: 'Certificado', icono: Award, coleccion: 'certificados' },
+  estado: { label: 'Estado de cuenta', icono: DollarSign, coleccion: 'estados' },
+  orden: { label: 'Orden de trabajo', icono: ClipboardList, coleccion: 'ordenesTrabajo' },
+  mantenimiento: { label: 'Mantenimiento Preventivo', icono: Wrench, coleccion: 'mantenimientosPreventivos' },
+  informe: { label: 'Informe', icono: File, coleccion: 'documentos' }
 };
 
 // La sede queda anidada en `cliente.sedeNombre` para los documentos armados
@@ -23,14 +27,9 @@ export const TIPOS_DOC = {
 // admin (app/admin/usuarios/[id]/page.js).
 export const SEDE_ANIDADA = new Set(['presupuesto', 'remito', 'estado', 'orden', 'mantenimiento', 'informe']);
 
-// Nombre con el que se muestra una cuenta cliente (ej. una cuenta vinculada
-// en el portal de su cuenta principal).
-export const nombreCuenta = (usuario) =>
-  usuario.empresa || `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim() || usuario.email || 'Cuenta vinculada';
-
-// Sede de una cuenta vinculada: se antepone el nombre de la cuenta para que
-// no se confunda con una sede propia del mismo nombre (ej. "Principal").
-export const etiquetaSedeVinculada = (cuentaNombre, sedeNombre) => `${cuentaNombre} · ${sedeNombre || 'Principal'}`;
+// Sede de un documento cuando el cliente ve más de una empresa: se antepone
+// la empresa para que no se confundan sedes del mismo nombre.
+export const etiquetaSedeEmpresa = (empresaNombre, sedeNombre) => `${empresaNombre} · ${sedeNombre || 'Principal'}`;
 
 export const formatMoney = (amount) => {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -60,9 +59,12 @@ export const fechaOrdenDe = (doc) => {
 };
 
 const normalizarUno = (tipo, doc) => {
-  const numero = doc.numero || doc.nombre || '-';
-  const sedePropia = SEDE_ANIDADA.has(tipo) ? doc.cliente?.sedeNombre : doc.sedeNombre;
-  const sede = doc.cuentaNombre ? etiquetaSedeVinculada(doc.cuentaNombre, sedePropia) : sedePropia;
+  // Los informes no tienen número, solo un título de texto libre.
+  const numero = doc.numero || doc.nombre || doc.titulo || '-';
+  // Nombre actual de la sede en la empresa (ver useClienteAuth.js); si no
+  // está, el que quedó copiado en el documento al emitirlo.
+  const sedePropia = doc.sedeActual || (SEDE_ANIDADA.has(tipo) ? doc.cliente?.sedeNombre : doc.sedeNombre);
+  const sede = doc.empresaNombre ? etiquetaSedeEmpresa(doc.empresaNombre, sedePropia) : sedePropia;
   return {
     id: doc.id,
     tipo,
@@ -93,7 +95,8 @@ export function normalizarDocumentos(documentos) {
     ...documentos.certificados.map((d) => normalizarUno('certificado', d)),
     ...documentos.estados.map((d) => normalizarUno('estado', d)),
     ...documentos.ordenesTrabajo.map((d) => normalizarUno('orden', d)),
-    ...documentos.mantenimientosPreventivos.map((d) => normalizarUno('mantenimiento', d))
+    ...documentos.mantenimientosPreventivos.map((d) => normalizarUno('mantenimiento', d)),
+    ...documentos.informes.map((d) => normalizarUno('informe', d))
   ];
   return todos.sort((a, b) => b.fechaOrden - a.fechaOrden);
 }

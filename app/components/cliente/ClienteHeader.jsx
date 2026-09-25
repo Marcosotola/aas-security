@@ -15,7 +15,7 @@ const ITEM_PERFIL = { id: 'perfil', label: 'Mi perfil', icono: User, href: '/cue
 // Desktop tiene lugar de sobra: los 4 destinos quedan siempre a la vista.
 const NAV_ESCRITORIO = [ITEM_INICIO, ITEM_DOCUMENTOS, ITEM_SEDES, ITEM_PERFIL];
 
-export default function ClienteHeader({ user, perfil }) {
+export default function ClienteHeader({ user, cantidadSedes = 0 }) {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -33,10 +33,10 @@ export default function ClienteHeader({ user, perfil }) {
 
   // Perfil se edita poco (corrección de datos), así que en mobile siempre
   // queda detrás de "Más". Sedes sí gana un lugar fijo en la barra inferior
-  // cuando el cliente tiene 2 o más — ahí sí es un filtro que se usa seguido
+  // cuando el cliente ve 2 o más — ahí sí es un filtro que se usa seguido
   // para encontrar los documentos de una sede puntual — y si no, se suma a
   // "Más" en vez de ocupar un cuarto de la barra para un caso poco frecuente.
-  const multiSede = (perfil?.sedes || []).length >= 2;
+  const multiSede = cantidadSedes >= 2;
   const navInferior = multiSede ? [ITEM_INICIO, ITEM_DOCUMENTOS, ITEM_SEDES] : [ITEM_INICIO, ITEM_DOCUMENTOS];
   const navMas = multiSede ? [ITEM_PERFIL] : [ITEM_SEDES, ITEM_PERFIL];
   const masActivo = navMas.some((item) => esActivo(item.href));

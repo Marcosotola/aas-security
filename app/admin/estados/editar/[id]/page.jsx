@@ -5,10 +5,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Save, Download, Eye, PlusCircle, Trash2 } from 'lucide-react';
-import { obtenerEstadoPorId, actualizarEstado, obtenerClientes } from '../../../../lib/firestore';
+import { obtenerEstadoPorId, actualizarEstado, obtenerEmpresas } from '../../../../lib/firestore';
 import { useStaffAuth } from '../../../../lib/useStaffAuth';
 import { use } from 'react';
-import ClienteSelector from '../../../../components/ClienteSelector';
+import EmpresaSelector from '../../../../components/EmpresaSelector';
 import { fechaHoyLocal } from '../../../../lib/fecha';
 
 // Función para formatear montos con separador de miles (punto) y decimal (coma)
@@ -31,7 +31,7 @@ export default function EditarEstado({ params }) {
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [estadoOriginal, setEstadoOriginal] = useState(null);
-  const [clientes, setClientes] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
   const loading = loadingAuth || loadingData;
 
   // Estado para el modal de descripción
@@ -63,6 +63,8 @@ export default function EditarEstado({ params }) {
     numero: '',
     fecha: '',
     clienteId: null,
+    empresaId: null,
+    sedeId: null,
     items: [
       { id: 1, fecha: fechaHoyLocal(), descripcion: '', precio: '', comentarios: '' }
     ],
@@ -83,6 +85,8 @@ export default function EditarEstado({ params }) {
           numero: estadoData.numero,
           fecha: estadoData.fecha,
           clienteId: estadoData.clienteId || null,
+          empresaId: estadoData.empresaId || null,
+          sedeId: estadoData.sedeId || null,
           items: estadoData.items || [],
           total: estadoData.total || 0
         });
@@ -90,9 +94,9 @@ export default function EditarEstado({ params }) {
         setCliente({ sedeId: null, sedeNombre: '', ...estadoData.cliente });
 
         try {
-          setClientes(await obtenerClientes());
+          setEmpresas(await obtenerEmpresas());
         } catch (error) {
-          console.error('Error al cargar los clientes:', error);
+          console.error('Error al cargar las empresas:', error);
         }
 
         setLoadingData(false);
@@ -201,6 +205,8 @@ export default function EditarEstado({ params }) {
         numero: estado.numero,
         fecha: estado.fecha,
         clienteId: estado.clienteId || null,
+        empresaId: estado.empresaId || null,
+        sedeId: estado.empresaId ? estado.sedeId || null : null,
         cliente: cliente,
         items: estado.items,
         total: estado.total,
@@ -297,13 +303,16 @@ export default function EditarEstado({ params }) {
           {/* Información del cliente */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
-            <ClienteSelector
-              clientes={clientes}
-              onSelect={({ clienteId, nombre, empresa, email, telefono, direccion, sedeId, sedeNombre }) => {
-                setEstado({ ...estado, clienteId });
-                setCliente({ nombre, empresa, email, telefono, direccion, sedeId, sedeNombre });
+            <EmpresaSelector
+              empresas={empresas}
+              empresaId={estado.empresaId}
+              sedeId={estado.sedeId}
+              onSelect={({ empresaId, sedeId, empresa, email, telefono, direccion, sedeNombre }) => {
+                setEstado({ ...estado, clienteId: null, empresaId, sedeId });
+                setCliente({ ...cliente, empresa, email, telefono, direccion, sedeId, sedeNombre });
               }}
-              placeholder="Buscar cliente registrado (opcional)..."
+              onQuitar={() => setEstado({ ...estado, clienteId: null, empresaId: null, sedeId: null })}
+              placeholder="Buscar empresa registrada (opcional)..."
             />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>

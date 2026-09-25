@@ -10,11 +10,11 @@ import {
   obtenerMantenimientoPreventivoPorId,
   actualizarMantenimientoPreventivo,
   eliminarFotosStorage,
-  obtenerClientes,
+  obtenerEmpresas,
   obtenerPlantillas
 } from '../../../../lib/firestore';
 import { useStaffAuth } from '../../../../lib/useStaffAuth';
-import ClienteSelector from '../../../../components/ClienteSelector';
+import EmpresaSelector from '../../../../components/EmpresaSelector';
 import FotosUploader from '../../../../components/ui/FotosUploader';
 import FirmaCanvas from '../../../../components/ui/FirmaCanvas';
 import RichTextEditor from '../../../../components/ui/RichTextEditor';
@@ -27,7 +27,7 @@ export default function EditarMantenimientoPreventivo({ params }) {
   const { user, loading: loadingAuth } = useStaffAuth(['Admin', 'Tecnico']);
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
-  const [clientes, setClientes] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
   const [plantillasDisponibles, setPlantillasDisponibles] = useState([]);
   const [planillasAdjuntas, setPlanillasAdjuntas] = useState([]);
   const loading = loadingAuth || loadingData;
@@ -46,6 +46,8 @@ export default function EditarMantenimientoPreventivo({ params }) {
     numero: '',
     fecha: '',
     clienteId: null,
+    empresaId: null,
+    sedeId: null,
     descripcionTrabajo: '',
     observaciones: '',
     firmaTecnico: null,
@@ -72,6 +74,8 @@ export default function EditarMantenimientoPreventivo({ params }) {
           numero: mpData.numero || '',
           fecha: mpData.fecha || '',
           clienteId: mpData.clienteId || null,
+          empresaId: mpData.empresaId || null,
+          sedeId: mpData.sedeId || null,
           descripcionTrabajo: mpData.descripcionTrabajo || '',
           observaciones: mpData.observaciones || '',
           firmaTecnico: mpData.firmaTecnico || null,
@@ -84,9 +88,9 @@ export default function EditarMantenimientoPreventivo({ params }) {
         setPlanillasAdjuntas(mpData.planillasAdjuntas || []);
 
         try {
-          setClientes(await obtenerClientes());
+          setEmpresas(await obtenerEmpresas());
         } catch (error) {
-          console.error('Error al cargar los clientes:', error);
+          console.error('Error al cargar las empresas:', error);
         }
         try {
           setPlantillasDisponibles(await obtenerPlantillas());
@@ -141,6 +145,8 @@ export default function EditarMantenimientoPreventivo({ params }) {
         numero: mantenimiento.numero,
         fecha: mantenimiento.fecha,
         clienteId: mantenimiento.clienteId || null,
+        empresaId: mantenimiento.empresaId || null,
+        sedeId: mantenimiento.empresaId ? mantenimiento.sedeId || null : null,
         cliente,
         descripcionTrabajo: mantenimiento.descripcionTrabajo,
         fotos: [...fotosActuales, ...fotosSubidas],
@@ -235,13 +241,16 @@ export default function EditarMantenimientoPreventivo({ params }) {
           {/* Información del cliente */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
-            <ClienteSelector
-              clientes={clientes}
-              onSelect={({ clienteId, nombre, empresa, email, telefono, direccion, sedeId, sedeNombre }) => {
-                setMantenimiento({ ...mantenimiento, clienteId });
-                setCliente({ nombre, empresa, email, telefono, direccion, sedeId, sedeNombre });
+            <EmpresaSelector
+              empresas={empresas}
+              empresaId={mantenimiento.empresaId}
+              sedeId={mantenimiento.sedeId}
+              onSelect={({ empresaId, sedeId, empresa, email, telefono, direccion, sedeNombre }) => {
+                setMantenimiento({ ...mantenimiento, clienteId: null, empresaId, sedeId });
+                setCliente({ ...cliente, empresa, email, telefono, direccion, sedeId, sedeNombre });
               }}
-              placeholder="Buscar cliente registrado (opcional)..."
+              onQuitar={() => setMantenimiento({ ...mantenimiento, clienteId: null, empresaId: null, sedeId: null })}
+              placeholder="Buscar empresa registrada (opcional)..."
             />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>

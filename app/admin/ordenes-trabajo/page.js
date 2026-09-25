@@ -132,7 +132,7 @@ export default function HistorialOrdenesTrabajo() {
                 {ordenesFiltradas.map((orden) => (
                   <div key={orden.id} className="p-4 border border-gray-200 rounded-lg">
                     <div className="mb-1">
-                      <SedeLink clienteId={orden.clienteId} sede={orden.cliente?.sedeNombre} />
+                      <SedeLink empresaId={orden.empresaId} sedeId={orden.sedeId} sede={orden.cliente?.sedeNombre} />
                     </div>
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-medium text-gray-900">{orden.numero}</div>
@@ -206,7 +206,7 @@ export default function HistorialOrdenesTrabajo() {
                     ordenesFiltradas.map((orden) => (
                       <tr key={orden.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <SedeLink clienteId={orden.clienteId} sede={orden.cliente?.sedeNombre} />
+                          <SedeLink empresaId={orden.empresaId} sedeId={orden.sedeId} sede={orden.cliente?.sedeNombre} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">{orden.numero}</div>

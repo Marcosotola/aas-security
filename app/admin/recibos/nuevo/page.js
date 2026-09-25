@@ -4,11 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Save, Download, RefreshCw } from 'lucide-react';
-import { crearRecibo, obtenerClientes } from '../../../lib/firestore';
+import { crearRecibo, obtenerEmpresas } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import ReciboPDF from '../../../components/pdf/ReciboPDF';
-import ClienteSelector from '../../../components/ClienteSelector';
+import EmpresaSelector from '../../../components/EmpresaSelector';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
 import SignatureCanvas from 'react-signature-canvas';
 import { fechaHoyLocal } from '../../../lib/fecha';
@@ -73,7 +73,7 @@ export default function NuevoRecibo() {
   const [documentoGuardado, setDocumentoGuardado] = useState(null);
   const [showCanvas, setShowCanvas] = useState(true);
   const [canvasSize, setCanvasSize] = useState({ width: 500, height: 200 });
-  const [clientes, setClientes] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
   const sigCanvas = useRef({});
 
   // Estado para el modal de concepto
@@ -87,6 +87,7 @@ export default function NuevoRecibo() {
     numero: `R-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
     fecha: fechaHoyLocal(),
     clienteId: null,
+    empresaId: null,
     sedeId: null,
     sedeNombre: '',
     recibiDe: '',
@@ -99,9 +100,9 @@ export default function NuevoRecibo() {
 
   useEffect(() => {
     if (!user) return;
-    obtenerClientes()
-      .then(setClientes)
-      .catch((error) => console.error('Error al cargar los clientes:', error));
+    obtenerEmpresas()
+      .then(setEmpresas)
+      .catch((error) => console.error('Error al cargar las empresas:', error));
   }, [user]);
 
   useEffect(() => {
@@ -298,12 +299,15 @@ export default function NuevoRecibo() {
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">Recibí de</label>
-                <ClienteSelector
-                  clientes={clientes}
-                  onSelect={({ clienteId, nombre, empresa, sedeId, sedeNombre }) => {
-                    setRecibo({ ...recibo, clienteId, sedeId, sedeNombre, recibiDe: empresa ? `${nombre} - ${empresa}` : nombre });
+                <EmpresaSelector
+                  empresas={empresas}
+                  empresaId={recibo.empresaId}
+                  sedeId={recibo.sedeId}
+                  onSelect={({ empresaId, sedeId, empresa, sedeNombre }) => {
+                    setRecibo({ ...recibo, clienteId: null, empresaId, sedeId, sedeNombre, recibiDe: empresa });
                   }}
-                  placeholder="Buscar cliente registrado (opcional)..."
+                  onQuitar={() => setRecibo({ ...recibo, clienteId: null, empresaId: null, sedeId: null })}
+                  placeholder="Buscar empresa registrada (opcional)..."
                 />
                 <input
                   type="text"

@@ -26,7 +26,8 @@ import {
   ShieldAlert,
   Award,
   Search,
-  Wrench
+  Wrench,
+  Building2
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
@@ -53,6 +54,7 @@ const MODULOS_NAV = [
   { id: 'planillas', label: 'Planillas', icono: ListChecks, href: '/admin/planillas' },
   { id: 'finanzas', label: 'Finanzas', icono: Wallet, href: '/admin/finanzas' },
   { id: 'lista-precios', label: 'Lista de precios', icono: Tag, href: '/admin/lista-precios' },
+  { id: 'empresas', label: 'Empresas', icono: Building2, href: '/admin/empresas' },
   { id: 'usuarios', label: 'Usuarios', icono: UserCog, href: '/admin/usuarios' },
   { id: 'consultas', label: 'Consultas', icono: MessageCircle, href: '/admin/consultas' },
   { id: 'suscripcion', label: 'Suscripción', icono: CreditCard, href: '/admin/suscripcion' },

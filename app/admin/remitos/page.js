@@ -128,7 +128,7 @@ export default function HistorialRemitos() {
                 {remitosFiltrados.map((remito) => (
                   <div key={remito.id} className="p-4 border border-gray-200 rounded-lg">
                     <div className="mb-1">
-                      <SedeLink clienteId={remito.clienteId} sede={remito.cliente?.sedeNombre} />
+                      <SedeLink empresaId={remito.empresaId} sedeId={remito.sedeId} sede={remito.cliente?.sedeNombre} />
                     </div>
                     <div className="flex items-start justify-between gap-2">
                       <div className="text-sm font-medium text-gray-900">{remito.numero}</div>
@@ -218,7 +218,7 @@ export default function HistorialRemitos() {
                   remitosFiltrados.map((remito) => (
                     <tr key={remito.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <SedeLink clienteId={remito.clienteId} sede={remito.cliente?.sedeNombre} />
+                        <SedeLink empresaId={remito.empresaId} sedeId={remito.sedeId} sede={remito.cliente?.sedeNombre} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{remito.numero}</div>
