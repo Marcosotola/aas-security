@@ -82,8 +82,11 @@ service firebase.storage {
     // facturas (igual que firestore.rules en /facturas). Quien puede ver la
     // factura puede descargar su PDF; para eso se lee el documento de
     // Firestore de este facturaId.
+    // Quien emite facturas también lee los archivos: al subir uno, la app pide
+    // su link de descarga antes de crear el documento en Firestore.
     match /facturas/{facturaId}/{fileName} {
       allow read: if esAdmin()
+        || personalEmite('factura')
         || personalLee('factura', firestore.get(/databases/(default)/documents/facturas/$(facturaId)).data)
         || puedeVerDocumento('factura', firestore.get(/databases/(default)/documents/facturas/$(facturaId)).data);
       allow write: if esAdmin() || personalEmite('factura');
@@ -92,6 +95,7 @@ service firebase.storage {
     // Fotos/PDFs de certificados: mismo criterio que facturas.
     match /certificados/{certificadoId}/{fileName} {
       allow read: if esAdmin()
+        || personalEmite('certificado')
         || personalLee('certificado', firestore.get(/databases/(default)/documents/certificados/$(certificadoId)).data)
         || puedeVerDocumento('certificado', firestore.get(/databases/(default)/documents/certificados/$(certificadoId)).data);
       allow write: if esAdmin() || personalEmite('certificado');
