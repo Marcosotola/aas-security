@@ -11,7 +11,7 @@ import RemitoPDF from '../pdf/RemitoPDF';
 import ReciboPDF from '../pdf/ReciboPDF';
 import EstadoPDF from '../pdf/EstadoPDF';
 import DocumentoPDF from '../pdf/DocumentoPDF';
-import { EstadoFacturaBadge } from '../ui/EstadoFactura';
+import { EstadoFacturaBadge, facturaVencida } from '../ui/EstadoFactura';
 
 // Solo los tipos generados con @react-pdf/renderer necesitan el componente
 // PDF acá: factura/certificado se descargan del archivo subido directo, y
@@ -36,7 +36,7 @@ export function BadgeSede({ nombre }) {
 }
 
 export function CeldaEstado({ doc }) {
-  if (doc.tipo === 'factura') return <EstadoFacturaBadge estado={doc.estado} />;
+  if (doc.tipo === 'factura') return <EstadoFacturaBadge estado={doc.estado} vencida={facturaVencida(doc.raw)} />;
   if (doc.tipo === 'presupuesto') {
     const estado = doc.estado || 'Pendiente';
     const clase =

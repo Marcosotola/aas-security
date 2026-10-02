@@ -7,7 +7,7 @@ import { obtenerFacturas, actualizarFactura, eliminarFactura } from '../../lib/f
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { soloPropios } from '../../lib/permisos';
 import ViewToggle from '../../components/admin/ViewToggle';
-import EstadoFacturaToggle from '../../components/ui/EstadoFactura';
+import EstadoFacturaToggle, { facturaVencida, ordenarFacturas } from '../../components/ui/EstadoFactura';
 import PortalDropdown from '../../components/PortalDropdown';
 import SedeLink from '../../components/admin/SedeLink';
 import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/accionIcono';
@@ -93,7 +93,7 @@ export default function HistorialFacturas() {
       if (desde && f.fecha && f.fecha < desde) return false;
       if (hasta && f.fecha && f.fecha > hasta) return false;
       return true;
-    });
+    }).sort(ordenarFacturas);
   }, [facturas, filtro, sede, estado, desde, hasta]);
 
   if (loading) {
@@ -187,6 +187,11 @@ export default function HistorialFacturas() {
                     <div className="mt-1 text-sm text-gray-900">{factura.clienteNombre || 'N/A'}</div>
                     <div className="mt-1 text-sm text-gray-500 line-clamp-2" title={factura.descripcion}>{factura.descripcion || '-'}</div>
                     <div className="mt-2 text-sm font-medium text-gray-900">{formatCurrency(factura.monto)}</div>
+                    {factura.vencimiento && (
+                      <div className="mt-1 text-xs text-gray-500">
+                        Vence: <Vencimiento factura={factura} />
+                      </div>
+                    )}
                     <div className="mt-2">
                       <EstadoFacturaToggle estado={factura.estado} onChange={(nuevo) => handleCambiarEstado(factura.id, nuevo)} disabled={!puede('factura', 'gestionar', factura)} />
                     </div>
@@ -226,6 +231,7 @@ export default function HistorialFacturas() {
                     <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Sede</th>
                     <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Número</th>
                     <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Fecha</th>
+                    <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Vence</th>
                     <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Cliente</th>
                     <th className="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Monto</th>
                     <th className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Estado</th>
@@ -244,6 +250,9 @@ export default function HistorialFacturas() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-500">{formatearFecha(factura.fecha)}</div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                          {factura.vencimiento ? <Vencimiento factura={factura} /> : '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">{factura.clienteNombre || 'N/A'}</div>
@@ -281,7 +290,7 @@ export default function HistorialFacturas() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="7" className="px-6 py-4 text-center text-gray-500">No hay facturas que coincidan con los filtros</td>
+                      <td colSpan="8" className="px-6 py-4 text-center text-gray-500">No hay facturas que coincidan con los filtros</td>
                     </tr>
                   )}
                 </tbody>
@@ -300,6 +309,12 @@ export default function HistorialFacturas() {
       </div>
     </div>
   );
+}
+
+// Fecha de vencimiento, en rojo si ya venció sin pagarse.
+function Vencimiento({ factura }) {
+  if (!facturaVencida(factura)) return formatearFecha(factura.vencimiento);
+  return <span className="font-semibold text-red-600">{formatearFecha(factura.vencimiento)} · Vencida</span>;
 }
 
 // Descarga directa desde el listado, sin pasar por el detalle: un solo PDF

@@ -1,6 +1,8 @@
 // app/components/ui/EstadoFactura.jsx
 'use client';
 
+import { fechaHoyLocal } from '../../lib/fecha';
+
 // Estado de pago de una factura: comparte la paleta de colores entre el
 // badge de solo lectura (listado del cliente, listado admin) y el toggle
 // editable (solo Admin), para que no se desincronicen si cambia algún día.
@@ -11,9 +13,36 @@ export const ESTADOS_FACTURA = [
 
 const estadoInfo = (estado) => ESTADOS_FACTURA.find((e) => e.value === estado) || ESTADOS_FACTURA[0];
 
+// Vencida = no pagada y con vencimiento hoy o antes. `vencimiento` es
+// "YYYY-MM-DD" (como `fecha`), así que se compara como texto contra hoy.
+export const facturaVencida = (factura) =>
+  factura?.estado !== 'pagado' && !!factura?.vencimiento && factura.vencimiento <= fechaHoyLocal();
+
+// Pendientes arriba, de la que vence antes a la que vence después (las sin
+// vencimiento al final de las pendientes); debajo las pagadas, de la más
+// nueva a la más vieja.
+export const ordenarFacturas = (a, b) => {
+  const pagadaA = a.estado === 'pagado';
+  const pagadaB = b.estado === 'pagado';
+  if (pagadaA !== pagadaB) return pagadaA ? 1 : -1;
+  if (!pagadaA && a.vencimiento !== b.vencimiento) {
+    if (!a.vencimiento) return 1;
+    if (!b.vencimiento) return -1;
+    return a.vencimiento < b.vencimiento ? -1 : 1;
+  }
+  return (b.fecha || '').localeCompare(a.fecha || '');
+};
+
 // Badge de solo lectura, para el portal del cliente y para donde el admin no
 // deba poder tocar el estado (ej. dentro de una tabla muy angosta).
-export function EstadoFacturaBadge({ estado }) {
+export function EstadoFacturaBadge({ estado, vencida = false }) {
+  if (vencida) {
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 text-xs font-semibold text-red-800 bg-red-100 rounded-full">
+        Vencida
+      </span>
+    );
+  }
   const info = estadoInfo(estado);
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-semibold rounded-full ${info.claseBadge}`}>

@@ -3,9 +3,10 @@
 
 import { ClienteAuthProvider, useCliente } from '../lib/useClienteAuth';
 import ClienteHeader from '../components/cliente/ClienteHeader';
+import AvisoFacturasVencidas from '../components/cliente/AvisoFacturasVencidas';
 
 function CuentaShell({ children }) {
-  const { user, empresas, loading } = useCliente();
+  const { user, empresas, documentos, loading } = useCliente();
 
   if (loading) {
     return (
@@ -22,6 +23,7 @@ function CuentaShell({ children }) {
     <div className="min-h-screen bg-gray-50 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
       <ClienteHeader user={user} cantidadSedes={empresas.reduce((total, e) => total + e.sedes.length, 0)} />
       {children}
+      <AvisoFacturasVencidas facturas={documentos.facturas} />
     </div>
   );
 }

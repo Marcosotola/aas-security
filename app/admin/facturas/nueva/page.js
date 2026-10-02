@@ -22,6 +22,7 @@ export default function NuevaFactura() {
   const [factura, setFactura] = useState({
     numero: `FAC-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
     fecha: fechaHoyLocal(),
+    vencimiento: '',
     clienteId: null,
     empresaId: null,
     sedeId: null,
@@ -145,6 +146,15 @@ export default function NuevaFactura() {
                   onChange={(e) => setFactura({ ...factura, fecha: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   required
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Vencimiento</label>
+                <input
+                  type="date"
+                  value={factura.vencimiento}
+                  onChange={(e) => setFactura({ ...factura, vencimiento: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
             </div>

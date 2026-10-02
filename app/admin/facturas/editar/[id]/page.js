@@ -30,6 +30,7 @@ export default function EditarFactura({ params }) {
   const [factura, setFactura] = useState({
     numero: '',
     fecha: '',
+    vencimiento: '',
     clienteId: null,
     empresaId: null,
     sedeId: null,
@@ -56,6 +57,7 @@ export default function EditarFactura({ params }) {
         setFactura({
           numero: facturaData.numero || '',
           fecha: facturaData.fecha || '',
+          vencimiento: facturaData.vencimiento || '',
           clienteId: facturaData.clienteId || null,
           empresaId: facturaData.empresaId || null,
           sedeId: facturaData.sedeId || null,
@@ -190,6 +192,15 @@ export default function EditarFactura({ params }) {
                   type="date"
                   value={factura.fecha}
                   onChange={(e) => setFactura({ ...factura, fecha: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Vencimiento</label>
+                <input
+                  type="date"
+                  value={factura.vencimiento}
+                  onChange={(e) => setFactura({ ...factura, vencimiento: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>

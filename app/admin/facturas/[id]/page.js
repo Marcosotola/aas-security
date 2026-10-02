@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Home, Edit, ArrowLeft, Download, FileText } from 'lucide-react';
 import { obtenerFacturaPorId, actualizarFactura } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
-import EstadoFacturaToggle from '../../../components/ui/EstadoFactura';
+import EstadoFacturaToggle, { facturaVencida } from '../../../components/ui/EstadoFactura';
 import { formatearFecha } from '../../../lib/fecha';
 
 const formatCurrency = (amount) => new Intl.NumberFormat('es-AR', {
@@ -104,6 +104,14 @@ export default function VerFactura({ params }) {
                   <span className="block mb-1 text-sm font-medium text-gray-600">Fecha:</span>
                   <span className="text-gray-900">{formatearFecha(factura.fecha)}</span>
                 </div>
+                {factura.vencimiento && (
+                  <div className="mb-4">
+                    <span className="block mb-1 text-sm font-medium text-gray-600">Vencimiento:</span>
+                    <span className={facturaVencida(factura) ? 'font-semibold text-red-600' : 'text-gray-900'}>
+                      {formatearFecha(factura.vencimiento)}{facturaVencida(factura) && ' (vencida)'}
+                    </span>
+                  </div>
+                )}
                 <div className="mb-4">
                   <span className="block mb-1 text-sm font-medium text-gray-600">Cliente:</span>
                   <span className="text-lg text-gray-900">{factura.clienteNombre || 'N/A'}</span>
