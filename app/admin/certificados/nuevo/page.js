@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Save } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { comprimirParaSubir } from '../../../lib/imagenes';
 import { storage } from '../../../lib/firebase';
 import { crearCertificado, generarIdCertificado, obtenerEmpresas } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
@@ -56,11 +57,14 @@ export default function NuevoCertificado() {
 
       const archivosSubidos = await Promise.all(
         archivosNuevos.map(async (archivo, index) => {
-          const path = `certificados/${id}/${Date.now()}-${index}-${archivo.file.name}`;
+          // Más resolución que las fotos de OT: un certificado tiene letra chica
+          // que tiene que poder leerse. Los PDF se suben tal cual.
+          const subir = await comprimirParaSubir(archivo.file, 2400, 0.85);
+          const path = `certificados/${id}/${Date.now()}-${index}-${subir.name}`;
           const storageRef = ref(storage, path);
-          await uploadBytes(storageRef, archivo.file);
+          await uploadBytes(storageRef, subir);
           const url = await getDownloadURL(storageRef);
-          return { url, path, nombre: archivo.file.name };
+          return { url, path, nombre: subir.name };
         })
       );
 
