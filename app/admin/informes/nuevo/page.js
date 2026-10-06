@@ -35,7 +35,6 @@ export default function NuevoDocumento() {
   const [documento, setDocumento] = useState({
     titulo: '',
     fecha: fechaHoyLocal(),
-    clienteId: null,
     empresaId: null,
     sedeId: null,
     contenido: ''
@@ -185,10 +184,10 @@ export default function NuevoDocumento() {
               empresaId={documento.empresaId}
               sedeId={documento.sedeId}
               onSelect={({ empresaId, sedeId, empresa, email, telefono, direccion, sedeNombre }) => {
-                setDocumento({ ...documento, clienteId: null, empresaId, sedeId });
+                setDocumento({ ...documento, empresaId, sedeId });
                 setCliente({ ...cliente, empresa, email, telefono, direccion, sedeId, sedeNombre });
               }}
-              onQuitar={() => setDocumento({ ...documento, clienteId: null, empresaId: null, sedeId: null })}
+              onQuitar={() => setDocumento({ ...documento, empresaId: null, sedeId: null })}
               placeholder="Buscar empresa registrada (opcional)..."
             />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

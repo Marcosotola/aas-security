@@ -22,8 +22,7 @@ const SEVERIDADES = [
 
 // Selector para adjuntar plantillas de inspección (checklists) a una Orden de
 // Trabajo y completarlas ahí mismo. `plantillasDisponibles` viene precargada
-// por la página (mismo patrón que ClienteSelector recibe `clientes` por
-// prop). Al adjuntar una plantilla se toma una foto de sus ítems tal como
+// por la página. Al adjuntar una plantilla se toma una foto de sus ítems tal como
 // están en ese momento -- si la plantilla se edita después, las OT ya
 // creadas no cambian (mismo criterio que el snapshot de "cliente").
 export default function PlanillasAdjuntas({ plantillasDisponibles, planillasAdjuntas, onChange }) {

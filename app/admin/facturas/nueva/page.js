@@ -23,7 +23,6 @@ export default function NuevaFactura() {
     numero: `FAC-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
     fecha: fechaHoyLocal(),
     vencimiento: '',
-    clienteId: null,
     empresaId: null,
     sedeId: null,
     sedeNombre: '',
@@ -171,9 +170,9 @@ export default function NuevaFactura() {
                   empresaId={factura.empresaId}
                   sedeId={factura.sedeId}
                   onSelect={({ empresaId, sedeId, empresa, sedeNombre }) => {
-                    setFactura({ ...factura, clienteId: null, empresaId, sedeId, sedeNombre, clienteNombre: empresa });
+                    setFactura({ ...factura, empresaId, sedeId, sedeNombre, clienteNombre: empresa });
                   }}
-                  onQuitar={() => setFactura({ ...factura, clienteId: null, empresaId: null, sedeId: null })}
+                  onQuitar={() => setFactura({ ...factura, empresaId: null, sedeId: null })}
                   placeholder="Buscar empresa registrada (opcional)..."
                 />
                 <input

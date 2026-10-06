@@ -104,7 +104,6 @@ export default function EditarPresupuesto({ params }) {
           titulo: presupuestoData.titulo || '',
           fecha: presupuestoData.fecha,
           validez: presupuestoData.validez,
-          clienteId: presupuestoData.clienteId || null,
           empresaId: presupuestoData.empresaId || null,
           sedeId: presupuestoData.sedeId || null,
           modo: presupuestoData.modo || 'items',
@@ -292,7 +291,6 @@ export default function EditarPresupuesto({ params }) {
         fecha: presupuesto.fecha,
         validez: presupuesto.validez,
         modo: presupuesto.modo,
-        clienteId: presupuesto.clienteId || null,
         empresaId: presupuesto.empresaId || null,
         sedeId: presupuesto.empresaId ? presupuesto.sedeId || null : null,
         cliente: cliente,
@@ -426,10 +424,10 @@ export default function EditarPresupuesto({ params }) {
               empresaId={presupuesto.empresaId}
               sedeId={presupuesto.sedeId}
               onSelect={({ empresaId, sedeId, empresa, email, telefono, direccion, sedeNombre }) => {
-                setPresupuesto({ ...presupuesto, clienteId: null, empresaId, sedeId });
+                setPresupuesto({ ...presupuesto, empresaId, sedeId });
                 setCliente({ ...cliente, empresa, email, telefono, direccion, sedeId, sedeNombre });
               }}
-              onQuitar={() => setPresupuesto({ ...presupuesto, clienteId: null, empresaId: null, sedeId: null })}
+              onQuitar={() => setPresupuesto({ ...presupuesto, empresaId: null, sedeId: null })}
               placeholder="Buscar empresa registrada (opcional)..."
             />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

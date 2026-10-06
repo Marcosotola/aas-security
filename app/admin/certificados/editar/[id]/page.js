@@ -29,7 +29,6 @@ export default function EditarCertificado({ params }) {
   const [certificado, setCertificado] = useState({
     nombre: '',
     fecha: '',
-    clienteId: null,
     empresaId: null,
     sedeId: null,
     sedeNombre: '',
@@ -53,7 +52,6 @@ export default function EditarCertificado({ params }) {
         setCertificado({
           nombre: certificadoData.nombre || '',
           fecha: certificadoData.fecha || '',
-          clienteId: certificadoData.clienteId || null,
           empresaId: certificadoData.empresaId || null,
           sedeId: certificadoData.sedeId || null,
           sedeNombre: certificadoData.sedeNombre || '',
@@ -206,9 +204,9 @@ export default function EditarCertificado({ params }) {
                   empresaId={certificado.empresaId}
                   sedeId={certificado.sedeId}
                   onSelect={({ empresaId, sedeId, empresa, sedeNombre }) => {
-                    setCertificado({ ...certificado, clienteId: null, empresaId, sedeId, sedeNombre, clienteNombre: empresa });
+                    setCertificado({ ...certificado, empresaId, sedeId, sedeNombre, clienteNombre: empresa });
                   }}
-                  onQuitar={() => setCertificado({ ...certificado, clienteId: null, empresaId: null, sedeId: null })}
+                  onQuitar={() => setCertificado({ ...certificado, empresaId: null, sedeId: null })}
                   placeholder="Buscar empresa registrada (opcional)..."
                 />
                 <input

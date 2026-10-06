@@ -86,7 +86,6 @@ export default function NuevoRecibo() {
   const [recibo, setRecibo] = useState({
     numero: `R-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
     fecha: fechaHoyLocal(),
-    clienteId: null,
     empresaId: null,
     sedeId: null,
     sedeNombre: '',
@@ -304,9 +303,9 @@ export default function NuevoRecibo() {
                   empresaId={recibo.empresaId}
                   sedeId={recibo.sedeId}
                   onSelect={({ empresaId, sedeId, empresa, sedeNombre }) => {
-                    setRecibo({ ...recibo, clienteId: null, empresaId, sedeId, sedeNombre, recibiDe: empresa });
+                    setRecibo({ ...recibo, empresaId, sedeId, sedeNombre, recibiDe: empresa });
                   }}
-                  onQuitar={() => setRecibo({ ...recibo, clienteId: null, empresaId: null, sedeId: null })}
+                  onQuitar={() => setRecibo({ ...recibo, empresaId: null, sedeId: null })}
                   placeholder="Buscar empresa registrada (opcional)..."
                 />
                 <input

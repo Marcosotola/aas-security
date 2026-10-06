@@ -64,7 +64,6 @@ export default function NuevoEstado() {
     const [estado, setEstado] = useState({
         numero: `E-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
         fecha: fechaHoyLocal(),
-        clienteId: null,
         empresaId: null,
         sedeId: null,
         items: [
@@ -176,7 +175,6 @@ export default function NuevoEstado() {
             const estadoData = {
                 numero: estado.numero,
                 fecha: estado.fecha,
-                clienteId: estado.clienteId || null,
                 empresaId: estado.empresaId || null,
                 sedeId: estado.empresaId ? estado.sedeId || null : null,
                 cliente: cliente,
@@ -298,10 +296,10 @@ export default function NuevoEstado() {
                             empresaId={estado.empresaId}
                             sedeId={estado.sedeId}
                             onSelect={({ empresaId, sedeId, empresa, email, telefono, direccion, sedeNombre }) => {
-                                setEstado({ ...estado, clienteId: null, empresaId, sedeId });
+                                setEstado({ ...estado, empresaId, sedeId });
                                 setCliente({ ...cliente, empresa, email, telefono, direccion, sedeId, sedeNombre });
                             }}
-                            onQuitar={() => setEstado({ ...estado, clienteId: null, empresaId: null, sedeId: null })}
+                            onQuitar={() => setEstado({ ...estado, empresaId: null, sedeId: null })}
                             placeholder="Buscar empresa registrada (opcional)..."
                         />
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

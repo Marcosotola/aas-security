@@ -46,7 +46,6 @@ export default function EditarRemito({ params }) {
   const [remito, setRemito] = useState({
     numero: '',
     fecha: '',
-    clienteId: null,
     empresaId: null,
     sedeId: null,
     items: [
@@ -89,7 +88,6 @@ export default function EditarRemito({ params }) {
         setRemito({
           numero: remitoData.numero,
           fecha: remitoData.fecha,
-          clienteId: remitoData.clienteId || null,
           empresaId: remitoData.empresaId || null,
           sedeId: remitoData.sedeId || null,
           items: remitoData.items || [],
@@ -208,7 +206,6 @@ export default function EditarRemito({ params }) {
       const remitoData = {
         numero: remito.numero,
         fecha: remito.fecha,
-        clienteId: remito.clienteId || null,
         empresaId: remito.empresaId || null,
         sedeId: remito.empresaId ? remito.sedeId || null : null,
         cliente: cliente,
@@ -311,10 +308,10 @@ export default function EditarRemito({ params }) {
               empresaId={remito.empresaId}
               sedeId={remito.sedeId}
               onSelect={({ empresaId, sedeId, empresa, email, telefono, direccion, sedeNombre }) => {
-                setRemito({ ...remito, clienteId: null, empresaId, sedeId });
+                setRemito({ ...remito, empresaId, sedeId });
                 setCliente({ ...cliente, empresa, email, telefono, direccion, sedeId, sedeNombre });
               }}
-              onQuitar={() => setRemito({ ...remito, clienteId: null, empresaId: null, sedeId: null })}
+              onQuitar={() => setRemito({ ...remito, empresaId: null, sedeId: null })}
               placeholder="Buscar empresa registrada (opcional)..."
             />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

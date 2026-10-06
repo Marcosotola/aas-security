@@ -87,7 +87,6 @@ export default function EditarRecibo({ params }) {
   const [recibo, setRecibo] = useState({
     numero: '',
     fecha: '',
-    clienteId: null,
     empresaId: null,
     sedeId: null,
     sedeNombre: '',
@@ -129,7 +128,6 @@ export default function EditarRecibo({ params }) {
         setRecibo({
           numero: reciboData.numero || '',
           fecha: reciboData.fecha || '',
-          clienteId: reciboData.clienteId || null,
           empresaId: reciboData.empresaId || null,
           sedeId: reciboData.sedeId || null,
           sedeNombre: reciboData.sedeNombre || '',
@@ -314,9 +312,9 @@ export default function EditarRecibo({ params }) {
                   empresaId={recibo.empresaId}
                   sedeId={recibo.sedeId}
                   onSelect={({ empresaId, sedeId, empresa, sedeNombre }) => {
-                    setRecibo({ ...recibo, clienteId: null, empresaId, sedeId, sedeNombre, recibiDe: empresa });
+                    setRecibo({ ...recibo, empresaId, sedeId, sedeNombre, recibiDe: empresa });
                   }}
-                  onQuitar={() => setRecibo({ ...recibo, clienteId: null, empresaId: null, sedeId: null })}
+                  onQuitar={() => setRecibo({ ...recibo, empresaId: null, sedeId: null })}
                   placeholder="Buscar empresa registrada (opcional)..."
                 />
                 <input

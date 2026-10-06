@@ -31,7 +31,6 @@ export default function EditarFactura({ params }) {
     numero: '',
     fecha: '',
     vencimiento: '',
-    clienteId: null,
     empresaId: null,
     sedeId: null,
     sedeNombre: '',
@@ -58,7 +57,6 @@ export default function EditarFactura({ params }) {
           numero: facturaData.numero || '',
           fecha: facturaData.fecha || '',
           vencimiento: facturaData.vencimiento || '',
-          clienteId: facturaData.clienteId || null,
           empresaId: facturaData.empresaId || null,
           sedeId: facturaData.sedeId || null,
           sedeNombre: facturaData.sedeNombre || '',
@@ -222,9 +220,9 @@ export default function EditarFactura({ params }) {
                   empresaId={factura.empresaId}
                   sedeId={factura.sedeId}
                   onSelect={({ empresaId, sedeId, empresa, sedeNombre }) => {
-                    setFactura({ ...factura, clienteId: null, empresaId, sedeId, sedeNombre, clienteNombre: empresa });
+                    setFactura({ ...factura, empresaId, sedeId, sedeNombre, clienteNombre: empresa });
                   }}
-                  onQuitar={() => setFactura({ ...factura, clienteId: null, empresaId: null, sedeId: null })}
+                  onQuitar={() => setFactura({ ...factura, empresaId: null, sedeId: null })}
                   placeholder="Buscar empresa registrada (opcional)..."
                 />
                 <input

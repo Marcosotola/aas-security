@@ -133,7 +133,6 @@ export default function GestionUsuarios() {
   const textoAccesos = (u) => {
     if (u.role === 'Admin') return 'Acceso total';
     if (u.role === 'Personal') return `Perfil: ${perfilesPorId.get(u.perfilId)?.nombre || 'sin asignar'}`;
-    if (u.role === 'Tecnico') return 'Técnico (sin perfil)';
     const empresas = empresasDeAccesos(u);
     return empresas.length > 0 ? empresas.map((e) => e.nombre).join(', ') : 'Sin accesos';
   };
@@ -222,7 +221,7 @@ export default function GestionUsuarios() {
                           disabled={actualizandoRol === u.id}
                           className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full transition-opacity hover:opacity-80 disabled:opacity-50
                             ${u.role === 'Admin' ? 'bg-blue-100 text-blue-800' :
-                              ['Personal', 'Tecnico'].includes(u.role) ? 'bg-purple-100 text-purple-800' :
+                              u.role === 'Personal' ? 'bg-purple-100 text-purple-800' :
                                 'bg-green-100 text-green-800'}`}
                         >
                           {u.role || 'Cliente'}
@@ -323,7 +322,7 @@ export default function GestionUsuarios() {
                           disabled={actualizandoRol === u.id}
                           className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full transition-opacity hover:opacity-80 disabled:opacity-50
                             ${u.role === 'Admin' ? 'bg-blue-100 text-blue-800' :
-                              ['Personal', 'Tecnico'].includes(u.role) ? 'bg-purple-100 text-purple-800' :
+                              u.role === 'Personal' ? 'bg-purple-100 text-purple-800' :
                                 'bg-green-100 text-green-800'}`}
                         >
                           {u.role || 'Cliente'}

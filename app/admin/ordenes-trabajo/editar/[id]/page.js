@@ -45,7 +45,6 @@ export default function EditarOrdenTrabajo({ params }) {
   const [orden, setOrden] = useState({
     numero: '',
     fecha: '',
-    clienteId: null,
     empresaId: null,
     sedeId: null,
     descripcionTrabajo: '',
@@ -73,7 +72,6 @@ export default function EditarOrdenTrabajo({ params }) {
         setOrden({
           numero: otData.numero || '',
           fecha: otData.fecha || '',
-          clienteId: otData.clienteId || null,
           empresaId: otData.empresaId || null,
           sedeId: otData.sedeId || null,
           descripcionTrabajo: otData.descripcionTrabajo || '',
@@ -144,7 +142,6 @@ export default function EditarOrdenTrabajo({ params }) {
       const otData = {
         numero: orden.numero,
         fecha: orden.fecha,
-        clienteId: orden.clienteId || null,
         empresaId: orden.empresaId || null,
         sedeId: orden.empresaId ? orden.sedeId || null : null,
         cliente,
@@ -246,10 +243,10 @@ export default function EditarOrdenTrabajo({ params }) {
               empresaId={orden.empresaId}
               sedeId={orden.sedeId}
               onSelect={({ empresaId, sedeId, empresa, email, telefono, direccion, sedeNombre }) => {
-                setOrden({ ...orden, clienteId: null, empresaId, sedeId });
+                setOrden({ ...orden, empresaId, sedeId });
                 setCliente({ ...cliente, empresa, email, telefono, direccion, sedeId, sedeNombre });
               }}
-              onQuitar={() => setOrden({ ...orden, clienteId: null, empresaId: null, sedeId: null })}
+              onQuitar={() => setOrden({ ...orden, empresaId: null, sedeId: null })}
               placeholder="Buscar empresa registrada (opcional)..."
             />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

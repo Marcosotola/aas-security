@@ -15,12 +15,6 @@ service cloud.firestore {
       return request.auth != null && rolDe(request.auth.uid) == 'Admin';
     }
 
-    // Admin y el rol Técnico anterior a los perfiles (mientras dura la
-    // migración, el Técnico conserva exactamente el acceso que tenía).
-    function esStaff() {
-      return request.auth != null && rolDe(request.auth.uid) in ['Admin', 'Tecnico'];
-    }
-
     // Personal con perfil: lo que puede hacer lo dicen sus `permisos`
     // ({ modulo: 'ninguno' | 'ver' | 'propios' | 'todos' }), que copia el
     // Admin desde el perfil asignado (ver app/lib/permisos.js).
@@ -34,24 +28,6 @@ service cloud.firestore {
         : 'ninguno';
     }
 
-    function esPropietario(clienteId) {
-      return request.auth != null && request.auth.uid == clienteId;
-    }
-
-    // Cuentas cliente cuyos documentos puede ver además de los suyos (ej. una
-    // administración principal que ve todo lo de una sub-cuenta). Vínculo de
-    // un solo sentido y no transitivo; solo lo edita un Admin (ver /usuarios).
-    function cuentasVinculadasDe(uid) {
-      return get(/databases/$(database)/documents/usuarios/$(uid)).data.get('cuentasVinculadas', []);
-    }
-
-    // Lectura de un documento de cliente: el dueño, o una cuenta principal
-    // que lo tenga vinculado.
-    function puedeVerCliente(clienteId) {
-      return esPropietario(clienteId)
-        || (request.auth != null && clienteId in cuentasVinculadasDe(request.auth.uid));
-    }
-
     // Accesos de un usuario Cliente a documentos de empresas (los asigna solo
     // un Admin, ver /usuarios): { [empresaId]: { [sedeId | '*']: [tipos] } }.
     // '*' = todas las sedes de esa empresa, incluidas las que se creen después.
@@ -60,8 +36,7 @@ service cloud.firestore {
     }
 
     // Lectura de un documento emitido a una empresa/sede: el usuario tiene
-    // habilitado ese tipo de documento para esa sede (o para todas). Convive
-    // con puedeVerCliente mientras dura la migración a empresas.
+    // habilitado ese tipo de documento para esa sede (o para todas).
     function puedeVer(tipo, datos) {
       let empresaId = datos.get('empresaId', null);
       let sedeId = datos.get('sedeId', null);
@@ -130,13 +105,12 @@ service cloud.firestore {
 
     // Usuarios: cada uno gestiona su propio perfil; el rol solo lo cambia un Admin
     // (salvo el bootstrap único de las cuentas históricas de arriba).
-    // cuentasVinculadas, accesos, perfilId y permisos dan acceso a documentos
+    // accesos, perfilId y permisos dan acceso a documentos
     // o módulos, así que igual que el rol: el propio usuario nunca puede
     // ponérselos ni cambiarlos.
     match /usuarios/{uid} {
       allow create: if request.auth != null
                     && request.auth.uid == uid
-                    && !('cuentasVinculadas' in request.resource.data)
                     && !('accesos' in request.resource.data)
                     && !('permisos' in request.resource.data)
                     && !('perfilId' in request.resource.data)
@@ -144,17 +118,10 @@ service cloud.firestore {
                       request.resource.data.role == 'Cliente'
                       || (request.resource.data.role == 'Admin' && esCuentaAdminHistorica())
                     );
-      // La cuenta principal lee el perfil de sus vinculadas para mostrar su
-      // nombre y sus sedes en el portal.
-      allow read: if request.auth != null && (
-                    request.auth.uid == uid
-                    || esStaff()
-                    || uid in cuentasVinculadasDe(request.auth.uid)
-                  );
+      allow read: if request.auth != null && (request.auth.uid == uid || esAdmin());
       allow update: if request.auth != null && (
                       (request.auth.uid == uid
                         && request.resource.data.role == resource.data.role
-                        && request.resource.data.get('cuentasVinculadas', []) == resource.data.get('cuentasVinculadas', [])
                         && request.resource.data.get('accesos', {}) == resource.data.get('accesos', {})
                         && request.resource.data.get('permisos', {}) == resource.data.get('permisos', {})
                         && request.resource.data.get('perfilId', null) == resource.data.get('perfilId', null))
@@ -168,68 +135,66 @@ service cloud.firestore {
       allow read, write: if esAdmin();
     }
 
-    // Documentos de gestión interna: el Admin (y el Técnico anterior) tienen
-    // acceso completo; el Personal según su nivel; un Cliente solo lee los
+    // Documentos de gestión interna: el Admin tiene acceso completo; el Personal según su nivel; un Cliente solo lee los
     // que le corresponden, nunca los escribe.
     match /presupuestos/{id} {
-      allow read: if esStaff() || personalLee('presupuesto', resource.data) || puedeVerCliente(resource.data.clienteId) || puedeVer('presupuesto', resource.data);
-      allow create: if esStaff() || personalCrea('presupuesto');
-      allow update: if esStaff() || personalEdita('presupuesto');
-      allow delete: if esStaff() || personalBorra('presupuesto');
+      allow read: if esAdmin() || personalLee('presupuesto', resource.data) || puedeVer('presupuesto', resource.data);
+      allow create: if esAdmin() || personalCrea('presupuesto');
+      allow update: if esAdmin() || personalEdita('presupuesto');
+      allow delete: if esAdmin() || personalBorra('presupuesto');
     }
 
     match /estados/{id} {
-      allow read: if esStaff() || personalLee('estado', resource.data) || puedeVerCliente(resource.data.clienteId) || puedeVer('estado', resource.data);
-      allow create: if esStaff() || personalCrea('estado');
-      allow update: if esStaff() || personalEdita('estado');
-      allow delete: if esStaff() || personalBorra('estado');
+      allow read: if esAdmin() || personalLee('estado', resource.data) || puedeVer('estado', resource.data);
+      allow create: if esAdmin() || personalCrea('estado');
+      allow update: if esAdmin() || personalEdita('estado');
+      allow delete: if esAdmin() || personalBorra('estado');
     }
 
     match /remitos/{id} {
-      allow read: if esStaff() || personalLee('remito', resource.data) || puedeVerCliente(resource.data.clienteId) || puedeVer('remito', resource.data);
-      allow create: if esStaff() || personalCrea('remito');
-      allow update: if esStaff() || personalEdita('remito');
-      allow delete: if esStaff() || personalBorra('remito');
+      allow read: if esAdmin() || personalLee('remito', resource.data) || puedeVer('remito', resource.data);
+      allow create: if esAdmin() || personalCrea('remito');
+      allow update: if esAdmin() || personalEdita('remito');
+      allow delete: if esAdmin() || personalBorra('remito');
     }
 
     match /recibos/{id} {
-      allow read: if esStaff() || personalLee('recibo', resource.data) || puedeVerCliente(resource.data.clienteId) || puedeVer('recibo', resource.data);
-      allow create: if esStaff() || personalCrea('recibo');
-      allow update: if esStaff() || personalEdita('recibo');
-      allow delete: if esStaff() || personalBorra('recibo');
+      allow read: if esAdmin() || personalLee('recibo', resource.data) || puedeVer('recibo', resource.data);
+      allow create: if esAdmin() || personalCrea('recibo');
+      allow update: if esAdmin() || personalEdita('recibo');
+      allow delete: if esAdmin() || personalBorra('recibo');
     }
 
     // Informes: un Cliente solo los lee si tiene habilitado el tipo
     // 'informe' para esa empresa/sede.
     match /documentos/{id} {
-      allow read: if esStaff() || personalLee('informe', resource.data) || puedeVer('informe', resource.data);
-      allow create: if esStaff() || personalCrea('informe');
-      allow update: if esStaff() || personalEdita('informe');
-      allow delete: if esStaff() || personalBorra('informe');
+      allow read: if esAdmin() || personalLee('informe', resource.data) || puedeVer('informe', resource.data);
+      allow create: if esAdmin() || personalCrea('informe');
+      allow update: if esAdmin() || personalEdita('informe');
+      allow delete: if esAdmin() || personalBorra('informe');
     }
 
-    // El Admin gestiona todas las OT. El Técnico anterior solo las que él
-    // mismo creó (usuarioCreador == su email); el Personal según su nivel.
+    // El Admin gestiona todas las OT; el Personal según su nivel.
     match /ordenesTrabajo/{id} {
-      allow read: if esAdmin() || personalLee('orden', resource.data) || puedeVerCliente(resource.data.clienteId) || puedeVer('orden', resource.data) || esCreador(resource.data);
-      allow create: if esAdmin() || (esStaff() && esCreador(request.resource.data)) || personalCrea('orden');
-      allow update: if esAdmin() || (esStaff() && esCreador(resource.data)) || personalEdita('orden');
-      allow delete: if esAdmin() || (esStaff() && esCreador(resource.data)) || personalBorra('orden');
+      allow read: if esAdmin() || personalLee('orden', resource.data) || puedeVer('orden', resource.data);
+      allow create: if esAdmin() || personalCrea('orden');
+      allow update: if esAdmin() || personalEdita('orden');
+      allow delete: if esAdmin() || personalBorra('orden');
     }
 
     // Mismo criterio que ordenesTrabajo.
     match /mantenimientosPreventivos/{id} {
-      allow read: if esAdmin() || personalLee('mantenimiento', resource.data) || puedeVerCliente(resource.data.clienteId) || puedeVer('mantenimiento', resource.data) || esCreador(resource.data);
-      allow create: if esAdmin() || (esStaff() && esCreador(request.resource.data)) || personalCrea('mantenimiento');
-      allow update: if esAdmin() || (esStaff() && esCreador(resource.data)) || personalEdita('mantenimiento');
-      allow delete: if esAdmin() || (esStaff() && esCreador(resource.data)) || personalBorra('mantenimiento');
+      allow read: if esAdmin() || personalLee('mantenimiento', resource.data) || puedeVer('mantenimiento', resource.data);
+      allow create: if esAdmin() || personalCrea('mantenimiento');
+      allow update: if esAdmin() || personalEdita('mantenimiento');
+      allow delete: if esAdmin() || personalBorra('mantenimiento');
     }
 
     // Facturas emitidas (PDF real subido a Storage + estado pendiente/pagado):
-    // el Admin y el Personal según su nivel (el Técnico anterior no). El
-    // Cliente solo puede leer las suyas, nunca escribirlas.
+    // el Admin y el Personal según su nivel. El Cliente solo puede leer las
+    // suyas, nunca escribirlas.
     match /facturas/{id} {
-      allow read: if esAdmin() || personalLee('factura', resource.data) || puedeVerCliente(resource.data.clienteId) || puedeVer('factura', resource.data);
+      allow read: if esAdmin() || personalLee('factura', resource.data) || puedeVer('factura', resource.data);
       allow create: if esAdmin() || personalCrea('factura');
       allow update: if esAdmin() || personalEdita('factura');
       allow delete: if esAdmin() || personalBorra('factura');
@@ -238,7 +203,7 @@ service cloud.firestore {
     // Certificados (fotos o PDF por cliente y sede): mismo criterio que
     // Facturas.
     match /certificados/{id} {
-      allow read: if esAdmin() || personalLee('certificado', resource.data) || puedeVerCliente(resource.data.clienteId) || puedeVer('certificado', resource.data);
+      allow read: if esAdmin() || personalLee('certificado', resource.data) || puedeVer('certificado', resource.data);
       allow create: if esAdmin() || personalCrea('certificado');
       allow update: if esAdmin() || personalEdita('certificado');
       allow delete: if esAdmin() || personalBorra('certificado');
@@ -249,7 +214,7 @@ service cloud.firestore {
     // esos documentos; solo el Admin (o Personal con nivel "todos") las
     // crea, edita o borra.
     match /plantillas/{id} {
-      allow read: if esStaff() || personalVeModulo('plantillas') || personalEmite('orden') || personalEmite('mantenimiento');
+      allow read: if esAdmin() || personalVeModulo('plantillas') || personalEmite('orden') || personalEmite('mantenimiento');
       allow write: if esAdmin() || nivelDe('plantillas') == 'todos';
     }
 
@@ -257,15 +222,15 @@ service cloud.firestore {
     // las gestiona el Admin o el Personal con nivel "todos". Un Cliente lee
     // las empresas en las que tiene algún acceso (nombre y sedes del portal).
     match /empresas/{empresaId} {
-      allow read: if esStaff() || esPersonal() || (request.auth != null && empresaId in accesosDe(request.auth.uid));
+      allow read: if esAdmin() || esPersonal() || (request.auth != null && empresaId in accesosDe(request.auth.uid));
       allow write: if esAdmin() || nivelDe('empresas') == 'todos';
     }
 
     // Lista de precios: también la lee quien emite presupuestos (buscador de
     // precios del formulario).
     match /listaPrecios/{id} {
-      allow read: if esStaff() || personalVeModulo('listaPrecios') || personalEmite('presupuesto');
-      allow write: if esStaff() || nivelDe('listaPrecios') == 'todos';
+      allow read: if esAdmin() || personalVeModulo('listaPrecios') || personalEmite('presupuesto');
+      allow write: if esAdmin() || nivelDe('listaPrecios') == 'todos';
     }
 
     // Movimientos financieros (ingresos/gastos manuales): datos sensibles de
@@ -288,8 +253,8 @@ service cloud.firestore {
     // quienes tienen nivel "todos".
     match /consultas/{id} {
       allow create: if true;
-      allow read: if esStaff() || personalVeModulo('consultas');
-      allow update, delete: if esStaff() || nivelDe('consultas') == 'todos';
+      allow read: if esAdmin() || personalVeModulo('consultas');
+      allow update, delete: if esAdmin() || nivelDe('consultas') == 'todos';
     }
 
     // Todo lo demás, denegado por defecto.

@@ -8,6 +8,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { obtenerUsuarioPorId } from '../lib/firestore';
+import { esInterno } from '../lib/permisos';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -35,7 +36,7 @@ export default function Login() {
       if (!perfil) {
         // Cuenta autenticada sin perfil completo (registro interrumpido): lo termina.
         router.push('/registro/datos');
-      } else if (perfil.role === 'Admin' || perfil.role === 'Tecnico') {
+      } else if (esInterno(perfil)) {
         router.push('/admin/dashboard');
       } else if (!perfil.perfilCompleto) {
         router.push('/registro/datos');

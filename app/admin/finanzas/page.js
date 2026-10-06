@@ -40,7 +40,6 @@ const MOVIMIENTO_VACIO = {
   categoria: '',
   monto: '',
   fecha: new Date().toISOString().split('T')[0],
-  clienteId: null,
   empresaId: null,
   clienteNombre: '',
   sedeId: null,
@@ -121,7 +120,6 @@ function Finanzas() {
         categoria: item.categoria || '',
         monto: item.monto ?? '',
         fecha: item.fecha || hoy(),
-        clienteId: item.clienteId || null,
         empresaId: item.empresaId || null,
         clienteNombre: item.clienteNombre || '',
         sedeId: item.sedeId || null,
@@ -147,7 +145,6 @@ function Finanzas() {
         categoria: modal.data.categoria.trim(),
         monto: parseFloat(modal.data.monto) || 0,
         fecha: modal.data.fecha,
-        clienteId: modal.data.clienteId || null,
         empresaId: modal.data.empresaId || null,
         clienteNombre: modal.data.clienteNombre || '',
         sedeId: modal.data.sedeId || null,
@@ -194,11 +191,10 @@ function Finanzas() {
       categoria: 'Cobro (recibo)',
       monto: parseFloat(r.monto) || 0,
       fecha: r.fecha || '',
-      clienteId: r.clienteId || null,
       empresaId: r.empresaId || null,
       clienteNombre: r.recibiDe || 'Sin cliente asociado',
       sedeId: r.sedeId || null,
-      sedeNombre: r.sedeNombre || (r.empresaId || r.clienteId ? 'Principal' : ''),
+      sedeNombre: r.sedeNombre || (r.empresaId ? 'Principal' : ''),
       origen: 'recibo'
     }));
 
@@ -209,7 +205,6 @@ function Finanzas() {
       categoria: m.categoria,
       monto: parseFloat(m.monto) || 0,
       fecha: m.fecha || '',
-      clienteId: m.clienteId || null,
       empresaId: m.empresaId || null,
       clienteNombre: m.clienteNombre || 'Sin cliente asociado',
       sedeId: m.sedeId || null,
@@ -237,7 +232,7 @@ function Finanzas() {
   const agrupadoPorClienteSede = useMemo(() => {
     const grupos = new Map();
     for (const item of itemsFiltrados) {
-      const key = `${item.empresaId || item.clienteId || 'sin-cliente'}::${item.sedeId || 'sin-sede'}`;
+      const key = `${item.empresaId || 'sin-cliente'}::${item.sedeId || 'sin-sede'}`;
       if (!grupos.has(key)) {
         grupos.set(key, {
           clienteNombre: item.clienteNombre || 'Sin cliente asociado',
@@ -563,24 +558,13 @@ function Finanzas() {
                   onSelect={({ empresaId, empresa, sedeId, sedeNombre }) => {
                     setModal({
                       ...modal,
-                      data: { ...modal.data, clienteId: null, empresaId, clienteNombre: empresa, sedeId, sedeNombre }
+                      data: { ...modal.data, empresaId, clienteNombre: empresa, sedeId, sedeNombre }
                     });
                   }}
-                  onQuitar={() => setModal({ ...modal, data: { ...modal.data, clienteId: null, empresaId: null, clienteNombre: '', sedeId: null, sedeNombre: '' } })}
+                  onQuitar={() => setModal({ ...modal, data: { ...modal.data, empresaId: null, clienteNombre: '', sedeId: null, sedeNombre: '' } })}
                   placeholder="Buscar empresa registrada..."
                 />
-                {modal.data.empresaId ? null : modal.data.clienteId ? (
-                  <div className="flex items-center justify-between px-3 py-2 mt-1 text-sm border border-gray-200 rounded-md bg-gray-50">
-                    <span>{modal.data.clienteNombre} · {modal.data.sedeNombre}</span>
-                    <button
-                      type="button"
-                      onClick={() => setModal({ ...modal, data: { ...modal.data, clienteId: null, clienteNombre: '', sedeId: null, sedeNombre: '' } })}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
+                {!modal.data.empresaId && (
                   <p className="mt-1 text-xs text-gray-400">Sin asociar a ninguna empresa ni sede.</p>
                 )}
               </div>

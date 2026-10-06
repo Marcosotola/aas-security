@@ -1032,11 +1032,11 @@ export const contarConsultasNoLeidas = async () => {
   }
 };
 
-// ========== FUNCIONES PARA USUARIOS (clientes, técnicos y admins) ==========
+// ========== FUNCIONES PARA USUARIOS (clientes, personal y admins) ==========
 // El id del documento es siempre el UID de Firebase Auth del usuario.
 
 // Crea el documento de usuario al registrarse. Rol fijo en 'Cliente':
-// el auto-registro público nunca puede asignarse Admin ni Tecnico (eso lo
+// el auto-registro público nunca puede asignarse Admin ni Personal (eso lo
 // hace un Admin después, desde /admin/usuarios).
 // Acepta una instancia de Firestore opcional: cuando un Admin da de alta un
 // usuario desde el panel, esta escritura se hace autenticado como el usuario
@@ -1049,7 +1049,6 @@ export const crearUsuario = async (uid, datos, dbInstancia = db) => {
     await setDoc(docRef, {
       ...datos,
       role: 'Cliente',
-      sedes: datos.sedes || [],
       fechaCreacion: serverTimestamp()
     });
     return { id: uid };
@@ -1314,25 +1313,6 @@ export const obtenerDocumentosConAcceso = async (tipo, empresaId, sedeIds = null
   const snapshots = await Promise.all(consultas.map((q) => getDocs(q)));
   return snapshots.flatMap((s) => s.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 };
-
-// ========== DOCUMENTOS DE UN CLIENTE (portal /cuenta) ==========
-
-const obtenerColeccionPorCliente = async (nombreColeccion, clienteId) => {
-  if (!db) throw new Error('Firebase no está configurado');
-  const q = query(collection(db, nombreColeccion), where('clienteId', '==', clienteId));
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-};
-
-export const obtenerPresupuestosPorCliente = (clienteId) => obtenerColeccionPorCliente('presupuestos', clienteId);
-export const obtenerRemitosPorCliente = (clienteId) => obtenerColeccionPorCliente('remitos', clienteId);
-export const obtenerRecibosPorCliente = (clienteId) => obtenerColeccionPorCliente('recibos', clienteId);
-export const obtenerOrdenesTrabajoPorCliente = (clienteId) => obtenerColeccionPorCliente('ordenesTrabajo', clienteId);
-export const obtenerMantenimientosPreventivosPorCliente = (clienteId) => obtenerColeccionPorCliente('mantenimientosPreventivos', clienteId);
-export const obtenerFacturasPorCliente = (clienteId) => obtenerColeccionPorCliente('facturas', clienteId);
-export const obtenerCertificadosPorCliente = (clienteId) => obtenerColeccionPorCliente('certificados', clienteId);
-export const obtenerEstadosPorCliente = (clienteId) => obtenerColeccionPorCliente('estados', clienteId);
-export const obtenerDocumentosPorCliente = (clienteId) => obtenerColeccionPorCliente('documentos', clienteId);
 
 // ========== SUSCRIPCIÓN DE LA APP (solo lectura para Admin, edición solo SuperAdmin) ==========
 // Doc único config/suscripcion. Si no existe todavía, se devuelven valores

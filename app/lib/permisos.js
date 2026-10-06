@@ -39,18 +39,12 @@ export const MODULOS = {
 
 export const esAdmin = (usuario) => usuario?.role === 'Admin';
 
-// Personal interno (panel): Admin, Personal y el rol Técnico anterior
-// mientras dura la migración a perfiles.
-export const esInterno = (usuario) => ['Admin', 'Personal', 'Tecnico'].includes(usuario?.role);
-
-// Acceso del rol Técnico anterior (antes de migrar a perfiles): OT y
-// Mantenimiento Preventivo propios, como funcionaba hasta ahora.
-const NIVELES_TECNICO = { orden: 'propios', mantenimiento: 'propios' };
+// Personal interno (panel): Admin y Personal.
+export const esInterno = (usuario) => ['Admin', 'Personal'].includes(usuario?.role);
 
 export function nivelDe(usuario, modulo) {
   if (esAdmin(usuario)) return 'todos';
   if (usuario?.role === 'Personal') return usuario.permisos?.[modulo] || 'ninguno';
-  if (usuario?.role === 'Tecnico') return NIVELES_TECNICO[modulo] || 'ninguno';
   return 'ninguno';
 }
 

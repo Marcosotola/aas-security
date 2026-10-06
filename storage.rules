@@ -9,10 +9,6 @@ service firebase.storage {
       return firestore.get(/databases/(default)/documents/usuarios/$(uid)).data.role;
     }
 
-    function esStaff() {
-      return request.auth != null && rolDe(request.auth.uid) in ['Admin', 'Tecnico'];
-    }
-
     function esAdmin() {
       return request.auth != null && rolDe(request.auth.uid) == 'Admin';
     }
@@ -37,15 +33,6 @@ service firebase.storage {
       return nivelDe(modulo) in ['propios', 'todos'];
     }
 
-    // Dueño del documento o cuenta principal que lo tiene vinculado (mismo
-    // criterio que puedeVerCliente en firestore.rules).
-    function puedeVerCliente(clienteId) {
-      return request.auth != null && (
-        clienteId == request.auth.uid
-        || clienteId in firestore.get(/databases/(default)/documents/usuarios/$(request.auth.uid)).data.get('cuentasVinculadas', [])
-      );
-    }
-
     // Documento emitido a una empresa/sede: el usuario tiene habilitado ese
     // tipo para esa sede o para todas (mismo criterio que puedeVer en
     // firestore.rules).
@@ -59,23 +46,16 @@ service firebase.storage {
         || tipo in accesosEmpresa.get('*', []);
     }
 
-    // Lectura del archivo de un documento: por dueño/cuenta vinculada o por
-    // accesos a empresa, mientras conviven los dos modelos.
-    function puedeVerDocumento(tipo, datos) {
-      return puedeVerCliente(datos.get('clienteId', null)) || puedeVer(tipo, datos);
-    }
-
-    // Fotos de las órdenes de trabajo: el staff (Admin/Técnico anterior) y
-    // el Personal con acceso a OT.
+    // Fotos de las órdenes de trabajo: el Admin y el Personal con acceso a OT.
     match /ordenes-trabajo/{otId}/{fileName} {
-      allow read: if esStaff() || nivelDe('orden') != 'ninguno';
-      allow write: if esStaff() || personalEmite('orden');
+      allow read: if esAdmin() || nivelDe('orden') != 'ninguno';
+      allow write: if esAdmin() || personalEmite('orden');
     }
 
     // Fotos de Mantenimiento Preventivo: mismo criterio que ordenes-trabajo.
     match /mantenimiento-preventivo/{mpId}/{fileName} {
-      allow read: if esStaff() || nivelDe('mantenimiento') != 'ninguno';
-      allow write: if esStaff() || personalEmite('mantenimiento');
+      allow read: if esAdmin() || nivelDe('mantenimiento') != 'ninguno';
+      allow write: if esAdmin() || personalEmite('mantenimiento');
     }
 
     // PDFs de facturas: los sube/borra el Admin o el Personal que emite
@@ -88,7 +68,7 @@ service firebase.storage {
       allow read: if esAdmin()
         || personalEmite('factura')
         || personalLee('factura', firestore.get(/databases/(default)/documents/facturas/$(facturaId)).data)
-        || puedeVerDocumento('factura', firestore.get(/databases/(default)/documents/facturas/$(facturaId)).data);
+        || puedeVer('factura', firestore.get(/databases/(default)/documents/facturas/$(facturaId)).data);
       allow write: if esAdmin() || personalEmite('factura');
     }
 
@@ -97,7 +77,7 @@ service firebase.storage {
       allow read: if esAdmin()
         || personalEmite('certificado')
         || personalLee('certificado', firestore.get(/databases/(default)/documents/certificados/$(certificadoId)).data)
-        || puedeVerDocumento('certificado', firestore.get(/databases/(default)/documents/certificados/$(certificadoId)).data);
+        || puedeVer('certificado', firestore.get(/databases/(default)/documents/certificados/$(certificadoId)).data);
       allow write: if esAdmin() || personalEmite('certificado');
     }
 

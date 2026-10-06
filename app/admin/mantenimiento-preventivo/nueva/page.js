@@ -41,7 +41,6 @@ export default function NuevoMantenimientoPreventivo() {
   const [mantenimiento, setMantenimiento] = useState({
     numero: `MP-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
     fecha: fechaHoyLocal(),
-    clienteId: null,
     empresaId: null,
     sedeId: null,
     descripcionTrabajo: '',
@@ -100,7 +99,6 @@ export default function NuevoMantenimientoPreventivo() {
       const mpData = {
         numero: mantenimiento.numero,
         fecha: mantenimiento.fecha,
-        clienteId: mantenimiento.clienteId || null,
         empresaId: mantenimiento.empresaId || null,
         sedeId: mantenimiento.empresaId ? mantenimiento.sedeId || null : null,
         cliente,
@@ -208,10 +206,10 @@ export default function NuevoMantenimientoPreventivo() {
               empresaId={mantenimiento.empresaId}
               sedeId={mantenimiento.sedeId}
               onSelect={({ empresaId, sedeId, empresa, email, telefono, direccion, sedeNombre }) => {
-                setMantenimiento({ ...mantenimiento, clienteId: null, empresaId, sedeId });
+                setMantenimiento({ ...mantenimiento, empresaId, sedeId });
                 setCliente({ ...cliente, empresa, email, telefono, direccion, sedeId, sedeNombre });
               }}
-              onQuitar={() => setMantenimiento({ ...mantenimiento, clienteId: null, empresaId: null, sedeId: null })}
+              onQuitar={() => setMantenimiento({ ...mantenimiento, empresaId: null, sedeId: null })}
               placeholder="Buscar empresa registrada (opcional)..."
             />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

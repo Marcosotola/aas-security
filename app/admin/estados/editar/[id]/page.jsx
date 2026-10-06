@@ -62,7 +62,6 @@ export default function EditarEstado({ params }) {
   const [estado, setEstado] = useState({
     numero: '',
     fecha: '',
-    clienteId: null,
     empresaId: null,
     sedeId: null,
     items: [
@@ -84,7 +83,6 @@ export default function EditarEstado({ params }) {
         setEstado({
           numero: estadoData.numero,
           fecha: estadoData.fecha,
-          clienteId: estadoData.clienteId || null,
           empresaId: estadoData.empresaId || null,
           sedeId: estadoData.sedeId || null,
           items: estadoData.items || [],
@@ -204,7 +202,6 @@ export default function EditarEstado({ params }) {
       const estadoData = {
         numero: estado.numero,
         fecha: estado.fecha,
-        clienteId: estado.clienteId || null,
         empresaId: estado.empresaId || null,
         sedeId: estado.empresaId ? estado.sedeId || null : null,
         cliente: cliente,
@@ -308,10 +305,10 @@ export default function EditarEstado({ params }) {
               empresaId={estado.empresaId}
               sedeId={estado.sedeId}
               onSelect={({ empresaId, sedeId, empresa, email, telefono, direccion, sedeNombre }) => {
-                setEstado({ ...estado, clienteId: null, empresaId, sedeId });
+                setEstado({ ...estado, empresaId, sedeId });
                 setCliente({ ...cliente, empresa, email, telefono, direccion, sedeId, sedeNombre });
               }}
-              onQuitar={() => setEstado({ ...estado, clienteId: null, empresaId: null, sedeId: null })}
+              onQuitar={() => setEstado({ ...estado, empresaId: null, sedeId: null })}
               placeholder="Buscar empresa registrada (opcional)..."
             />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

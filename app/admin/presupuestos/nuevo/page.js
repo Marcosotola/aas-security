@@ -58,7 +58,6 @@ export default function NuevoPresupuesto() {
         titulo: '',
         fecha: fechaHoyLocal(),
         validez: '30 días',
-        clienteId: null, // uid del cliente registrado seleccionado (null = cliente manual, sin cuenta)
         empresaId: null,
         sedeId: null,
         modo: 'items', // 'items' (detalle por ítem) o 'global' (una sola descripción y un precio)
@@ -237,7 +236,6 @@ export default function NuevoPresupuesto() {
                 fecha: presupuesto.fecha,
                 validez: presupuesto.validez,
                 modo: presupuesto.modo,
-                clienteId: presupuesto.clienteId || null,
                 empresaId: presupuesto.empresaId || null,
                 sedeId: presupuesto.empresaId ? presupuesto.sedeId || null : null,
                 cliente: cliente,
@@ -394,10 +392,10 @@ export default function NuevoPresupuesto() {
                             empresaId={presupuesto.empresaId}
                             sedeId={presupuesto.sedeId}
                             onSelect={({ empresaId, sedeId, empresa, email, telefono, direccion, sedeNombre }) => {
-                                setPresupuesto({ ...presupuesto, clienteId: null, empresaId, sedeId });
+                                setPresupuesto({ ...presupuesto, empresaId, sedeId });
                                 setCliente({ ...cliente, empresa, email, telefono, direccion, sedeId, sedeNombre });
                             }}
-                            onQuitar={() => setPresupuesto({ ...presupuesto, clienteId: null, empresaId: null, sedeId: null })}
+                            onQuitar={() => setPresupuesto({ ...presupuesto, empresaId: null, sedeId: null })}
                             placeholder="Buscar empresa registrada (opcional)..."
                         />
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

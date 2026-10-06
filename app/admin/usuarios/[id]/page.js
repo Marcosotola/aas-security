@@ -98,9 +98,9 @@ function FichaUsuario({ params }) {
         </div>
       </div>
 
-      {/* Personal (o Técnico anterior, o un cliente al que se lo está pasando
-          a Personal desde el listado con ?perfil=1): su perfil de permisos. */}
-      {(['Personal', 'Tecnico'].includes(perfil.role) || searchParams.get('perfil') === '1') && perfil.role !== 'Admin' && (
+      {/* Personal (o un cliente al que se lo está pasando a Personal desde el
+          listado con ?perfil=1): su perfil de permisos. */}
+      {(perfil.role === 'Personal' || searchParams.get('perfil') === '1') && perfil.role !== 'Admin' && (
         <PerfilPersonal
           usuario={perfil}
           perfiles={perfiles}
