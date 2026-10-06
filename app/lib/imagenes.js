@@ -12,12 +12,9 @@ const leerComoBase64 = (blob) => new Promise((resolve, reject) => {
   reader.readAsDataURL(blob);
 });
 
-// Redimensiona una imagen a un máximo de `maxDimension` px de lado más largo
-// y la devuelve como data URI JPEG. Las fotos de un celular sin comprimir
-// pueden pesar varios MB cada una; en el PDF se muestran chicas (~150pt), así
-// que embeberlas a resolución completa infla el documento y, con varias
-// fotos grandes juntas, algunas terminaban saliendo en blanco en el PDF.
-const comprimirImagen = (blob, maxDimension = 1600, calidad = 0.82) => new Promise((resolve, reject) => {
+// Dibuja una imagen en un <canvas> con un máximo de `maxDimension` px de lado
+// más largo (si ya es más chica, queda igual).
+const dibujarReducida = (blob, maxDimension) => new Promise((resolve, reject) => {
   const objectUrl = URL.createObjectURL(blob);
   const img = new Image();
   img.onload = () => {
@@ -37,7 +34,7 @@ const comprimirImagen = (blob, maxDimension = 1600, calidad = 0.82) => new Promi
       canvas.width = width;
       canvas.height = height;
       canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL('image/jpeg', calidad));
+      resolve(canvas);
     } catch (error) {
       reject(error);
     }
@@ -48,6 +45,33 @@ const comprimirImagen = (blob, maxDimension = 1600, calidad = 0.82) => new Promi
   };
   img.src = objectUrl;
 });
+
+// Redimensiona una imagen y la devuelve como data URI JPEG. Las fotos de un
+// celular sin comprimir pueden pesar varios MB cada una; en el PDF se muestran
+// chicas (~150pt), así que embeberlas a resolución completa infla el documento
+// y, con varias fotos grandes juntas, algunas terminaban saliendo en blanco.
+const comprimirImagen = async (blob, maxDimension = 1600, calidad = 0.82) => {
+  const canvas = await dibujarReducida(blob, maxDimension);
+  return canvas.toDataURL('image/jpeg', calidad);
+};
+
+// Comprime una foto antes de subirla a Storage (mismo tamaño y calidad que
+// para el PDF): una foto de celular de ~2-3 MB queda en unos cientos de KB,
+// que alcanzan de sobra para verla en pantalla. Devuelve un File JPEG; si no
+// es una imagen, no se puede procesar o no achica nada, devuelve el original.
+export const comprimirParaSubir = async (file, maxDimension = 1600, calidad = 0.82) => {
+  if (!file?.type?.startsWith('image/')) return file;
+  try {
+    const canvas = await dibujarReducida(file, maxDimension);
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', calidad));
+    if (!blob || blob.size >= file.size) return file;
+    const nombre = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+    return new File([blob], nombre, { type: 'image/jpeg' });
+  } catch (error) {
+    console.error('No se pudo comprimir la foto, se sube sin comprimir:', error);
+    return file;
+  }
+};
 
 // Convierte un File/Blob a data URI para el PDF, comprimiéndolo primero. Si
 // la compresión falla (formato que <canvas> no puede decodificar, etc.) cae

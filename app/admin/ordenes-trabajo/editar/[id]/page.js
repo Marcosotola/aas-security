@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Home, Save, X } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { comprimirParaSubir } from '../../../../lib/imagenes';
 import { storage } from '../../../../lib/firebase';
 import {
   obtenerOrdenTrabajoPorId,
@@ -129,9 +130,10 @@ export default function EditarOrdenTrabajo({ params }) {
     try {
       const fotosSubidas = await Promise.all(
         fotosNuevas.map(async (foto, index) => {
-          const path = `ordenes-trabajo/${id}/${Date.now()}-${index}-${foto.file.name}`;
+          const archivo = await comprimirParaSubir(foto.file);
+          const path = `ordenes-trabajo/${id}/${Date.now()}-${index}-${archivo.name}`;
           const storageRef = ref(storage, path);
-          await uploadBytes(storageRef, foto.file);
+          await uploadBytes(storageRef, archivo);
           const url = await getDownloadURL(storageRef);
           return { url, path };
         })

@@ -16,7 +16,7 @@ import FirmaCanvas from '../../../components/ui/FirmaCanvas';
 import RichTextEditor from '../../../components/ui/RichTextEditor';
 import PlanillasAdjuntas from '../../../components/planillas/PlanillasAdjuntas';
 import { fechaHoyLocal } from '../../../lib/fecha';
-import { archivoABase64 } from '../../../lib/imagenes';
+import { archivoABase64, comprimirParaSubir } from '../../../lib/imagenes';
 
 export default function NuevoMantenimientoPreventivo() {
   const router = useRouter();
@@ -78,9 +78,10 @@ export default function NuevoMantenimientoPreventivo() {
 
       const fotosSubidas = await Promise.all(
         fotos.map(async (foto, index) => {
-          const path = `mantenimiento-preventivo/${id}/${Date.now()}-${index}-${foto.file.name}`;
+          const archivo = await comprimirParaSubir(foto.file);
+          const path = `mantenimiento-preventivo/${id}/${Date.now()}-${index}-${archivo.name}`;
           const storageRef = ref(storage, path);
-          await uploadBytes(storageRef, foto.file);
+          await uploadBytes(storageRef, archivo);
           const url = await getDownloadURL(storageRef);
           return { url, path };
         })
