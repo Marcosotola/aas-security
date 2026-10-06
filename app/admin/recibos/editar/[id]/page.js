@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Home, Save, Download, RefreshCw } from 'lucide-react';
+import { Home, Save, RefreshCw } from 'lucide-react';
 import { obtenerReciboPorId, actualizarRecibo, obtenerEmpresas } from '../../../../lib/firestore';
 import { useStaffAuth } from '../../../../lib/useStaffAuth';
 import { use } from 'react';
@@ -171,11 +171,6 @@ export default function EditarRecibo({ params }) {
     });
   };
 
-  // Función para verificar si es móvil
-  const isMobile = () => {
-    return typeof window !== 'undefined' && window.innerWidth < 768;
-  };
-
   const handleMontoChange = (e) => {
     const valor = e.target.value;
     setRecibo({
@@ -183,28 +178,6 @@ export default function EditarRecibo({ params }) {
       monto: valor,
       cantidadLetras: valor ? numeroALetras(parseFloat(valor)) : ''
     });
-  };
-
-  const clearSignature = () => {
-    if (sigCanvas.current) {
-      sigCanvas.current.clear();
-    }
-  };
-
-  const saveSignature = () => {
-    if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
-      try {
-        const firmaData = sigCanvas.current.toDataURL('image/png');
-        setRecibo({ ...recibo, firma: firmaData });
-        setMostrarCanvas(false);
-        alert('Firma guardada');
-      } catch (error) {
-        console.error('Error al guardar firma:', error);
-        alert('Error al guardar la firma');
-      }
-    } else {
-      alert('Por favor, firme antes de guardar');
-    }
   };
 
   const handleGuardarRecibo = async () => {

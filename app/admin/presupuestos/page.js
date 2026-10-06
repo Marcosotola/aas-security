@@ -5,8 +5,6 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye, ChevronDown } from 'lucide-react';
 import SedeLink from '../../components/admin/SedeLink';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
 import { actualizarPresupuesto, eliminarPresupuesto, obtenerPresupuestos } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { soloPropios } from '../../lib/permisos';
@@ -15,7 +13,7 @@ import PresupuestoPDF from '../../components/pdf/PresupuestoPDF';
 import PortalDropdown from '../../components/PortalDropdown';
 import ViewToggle from '../../components/admin/ViewToggle';
 import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/accionIcono';
-import { formatearFecha, fechaHoyLocal } from '../../lib/fecha';
+import { formatearFecha } from '../../lib/fecha';
 
 const ESTADOS_PRESUPUESTO = ['Pendiente', 'Aprobado', 'Rechazado'];
 
@@ -28,27 +26,6 @@ export default function HistorialPresupuestos() {
   const [actualizandoEstado, setActualizandoEstado] = useState(null);
   const [vista, setVista] = useState('tabla');
   const estadoBtnRefs = useRef({});
-
-  // Estado del formulario
-  const [cliente, setCliente] = useState({
-    nombre: '',
-    empresa: '',
-    email: '',
-    telefono: '',
-    direccion: ''
-  });
-
-  const [presupuesto, setPresupuesto] = useState({
-    numero: `P-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
-    fecha: fechaHoyLocal(),
-    validez: '30 días',
-    items: [
-      { id: 1, descripcion: '', cantidad: '', precioUnitario: '', subtotal: 0 }
-    ],
-    notas: 'Este presupuesto tiene una validez de 30 días a partir de la fecha de emisión.',
-    subtotal: 0,
-    total: 0
-  });
 
   const loading = loadingAuth || loadingData;
 

@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Home, Save, Download, Eye, PlusCircle, Trash2, Percent, DollarSign } from 'lucide-react';
+import { Home, Save, Download, PlusCircle, Trash2, Percent, DollarSign } from 'lucide-react';
 import { crearPresupuesto, obtenerListaPrecios, obtenerEmpresas } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import PresupuestoPDF from '../../../components/pdf/PresupuestoPDF';

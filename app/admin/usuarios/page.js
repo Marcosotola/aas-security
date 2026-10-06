@@ -18,7 +18,7 @@ const ROLES = ['Cliente', 'Personal', 'Admin'];
 
 export default function GestionUsuarios() {
   const router = useRouter();
-  const { user, loading: loadingAuth } = useStaffAuth('admin');
+  const { loading: loadingAuth } = useStaffAuth('admin');
   const [usuarios, setUsuarios] = useState([]);
   const [loadingUsuarios, setLoadingUsuarios] = useState(true);
   const [filtro, setFiltro] = useState('');

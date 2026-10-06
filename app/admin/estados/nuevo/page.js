@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Home, Save, Download, Eye, PlusCircle, Trash2 } from 'lucide-react';
+import { Home, Save, Download, PlusCircle, Trash2 } from 'lucide-react';
 import { crearEstado, obtenerEmpresas } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
@@ -115,11 +115,6 @@ export default function NuevoEstado() {
             itemId: null,
             value: ''
         });
-    };
-
-    // Función para verificar si es móvil
-    const isMobile = () => {
-        return typeof window !== 'undefined' && window.innerWidth < 768;
     };
 
     const handleClienteChange = (e) => {

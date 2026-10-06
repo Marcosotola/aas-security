@@ -142,11 +142,6 @@ export default function NuevoRecibo() {
     });
   };
 
-  // Función para verificar si es móvil
-  const isMobile = () => {
-    return typeof window !== 'undefined' && window.innerWidth < 768;
-  };
-
   const handleMontoChange = (e) => {
     const valor = e.target.value;
     setRecibo({

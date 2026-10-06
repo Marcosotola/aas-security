@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Home, Save, Download, Eye, PlusCircle, Trash2, RefreshCw } from 'lucide-react';
+import { Home, Save, PlusCircle, Trash2, RefreshCw } from 'lucide-react';
 import { obtenerRemitoPorId, actualizarRemito, obtenerEmpresas } from '../../../../lib/firestore';
 import { useStaffAuth } from '../../../../lib/useStaffAuth';
 import { use } from 'react';
@@ -18,7 +18,6 @@ export default function EditarRemito({ params }) {
   const { user, loading: loadingAuth } = useStaffAuth({ modulo: 'remito', accion: 'crear' });
   const [loadingData, setLoadingData] = useState(true);
   const [guardando, setGuardando] = useState(false);
-  const [remitoOriginal, setRemitoOriginal] = useState(null);
   const [empresas, setEmpresas] = useState([]);
   const loading = loadingAuth || loadingData;
   const [mostrarCanvas, setMostrarCanvas] = useState(false);
@@ -83,7 +82,6 @@ export default function EditarRemito({ params }) {
     (async () => {
       try {
         const remitoData = await obtenerRemitoPorId(id);
-        setRemitoOriginal(remitoData);
 
         setRemito({
           numero: remitoData.numero,
@@ -132,11 +130,6 @@ export default function EditarRemito({ params }) {
     });
   };
 
-  // Función para verificar si es móvil
-  const isMobile = () => {
-    return typeof window !== 'undefined' && window.innerWidth < 768;
-  };
-
   const handleClienteChange = (e) => {
     const { name, value } = e.target;
     setCliente({ ...cliente, [name]: value });
@@ -180,23 +173,6 @@ export default function EditarRemito({ params }) {
   const clearSignature = () => {
     if (sigCanvas.current) {
       sigCanvas.current.clear();
-    }
-  };
-
-  const saveSignature = () => {
-    if (sigCanvas.current.isEmpty()) {
-      alert('Por favor, firme antes de guardar');
-      return;
-    }
-
-    // Guardar la firma como base64 sin trimming
-    try {
-      const firmaData = sigCanvas.current.toDataURL('image/png');
-      setRemito({ ...remito, firma: firmaData });
-      alert('Firma guardada');
-    } catch (error) {
-      console.error('Error al guardar firma:', error);
-      alert('Error al guardar la firma');
     }
   };
 
