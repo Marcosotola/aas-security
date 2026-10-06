@@ -1,7 +1,7 @@
 // app/lib/mercadopago.js
 // Uso exclusivo en server (API routes): usa el Access Token privado de
 // MercadoPago. Nunca importar desde un componente 'use client'.
-import { MercadoPagoConfig, PreApproval, Payment } from 'mercadopago';
+import { MercadoPagoConfig, PreApproval, PreApprovalPlan, Payment } from 'mercadopago';
 
 export const hasMercadoPagoConfig = Boolean(process.env.MERCADOPAGO_ACCESS_TOKEN);
 
@@ -12,14 +12,15 @@ if (hasMercadoPagoConfig) {
   console.warn('MercadoPago no está configurado. Definí MERCADOPAGO_ACCESS_TOKEN para habilitar el cobro recurrente.');
 }
 
-// Crea una suscripción (preapproval) mensual. payer_email es obligatorio
-// para la API de MercadoPago (sin plan asociado, rechaza la creación con
-// "payer_email is required" si no se manda). Por eso el admin lo carga a
-// mano antes de ser redirigido (ver AdminHeader.jsx): tiene que ser el
-// email de su cuenta de MercadoPago, no el que usa para entrar al panel.
-export const crearPreapproval = async ({ monto, backUrl, reason, payerEmail }) => {
-  const preapproval = new PreApproval(client);
-  return preapproval.create({
+// Crea un plan (preapproval_plan) mensual. Usamos un plan y no un
+// preapproval directo a propósito: el preapproval exige payer_email y
+// MercadoPago rechaza la autorización si quien paga entra con otra cuenta;
+// el plan no lleva email, así que su link (init_point) lo autoriza
+// cualquier cuenta de MercadoPago. La suscripción que se crea desde el link
+// la vincula el webhook comparando preapproval_plan_id.
+export const crearPlan = async ({ monto, backUrl, reason }) => {
+  const plan = new PreApprovalPlan(client);
+  return plan.create({
     body: {
       reason: reason || 'Suscripción mensual - Panel AAS Security',
       auto_recurring: {
@@ -28,9 +29,7 @@ export const crearPreapproval = async ({ monto, backUrl, reason, payerEmail }) =
         transaction_amount: monto,
         currency_id: 'ARS'
       },
-      back_url: backUrl,
-      external_reference: 'aas-security-suscripcion',
-      payer_email: payerEmail
+      back_url: backUrl
     }
   });
 };
@@ -40,13 +39,20 @@ export const obtenerPreapproval = async (id) => {
   return preapproval.get({ id });
 };
 
-// Cancela una preapproval existente en MercadoPago. Se usa cuando el admin
-// cambia el email de pago o cuando el link guardado quedó desincronizado
-// (p. ej. MercadoPago lo canceló solo y el webhook no llegó a avisarnos),
-// para no dejar suscripciones huérfanas dando vueltas.
+// Cancela una preapproval existente en MercadoPago. Solo se usa con las que
+// quedaron 'pending' (links del modelo anterior que nadie llegó a
+// autorizar): una 'authorized' nunca se cancela desde el panel.
 export const cancelarPreapproval = async (id) => {
   const preapproval = new PreApproval(client);
   return preapproval.update({ id, body: { status: 'cancelled' } });
+};
+
+// Cambia el monto que MercadoPago debita en los próximos cobros de una
+// suscripción ya autorizada. Sin esto, editar el monto en el panel solo
+// cambiaba Firestore y MercadoPago seguía cobrando el monto original.
+export const actualizarMontoPreapproval = async (id, monto) => {
+  const preapproval = new PreApproval(client);
+  return preapproval.update({ id, body: { auto_recurring: { transaction_amount: monto, currency_id: 'ARS' } } });
 };
 
 export const obtenerPago = async (id) => {

@@ -4,11 +4,72 @@
 // la notificación a ciegas: siempre volvemos a pedirle el recurso a la API
 // de MercadoPago con nuestro Access Token antes de actualizar algo, así una
 // notificación falsa no puede inventar un pago que no exista de verdad.
+//
+// La cuenta de MercadoPago es la misma que cobra otros sistemas y pagos
+// sueltos, así que solo se tienen en cuenta los pagos y suscripciones que
+// son nuestros: la suscripción vigente (mercadoPago.preapprovalId) o una
+// nueva creada desde el último plan que generamos (mercadoPago.planId).
 import { NextResponse } from 'next/server';
 import { WebhookSignatureValidator } from 'mercadopago';
 import { adminDb, hasAdminConfig } from '../../../lib/firebaseAdmin';
 import { obtenerPago, obtenerPreapproval, hasMercadoPagoConfig } from '../../../lib/mercadopago';
-import { fechaHoy, sumarMeses } from '../../../lib/suscripcion';
+import { vencimientoTrasPago } from '../../../lib/suscripcion';
+
+const esDeLaSuscripcion = (preapproval, mercadoPago) =>
+  preapproval.id === mercadoPago?.preapprovalId ||
+  Boolean(mercadoPago?.planId && preapproval.preapproval_plan_id === mercadoPago.planId);
+
+const procesarPago = async (id) => {
+  const pago = await obtenerPago(id);
+  // card_validation es el cobro mínimo (y después devuelto) con el que
+  // MercadoPago valida una tarjeta al cargarla o cambiarla: no es una
+  // mensualidad y no debe extender el vencimiento.
+  if (pago.status !== 'approved' || pago.operation_type === 'card_validation') return;
+
+  // Los pagos de una suscripción traen su id acá (también el primero, que
+  // MercadoPago marca como regular_payment y no como recurring_payment).
+  const subscriptionId =
+    pago.point_of_interaction?.transaction_data?.subscription_id || pago.metadata?.preapproval_id;
+  if (!subscriptionId) return;
+
+  const configRef = adminDb.doc('config/suscripcion');
+  const config = (await configRef.get()).data() || {};
+  // MercadoPago reintenta la notificación si no respondemos a tiempo.
+  if (String(config.ultimoPago?.id) === String(pago.id)) return;
+
+  const preapproval = await obtenerPreapproval(subscriptionId);
+  if (!esDeLaSuscripcion(preapproval, config.mercadoPago)) return;
+
+  await configRef.set({
+    fechaVencimiento: vencimientoTrasPago(preapproval.next_payment_date),
+    appHabilitada: true,
+    ultimoPago: {
+      id: pago.id,
+      monto: pago.transaction_amount,
+      fecha: new Date().toISOString()
+    },
+    // Si el pago llegó antes que la notificación de la suscripción nueva,
+    // la vinculamos acá.
+    mercadoPago: { preapprovalId: preapproval.id, estado: preapproval.status }
+  }, { merge: true });
+};
+
+const procesarPreapproval = async (id) => {
+  const preapproval = await obtenerPreapproval(id);
+  const configRef = adminDb.doc('config/suscripcion');
+  const config = (await configRef.get()).data() || {};
+  const esLaVigente = preapproval.id === config.mercadoPago?.preapprovalId;
+
+  // De la vigente registramos cualquier cambio de estado (cancelada,
+  // pausada...) para que el panel deje renovarla; una nueva de nuestro plan
+  // pasa a ser la vigente recién cuando el pagador la autoriza. El
+  // vencimiento no se toca acá: solo lo mueve un pago aprobado.
+  if (esLaVigente || (preapproval.status === 'authorized' && esDeLaSuscripcion(preapproval, config.mercadoPago))) {
+    await configRef.set({
+      mercadoPago: { preapprovalId: preapproval.id, estado: preapproval.status }
+    }, { merge: true });
+  }
+};
 
 export async function POST(request) {
   if (!hasAdminConfig || !hasMercadoPagoConfig) {
@@ -46,38 +107,9 @@ export async function POST(request) {
 
   try {
     if (tipo === 'payment') {
-      const pago = await obtenerPago(id);
-      if (pago.status === 'approved') {
-        const configSnap = await adminDb.doc('config/suscripcion').get();
-        const actual = configSnap.exists ? configSnap.data() : {};
-        const hoyStr = fechaHoy();
-        // Si todavía no venció, extiende desde el vencimiento actual (no
-        // "pierde" los días que quedaban); si ya venció o no había fecha,
-        // extiende desde hoy.
-        const fechaBase = actual.fechaVencimiento && actual.fechaVencimiento > hoyStr
-          ? actual.fechaVencimiento
-          : hoyStr;
-        const nuevaFecha = sumarMeses(fechaBase, 1);
-
-        await adminDb.doc('config/suscripcion').set({
-          fechaVencimiento: nuevaFecha,
-          appHabilitada: true,
-          ultimoPago: {
-            id: pago.id,
-            monto: pago.transaction_amount,
-            fecha: new Date().toISOString()
-          }
-        }, { merge: true });
-      }
+      await procesarPago(id);
     } else if (tipo === 'subscription_preapproval' || tipo === 'preapproval') {
-      const preapproval = await obtenerPreapproval(id);
-      await adminDb.doc('config/suscripcion').set({
-        mercadoPago: {
-          preapprovalId: preapproval.id,
-          initPoint: preapproval.init_point,
-          estado: preapproval.status
-        }
-      }, { merge: true });
+      await procesarPreapproval(id);
     }
   } catch (error) {
     console.error('Error al procesar el webhook de MercadoPago:', error);
