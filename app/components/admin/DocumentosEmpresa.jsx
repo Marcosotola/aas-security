@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { MapPin, Eye, Edit, Trash, Download } from 'lucide-react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import DescargarPDF from '../pdf/DescargarPDF';
 import {
   obtenerDocumentosDeEmpresa,
   eliminarPresupuesto,
@@ -70,14 +70,14 @@ function SeccionPDF({ titulo, Icono, items, rutaBase, PDFDoc, propName, montoFie
         <Eye size={ACCION_ICONO_TAMANO} />
       </Link>
       {renderDescarga ? renderDescarga(item) : (
-        <PDFDownloadLink
+        <DescargarPDF
           document={<PDFDoc {...{ [propName]: item }} />}
           fileName={`${item.numero}.pdf`}
           title="Descargar PDF"
           className={accionIconoClase('primary')}
         >
-          {({ loading }) => <Download size={ACCION_ICONO_TAMANO} className={loading ? 'animate-pulse' : ''} />}
-        </PDFDownloadLink>
+          <Download size={ACCION_ICONO_TAMANO} />
+        </DescargarPDF>
       )}
       <Link href={`${rutaBase}/editar/${item.id}`} title="Editar" className={accionIconoClase('secondary')}>
         <Edit size={ACCION_ICONO_TAMANO} />

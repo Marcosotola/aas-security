@@ -2,7 +2,8 @@
 'use client';
 
 import { useState } from 'react';
-import { pdf, PDFDownloadLink } from '@react-pdf/renderer';
+import { pdf } from '@react-pdf/renderer';
+import DescargarPDF from '../pdf/DescargarPDF';
 import { CheckCircle2, Share2, Download, List } from 'lucide-react';
 import { construirLinkWhatsApp } from '../../lib/whatsapp';
 
@@ -90,7 +91,7 @@ export default function CompartirDocumentoModal({
             {compartiendo ? 'Compartiendo...' : 'Compartir'}
           </button>
 
-          <PDFDownloadLink
+          <DescargarPDF
             document={pdfElement}
             fileName={fileName}
             className="flex items-center justify-center w-full gap-2 px-4 py-3 text-sm font-medium transition-colors border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
@@ -104,7 +105,7 @@ export default function CompartirDocumentoModal({
                 </>
               )
             }
-          </PDFDownloadLink>
+          </DescargarPDF>
 
           <button
             type="button"

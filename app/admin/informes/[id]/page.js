@@ -8,7 +8,7 @@ import { db } from '../../../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { use } from 'react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import DescargarPDF from '../../../components/pdf/DescargarPDF';
 import DocumentoPDF from '../../../components/pdf/DocumentoPDF';
 import { formatearFecha } from '../../../lib/fecha';
 import { esHtmlEnriquecido } from '../../../lib/richText';
@@ -94,17 +94,17 @@ export default function VerDocumento({ params }) {
                 <Edit size={18} className="mr-2" /> Editar
               </Link>
             )}
-            <PDFDownloadLink
+            <DescargarPDF
               document={<DocumentoPDF documento={documento} />}
               fileName={`${documento.titulo?.replace(/\s+/g, '_') || 'Informe'}.pdf`}
               className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
             >
-              {({ blob, url, loading, error }) =>
+              {({ loading }) =>
                 loading ?
                   <span><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
                   <span><Download size={18} className="mr-2" /> Descargar PDF</span>
               }
-            </PDFDownloadLink>
+            </DescargarPDF>
           </div>
         </div>
 

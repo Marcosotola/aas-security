@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Home, Save, Download } from 'lucide-react';
 import { crearDocumento, obtenerEmpresas } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import DescargarPDF from '../../../components/pdf/DescargarPDF';
 import DocumentoPDF from '../../../components/pdf/DocumentoPDF';
 import EmpresaSelector from '../../../components/EmpresaSelector';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
@@ -128,17 +128,17 @@ export default function NuevoDocumento() {
               {guardando ? 'Guardando...' : 'Guardar'}
             </button>
             {documento.titulo && documento.contenido && (
-              <PDFDownloadLink
+              <DescargarPDF
                 document={<DocumentoPDF documento={{ ...documento, cliente }} />}
                 fileName={`${documento.titulo.replace(/\s+/g, '_')}.pdf`}
                 className={`bg-secondary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors flex items-center`}
               >
-                {({ blob, url, loading, error }) =>
+                {({ loading }) =>
                   loading ?
                     <span><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
                     <span><Download size={18} className="mr-2" /> Descargar PDF</span>
                 }
-              </PDFDownloadLink>
+              </DescargarPDF>
             )}
           </div>
         </div>

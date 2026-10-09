@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Home, Save, Download, PlusCircle, Trash2, RefreshCw } from 'lucide-react';
 import { crearRemito, obtenerEmpresas } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import DescargarPDF from '../../../components/pdf/DescargarPDF';
 import RemitoPDF from '../../../components/pdf/RemitoPDF';
 import EmpresaSelector from '../../../components/EmpresaSelector';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
@@ -239,17 +239,17 @@ export default function NuevoRemito() {
                             {guardando ? 'Guardando...' : 'Guardar'}
                         </button>
                         {remito.items[0].descripcion && (
-                            <PDFDownloadLink
+                            <DescargarPDF
                                 document={<RemitoPDF remito={{ ...remito, cliente, firma: remito.firma || null }} />}
                                 fileName={`${remito.numero}.pdf`}
                                 className={`bg-secondary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors flex items-center`}
                             >
-                                {({ blob, url, loading, error }) =>
+                                {({ loading }) =>
                                     loading ?
                                         <span><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
                                         <span><Download size={18} className="mr-2" /> Descargar PDF</span>
                                 }
-                            </PDFDownloadLink>
+                            </DescargarPDF>
                         )}
                     </div>
                 </div>

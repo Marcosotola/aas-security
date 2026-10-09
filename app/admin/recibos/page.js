@@ -6,7 +6,7 @@ import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye } from 'lu
 import { eliminarRecibo, obtenerRecibos } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { soloPropios } from '../../lib/permisos';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import DescargarPDF from '../../components/pdf/DescargarPDF';
 import ReciboPDF from '../../components/pdf/ReciboPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
 import SedeLink from '../../components/admin/SedeLink';
@@ -160,15 +160,14 @@ export default function HistorialRecibos() {
                       >
                         <Eye size={ACCION_ICONO_TAMANO} />
                       </Link>
-                      <PDFDownloadLink
+                      <DescargarPDF
                         document={<ReciboPDF recibo={recibo} />}
                         fileName={`Recibo_${recibo.numero}.pdf`}
+                        title="Descargar PDF"
                         className={accionIconoClase('primary')}
                       >
-                        {({ blob, url, loading, error }) =>
-                          <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
-                        }
-                      </PDFDownloadLink>
+                        <Download size={ACCION_ICONO_TAMANO} />
+                      </DescargarPDF>
                       {puede('recibo', 'gestionar', recibo) && (
                         <Link
                           href={`/admin/recibos/editar/${recibo.id}`}
@@ -266,15 +265,14 @@ export default function HistorialRecibos() {
                           >
                             <Eye size={ACCION_ICONO_TAMANO} />
                           </Link>
-                          <PDFDownloadLink
+                          <DescargarPDF
                             document={<ReciboPDF recibo={recibo} />}
                             fileName={`Recibo_${recibo.numero}.pdf`}
+                            title="Descargar PDF"
                             className={accionIconoClase('primary')}
                           >
-                            {({ blob, url, loading, error }) =>
-                              <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
-                            }
-                          </PDFDownloadLink>
+                            <Download size={ACCION_ICONO_TAMANO} />
+                          </DescargarPDF>
                           {puede('recibo', 'gestionar', recibo) && (
                             <Link
                               href={`/admin/recibos/editar/${recibo.id}`}

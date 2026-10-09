@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Eye, Download } from 'lucide-react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import DescargarPDF from '../pdf/DescargarPDF';
 import { accionIconoClase, ACCION_ICONO_TAMANO } from './accionIcono';
 import DescargarOrdenTrabajoPDF from '../pdf/DescargarOrdenTrabajoPDF';
 import DescargarMantenimientoPreventivoPDF from '../pdf/DescargarMantenimientoPreventivoPDF';
@@ -91,14 +91,14 @@ export function AccionesDocumentoAdmin({ doc }) {
           </span>
         )
       ) : (
-        <PDFDownloadLink
+        <DescargarPDF
           document={<PdfComponent {...{ [pdfInfo.propName]: doc.raw }} />}
           fileName={`${doc.numero}.pdf`}
           title="Descargar PDF"
           className={accionIconoClase('primary')}
         >
-          {({ loading }) => <Download size={ACCION_ICONO_TAMANO} className={loading ? 'animate-pulse' : ''} />}
-        </PDFDownloadLink>
+          <Download size={ACCION_ICONO_TAMANO} />
+        </DescargarPDF>
       )}
     </span>
   );

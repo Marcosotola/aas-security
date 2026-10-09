@@ -10,7 +10,7 @@ import { db } from '../../../lib/firebase';
 import { eliminarRemito } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { use } from 'react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import DescargarPDF from '../../../components/pdf/DescargarPDF';
 import RemitoPDF from '../../../components/pdf/RemitoPDF';
 import { formatearFecha } from '../../../lib/fecha';
 
@@ -120,22 +120,18 @@ export default function VerRemito({ params }) {
                   <Trash size={18} className="mr-2" /> Eliminar
                 </button>
               )}
-              <button
+              <DescargarPDF
+                document={<RemitoPDF remito={remito} />}
+                fileName={`${remito.numero}.pdf`}
                 title="Descargar PDF"
                 className="flex px-4 py-2 text-white rounded-md bg-primary hover:bg-primary-dark"
               >
-                <PDFDownloadLink
-                  document={<RemitoPDF remito={remito} />}
-                  fileName={`${remito.numero}.pdf`}
-                  className="flex text-white"
-                >     
-                  {({ blob, url, loading, error }) =>
-                    loading ?
-                      <span><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
-                      <span><Download size={18} className="mr-2" /> Descargar PDF</span>
-                  }
-                </PDFDownloadLink>
-              </button>
+                {({ loading }) =>
+                  loading ?
+                    <span><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
+                    <span><Download size={18} className="mr-2" /> Descargar PDF</span>
+                }
+              </DescargarPDF>
             </div>
           </div>
         </div>

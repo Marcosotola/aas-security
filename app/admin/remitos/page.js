@@ -6,7 +6,7 @@ import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye } from 'lu
 import { eliminarRemito, obtenerRemitos } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { soloPropios } from '../../lib/permisos';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import DescargarPDF from '../../components/pdf/DescargarPDF';
 import RemitoPDF from '../../components/pdf/RemitoPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
 import SedeLink from '../../components/admin/SedeLink';
@@ -147,15 +147,14 @@ export default function HistorialRemitos() {
                       >
                         <Eye size={ACCION_ICONO_TAMANO} />
                       </Link>
-                      <PDFDownloadLink
+                      <DescargarPDF
                         document={<RemitoPDF remito={remito} />}
                         fileName={`${remito.numero}.pdf`}
+                        title="Descargar PDF"
                         className={accionIconoClase('primary')}
                       >
-                        {({ blob, url, loading, error }) =>
-                          <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
-                        }
-                      </PDFDownloadLink>
+                        <Download size={ACCION_ICONO_TAMANO} />
+                      </DescargarPDF>
                       {puede('remito', 'gestionar', remito) && (
                         <Link
                           href={`/admin/remitos/editar/${remito.id}`}
@@ -249,15 +248,14 @@ export default function HistorialRemitos() {
                           >
                             <Eye size={ACCION_ICONO_TAMANO} />
                           </Link>
-                          <PDFDownloadLink
+                          <DescargarPDF
                             document={<RemitoPDF remito={remito} />}
                             fileName={`${remito.numero}.pdf`}
+                            title="Descargar PDF"
                             className={accionIconoClase('primary')}
                           >
-                            {({ blob, url, loading, error }) =>
-                              <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
-                            }
-                          </PDFDownloadLink>
+                            <Download size={ACCION_ICONO_TAMANO} />
+                          </DescargarPDF>
                           {puede('remito', 'gestionar', remito) && (
                             <Link
                               href={`/admin/remitos/editar/${remito.id}`}

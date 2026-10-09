@@ -8,7 +8,7 @@ import { Home, Edit, ArrowLeft, Download, Check, X } from 'lucide-react';
 import { obtenerPresupuestoPorId, actualizarPresupuesto } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { use } from 'react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import DescargarPDF from '../../../components/pdf/DescargarPDF';
 import PresupuestoPDF from '../../../components/pdf/PresupuestoPDF';
 import { formatearFecha } from '../../../lib/fecha';
 
@@ -133,7 +133,7 @@ export default function VerPresupuesto({ params }) {
                   <Edit size={18} className="mr-2" /> Editar
                 </Link>
               )}
-              <PDFDownloadLink
+              <DescargarPDF
                 document={<PresupuestoPDF presupuesto={presupuesto} />}
                 fileName={`${presupuesto.numero}.pdf`}
                 title="Descargar PDF"
@@ -144,7 +144,7 @@ export default function VerPresupuesto({ params }) {
                     <span className="flex items-center"><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
                     <span className="flex items-center"><Download size={18} className="mr-2" /> Descargar PDF</span>
                 }
-              </PDFDownloadLink>
+              </DescargarPDF>
             </div>
           </div>
         </div>

@@ -8,7 +8,7 @@ import { Home, Edit, ArrowLeft, Download, Printer } from 'lucide-react';
 import { obtenerEstadoPorId } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { use } from 'react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import DescargarPDF from '../../../components/pdf/DescargarPDF';
 import EstadoPDF from '../../../components/pdf/EstadoPDF';
 import { formatearFecha } from '../../../lib/fecha';
 
@@ -104,17 +104,17 @@ export default function VerEstado({ params }) {
               </Link>
             )}
 
-            <PDFDownloadLink
+            <DescargarPDF
               document={<EstadoPDF estado={estado} />}
               fileName={`${estado.numero}.pdf`}
               className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
             >     
-              {({ blob, url, loading, error }) =>
+              {({ loading }) =>
                 loading ?
                   <span><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
                   <span><Download size={18} className="mr-2" /> Descargar PDF</span>
               }
-            </PDFDownloadLink>
+            </DescargarPDF>
           </div>
         </div>
       </div>

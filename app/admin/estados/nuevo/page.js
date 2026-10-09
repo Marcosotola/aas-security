@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Home, Save, Download, PlusCircle, Trash2 } from 'lucide-react';
 import { crearEstado, obtenerEmpresas } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import DescargarPDF from '../../../components/pdf/DescargarPDF';
 import EstadoPDF from '../../../components/pdf/EstadoPDF';
 import EmpresaSelector from '../../../components/EmpresaSelector';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
@@ -237,18 +237,18 @@ export default function NuevoEstado() {
                             <Save size={18} className="mr-2" />
                             {guardando ? 'Guardando...' : 'Guardar'}
                         </button>
-                        <PDFDownloadLink
+                        <DescargarPDF
                             document={<EstadoPDF estado={{ ...estado, cliente }} />}
                             fileName={`${estado.numero}.pdf`}
                             className={`bg-secondary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors flex items-center ${!estado.items[0].descripcion ? 'opacity-50 cursor-not-allowed' : ''}`}
                             disabled={!estado.items[0].descripcion}
                         >
-                            {({ blob, url, loading, error }) =>
+                            {({ loading }) =>
                                 loading ?
                                     <span><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
                                     <span><Download size={18} className="mr-2" /> Descargar PDF</span>
                             }
-                        </PDFDownloadLink>
+                        </DescargarPDF>
                     </div>
                 </div>
 

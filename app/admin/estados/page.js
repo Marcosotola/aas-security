@@ -7,7 +7,7 @@ import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye } from 'lu
 import { eliminarEstado, obtenerEstados } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { soloPropios } from '../../lib/permisos';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import DescargarPDF from '../../components/pdf/DescargarPDF';
 import EstadoPDF from '../../components/pdf/EstadoPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
 import SedeLink from '../../components/admin/SedeLink';
@@ -164,15 +164,14 @@ export default function HistorialEstados() {
                       >
                         <Eye size={ACCION_ICONO_TAMANO} />
                       </Link>
-                      <PDFDownloadLink
+                      <DescargarPDF
                         document={<EstadoPDF estado={estado} />}
                         fileName={`${estado.numero}.pdf`}
+                        title="Descargar PDF"
                         className={accionIconoClase('primary')}
                       >
-                        {({ blob, url, loading, error }) =>
-                          <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
-                        }
-                      </PDFDownloadLink>
+                        <Download size={ACCION_ICONO_TAMANO} />
+                      </DescargarPDF>
                       {puede('estado', 'gestionar', estado) && (
                         <Link
                           href={`/admin/estados/editar/${estado.id}`}
@@ -266,15 +265,14 @@ export default function HistorialEstados() {
                           >
                             <Eye size={ACCION_ICONO_TAMANO} />
                           </Link>
-                          <PDFDownloadLink
+                          <DescargarPDF
                             document={<EstadoPDF estado={estado} />}
                             fileName={`${estado.numero}.pdf`}
+                            title="Descargar PDF"
                             className={accionIconoClase('primary')}
                           >
-                            {({ blob, url, loading, error }) =>
-                              <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
-                            }
-                          </PDFDownloadLink>
+                            <Download size={ACCION_ICONO_TAMANO} />
+                          </DescargarPDF>
                           {puede('estado', 'gestionar', estado) && (
                             <Link
                               href={`/admin/estados/editar/${estado.id}`}

@@ -8,7 +8,7 @@ import SedeLink from '../../components/admin/SedeLink';
 import { actualizarPresupuesto, eliminarPresupuesto, obtenerPresupuestos } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { soloPropios } from '../../lib/permisos';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import DescargarPDF from '../../components/pdf/DescargarPDF';
 import PresupuestoPDF from '../../components/pdf/PresupuestoPDF';
 import PortalDropdown from '../../components/PortalDropdown';
 import ViewToggle from '../../components/admin/ViewToggle';
@@ -222,16 +222,14 @@ export default function HistorialPresupuestos() {
                         <Eye size={ACCION_ICONO_TAMANO} />
                       </Link>
 
-                      <PDFDownloadLink
+                      <DescargarPDF
                         document={<PresupuestoPDF presupuesto={presupuesto} />}
                         fileName={`${presupuesto.numero}.pdf`}
                         title="Descargar PDF"
                         className={accionIconoClase('primary')}
                       >
-                        {({ loading }) =>
-                          <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
-                        }
-                      </PDFDownloadLink>
+                        <Download size={ACCION_ICONO_TAMANO} />
+                      </DescargarPDF>
 
                       {puede('presupuesto', 'gestionar', presupuesto) && (
                         <Link
@@ -365,16 +363,14 @@ export default function HistorialPresupuestos() {
                             <Eye size={ACCION_ICONO_TAMANO} />
                           </Link>
 
-                          <PDFDownloadLink
+                          <DescargarPDF
                             document={<PresupuestoPDF presupuesto={presupuesto} />}
                             fileName={`${presupuesto.numero}.pdf`}
                             title="Descargar PDF"
                             className={accionIconoClase('primary')}
                           >
-                            {({ loading }) =>
-                              <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
-                            }
-                          </PDFDownloadLink>
+                            <Download size={ACCION_ICONO_TAMANO} />
+                          </DescargarPDF>
 
                           {puede('presupuesto', 'gestionar', presupuesto) && (
                             <Link

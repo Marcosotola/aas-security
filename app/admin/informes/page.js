@@ -6,7 +6,7 @@ import { FilePlus, FileText, Home, Search, Download, Edit, Trash, Eye } from 'lu
 import { obtenerDocumentos, eliminarDocumento } from '../../lib/firestore';
 import { useStaffAuth } from '../../lib/useStaffAuth';
 import { soloPropios } from '../../lib/permisos';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import DescargarPDF from '../../components/pdf/DescargarPDF';
 import DocumentoPDF from '../../components/pdf/DocumentoPDF';
 import ViewToggle from '../../components/admin/ViewToggle';
 import SedeLink from '../../components/admin/SedeLink';
@@ -148,15 +148,14 @@ export default function HistorialDocumentos() {
                       >
                         <Eye size={ACCION_ICONO_TAMANO} />
                       </Link>
-                      <PDFDownloadLink
+                      <DescargarPDF
                         document={<DocumentoPDF documento={documento} />}
                         fileName={`Informe_${documento.titulo?.replace(/\s+/g, '_') || 'Sin_titulo'}.pdf`}
+                        title="Descargar PDF"
                         className={accionIconoClase('primary')}
                       >
-                        {({ blob, url, loading, error }) =>
-                          <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
-                        }
-                      </PDFDownloadLink>
+                        <Download size={ACCION_ICONO_TAMANO} />
+                      </DescargarPDF>
                       {puede('informe', 'gestionar', documento) && (
                         <Link
                           href={`/admin/informes/editar/${documento.id}`}
@@ -247,15 +246,14 @@ export default function HistorialDocumentos() {
                           >
                             <Eye size={ACCION_ICONO_TAMANO} />
                           </Link>
-                          <PDFDownloadLink
+                          <DescargarPDF
                             document={<DocumentoPDF documento={documento} />}
                             fileName={`Informe_${documento.titulo?.replace(/\s+/g, '_') || 'Sin_titulo'}.pdf`}
+                            title="Descargar PDF"
                             className={accionIconoClase('primary')}
                           >
-                            {({ blob, url, loading, error }) =>
-                              <Download size={ACCION_ICONO_TAMANO} className={loading ? "animate-pulse" : ""} />
-                            }
-                          </PDFDownloadLink>
+                            <Download size={ACCION_ICONO_TAMANO} />
+                          </DescargarPDF>
                           {puede('informe', 'gestionar', documento) && (
                             <Link
                               href={`/admin/informes/editar/${documento.id}`}
