@@ -8,6 +8,7 @@ import { useStaffAuth } from '../../lib/useStaffAuth';
 import { soloPropios } from '../../lib/permisos';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import DocumentoPDF from '../../components/pdf/DocumentoPDF';
+import { compartirPdfEnPwaIOS } from '../../lib/compartirPdf';
 import ViewToggle from '../../components/admin/ViewToggle';
 import SedeLink from '../../components/admin/SedeLink';
 import { accionIconoClase, ACCION_ICONO_TAMANO } from '../../components/admin/accionIcono';
@@ -151,6 +152,7 @@ export default function HistorialDocumentos() {
                       <PDFDownloadLink
                         document={<DocumentoPDF documento={documento} />}
                         fileName={`Informe_${documento.titulo?.replace(/\s+/g, '_') || 'Sin_titulo'}.pdf`}
+                        onClick={(event, instance) => compartirPdfEnPwaIOS(event, instance.blob, `Informe_${documento.titulo?.replace(/\s+/g, '_') || 'Sin_titulo'}.pdf`)}
                         className={accionIconoClase('primary')}
                       >
                         {({ blob, url, loading, error }) =>
@@ -250,6 +252,7 @@ export default function HistorialDocumentos() {
                           <PDFDownloadLink
                             document={<DocumentoPDF documento={documento} />}
                             fileName={`Informe_${documento.titulo?.replace(/\s+/g, '_') || 'Sin_titulo'}.pdf`}
+                            onClick={(event, instance) => compartirPdfEnPwaIOS(event, instance.blob, `Informe_${documento.titulo?.replace(/\s+/g, '_') || 'Sin_titulo'}.pdf`)}
                             className={accionIconoClase('primary')}
                           >
                             {({ blob, url, loading, error }) =>

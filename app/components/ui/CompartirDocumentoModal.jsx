@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { pdf, PDFDownloadLink } from '@react-pdf/renderer';
 import { CheckCircle2, Share2, Download, List } from 'lucide-react';
 import { construirLinkWhatsApp } from '../../lib/whatsapp';
+import { compartirPdfEnPwaIOS } from '../../lib/compartirPdf';
 
 // Se muestra apenas se guarda un documento (presupuesto, recibo, remito,
 // estado de cuenta, hoja membretada). Antes había que ir a la lista, entrar
@@ -93,6 +94,7 @@ export default function CompartirDocumentoModal({
           <PDFDownloadLink
             document={pdfElement}
             fileName={fileName}
+            onClick={(event, instance) => compartirPdfEnPwaIOS(event, instance.blob, fileName)}
             className="flex items-center justify-center w-full gap-2 px-4 py-3 text-sm font-medium transition-colors border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
           >
             {({ loading }) =>

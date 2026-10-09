@@ -10,6 +10,7 @@ import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { use } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import DocumentoPDF from '../../../components/pdf/DocumentoPDF';
+import { compartirPdfEnPwaIOS } from '../../../lib/compartirPdf';
 import { formatearFecha } from '../../../lib/fecha';
 import { esHtmlEnriquecido } from '../../../lib/richText';
 
@@ -97,6 +98,7 @@ export default function VerDocumento({ params }) {
             <PDFDownloadLink
               document={<DocumentoPDF documento={documento} />}
               fileName={`${documento.titulo?.replace(/\s+/g, '_') || 'Informe'}.pdf`}
+              onClick={(event, instance) => compartirPdfEnPwaIOS(event, instance.blob, `${documento.titulo?.replace(/\s+/g, '_') || 'Informe'}.pdf`)}
               className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
             >
               {({ blob, url, loading, error }) =>

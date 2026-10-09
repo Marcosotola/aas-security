@@ -8,6 +8,7 @@ import { crearDocumento, obtenerEmpresas } from '../../../lib/firestore';
 import { useStaffAuth } from '../../../lib/useStaffAuth';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import DocumentoPDF from '../../../components/pdf/DocumentoPDF';
+import { compartirPdfEnPwaIOS } from '../../../lib/compartirPdf';
 import EmpresaSelector from '../../../components/EmpresaSelector';
 import CompartirDocumentoModal from '../../../components/ui/CompartirDocumentoModal';
 import RichTextEditor from '../../../components/ui/RichTextEditor';
@@ -131,6 +132,7 @@ export default function NuevoDocumento() {
               <PDFDownloadLink
                 document={<DocumentoPDF documento={{ ...documento, cliente }} />}
                 fileName={`${documento.titulo.replace(/\s+/g, '_')}.pdf`}
+                onClick={(event, instance) => compartirPdfEnPwaIOS(event, instance.blob, `${documento.titulo.replace(/\s+/g, '_')}.pdf`)}
                 className={`bg-secondary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors flex items-center`}
               >
                 {({ blob, url, loading, error }) =>
