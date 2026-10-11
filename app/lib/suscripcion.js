@@ -22,8 +22,8 @@ export const fechaEnArgentina = (fecha) =>
 
 export const fechaHoy = () => fechaEnArgentina(new Date());
 
-// Con débito automático, vencimientoExacto es la fecha y hora del cobro
-// mensual de MercadoPago: si a esa hora no entró el pago, vence en el acto.
+// Con débito automático, vencimientoExacto es el límite del día del cobro
+// mensual de MercadoPago (ver limiteDelDiaDeCobro): pasado eso sin pago, vence.
 // Sin hora (fecha cargada a mano por el SuperAdmin), el día del vencimiento
 // ya cuenta como vencida (por eso <=, no <).
 export const estaVencida = (config) => {
@@ -70,11 +70,21 @@ const sumarUnMes = (fecha) => {
   return resultado;
 };
 
-// Vencimiento que corresponde a un pago aprobado: la fecha y hora del
-// próximo cobro real de MercadoPago (next_payment_date), no un mes sumado al
-// vencimiento anterior, así una notificación repetida o una corrección
-// manual no corren el ciclo. Si MercadoPago todavía no avanzó el próximo
-// cobro (queda a menos de 7 días), se le suma un mes a ese mismo cobro.
+// MercadoPago no siempre cobra a la hora programada (a veces se atrasa un
+// rato): el bloqueo se corre hasta las 21:00 (hora argentina) del día del
+// cobro, para no cortarle el sitio al cliente por una demora de MercadoPago.
+// Si el cobro es más tarde que eso, vale su hora.
+export const limiteDelDiaDeCobro = (fechaCobro) => {
+  const limite = new Date(`${fechaEnArgentina(fechaCobro)}T21:00:00-03:00`);
+  return limite > fechaCobro ? limite : new Date(fechaCobro);
+};
+
+// Vencimiento que corresponde a un pago aprobado: el día del próximo cobro
+// real de MercadoPago (next_payment_date), no un mes sumado al vencimiento
+// anterior, así una notificación repetida o una corrección manual no corren
+// el ciclo. vencimientoExacto es el límite de ese día (21:00). Si
+// MercadoPago todavía no avanzó el próximo cobro (queda a menos de 7 días),
+// se le suma un mes a ese mismo cobro.
 export const vencimientoTrasPago = (nextPaymentDate) => {
   const ahora = new Date();
   let proximoCobro = nextPaymentDate ? new Date(nextPaymentDate) : null;
@@ -84,6 +94,6 @@ export const vencimientoTrasPago = (nextPaymentDate) => {
   }
   return {
     fechaVencimiento: fechaEnArgentina(proximoCobro),
-    vencimientoExacto: proximoCobro.toISOString()
+    vencimientoExacto: limiteDelDiaDeCobro(proximoCobro).toISOString()
   };
 };
