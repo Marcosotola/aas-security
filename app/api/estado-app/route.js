@@ -8,6 +8,8 @@
 import { NextResponse } from 'next/server';
 import { adminDb, hasAdminConfig } from '../../lib/firebaseAdmin';
 import { estaBloqueada } from '../../lib/suscripcion';
+import { hasMercadoPagoConfig } from '../../lib/mercadopago';
+import { verificarCobroAntesDeBloquear } from '../../lib/cobroSuscripcion';
 import { SUPERADMIN_COOKIE_NAME, verificarCookieSuperAdmin } from '../../lib/superAdminSesion';
 
 const CACHE_MS = 30_000;
@@ -29,8 +31,20 @@ export async function GET(request) {
   }
 
   try {
-    const snap = await adminDb.doc('config/suscripcion').get();
-    const data = snap.exists ? snap.data() : {};
+    const configRef = adminDb.doc('config/suscripcion');
+    let data = (await configRef.get()).data() || {};
+
+    // Antes de bloquear por vencimiento se confirma con MercadoPago: si el
+    // cobro entró y su notificación todavía no llegó, se registra acá.
+    if (estaBloqueada(data) && hasMercadoPagoConfig) {
+      try {
+        if (await verificarCobroAntesDeBloquear(data)) {
+          data = (await configRef.get()).data() || {};
+        }
+      } catch (error) {
+        console.error('No se pudo verificar el cobro con MercadoPago:', error);
+      }
+    }
 
     cache = { habilitada: !estaBloqueada(data) };
     cacheEn = ahora;

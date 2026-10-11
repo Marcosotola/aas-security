@@ -92,9 +92,13 @@ export default function Suscripcion() {
         }
       }
 
+      const fechaVencimiento = form.fechaVencimiento || null;
       await actualizarConfigSuscripcion({
         monto,
-        fechaVencimiento: form.fechaVencimiento || null
+        fechaVencimiento,
+        // La hora exacta es la del cobro de MercadoPago: si la fecha se
+        // corrige a mano deja de valer y se vence por fecha.
+        vencimientoExacto: fechaVencimiento === config?.fechaVencimiento ? (config?.vencimientoExacto ?? null) : null
       });
       const actualizado = await obtenerConfigSuscripcion();
       setConfig(actualizado);
@@ -165,6 +169,9 @@ export default function Suscripcion() {
               </p>
               <p className="text-sm text-gray-600">
                 Monto: {formatMoney(config?.monto)} · Vencimiento: {config?.fechaVencimiento ? formatearFecha(config.fechaVencimiento) : 'sin definir'}
+                {config?.vencimientoExacto && ` a las ${new Date(config.vencimientoExacto).toLocaleTimeString('es-AR', {
+                  timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit'
+                })} hs`}
               </p>
               {vencida && !esSuperAdmin && (
                 <p className="mt-2 text-sm text-danger">

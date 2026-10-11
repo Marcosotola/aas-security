@@ -55,6 +55,19 @@ export const actualizarMontoPreapproval = async (id, monto) => {
   return preapproval.update({ id, body: { auto_recurring: { transaction_amount: monto, currency_id: 'ARS' } } });
 };
 
+// Cobros mensuales (authorized_payments) de una suscripción. El SDK no trae
+// este recurso, por eso va por REST. MercadoPago no acepta páginas de más de
+// 12, y la primera página trae los más recientes.
+export const buscarCobrosPreapproval = async (preapprovalId) => {
+  const res = await fetch(
+    `https://api.mercadopago.com/authorized_payments/search?preapproval_id=${preapprovalId}&limit=12`,
+    { headers: { Authorization: `Bearer ${process.env.MERCADOPAGO_ACCESS_TOKEN}` }, cache: 'no-store' }
+  );
+  if (!res.ok) throw new Error(`MercadoPago respondió ${res.status} al buscar los cobros`);
+  const { results = [] } = await res.json();
+  return results;
+};
+
 export const obtenerPago = async (id) => {
   const payment = new Payment(client);
   return payment.get({ id });

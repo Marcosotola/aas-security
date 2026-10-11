@@ -22,10 +22,14 @@ export const fechaEnArgentina = (fecha) =>
 
 export const fechaHoy = () => fechaEnArgentina(new Date());
 
-// El día del vencimiento ya cuenta como vencida (por eso <=, no <): la
-// suscripción cubre "hasta" esa fecha, no "hasta el día siguiente".
-export const estaVencida = (config) =>
-  Boolean(config?.fechaVencimiento && config.fechaVencimiento <= fechaHoy());
+// Con débito automático, vencimientoExacto es la fecha y hora del cobro
+// mensual de MercadoPago: si a esa hora no entró el pago, vence en el acto.
+// Sin hora (fecha cargada a mano por el SuperAdmin), el día del vencimiento
+// ya cuenta como vencida (por eso <=, no <).
+export const estaVencida = (config) => {
+  if (config?.vencimientoExacto) return new Date() >= new Date(config.vencimientoExacto);
+  return Boolean(config?.fechaVencimiento && config.fechaVencimiento <= fechaHoy());
+};
 
 export const estaBloqueada = (config) =>
   estaVencida(config) || config?.appHabilitada === false;
@@ -54,18 +58,32 @@ export const sumarDias = (fechaStr, n) => {
   return new Date(Date.UTC(year, month - 1, day + n)).toISOString().slice(0, 10);
 };
 
-// Vencimiento que corresponde a un pago aprobado. Sigue el ciclo real de
-// MercadoPago (next_payment_date de la suscripción) en vez de sumar un mes
-// al vencimiento anterior: así un pago demorado, una notificación repetida
-// o una corrección manual no corren el ciclo. Vence el día siguiente al
-// próximo cobro, para que el sitio no se bloquee la mañana del débito antes
-// de que MercadoPago lo procese. Si MercadoPago todavía no avanzó el
-// próximo cobro (queda a menos de 7 días), se usa hoy + 1 mes.
+// Suma un mes a un instante conservando la hora (mismo recorte de fin de mes
+// que sumarMeses).
+const sumarUnMes = (fecha) => {
+  const [year, month, day] = fecha.toISOString().slice(0, 10).split('-').map(Number);
+  const [nuevoYear, nuevoMonth, nuevoDay] = sumarMeses(
+    `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`, 1
+  ).split('-').map(Number);
+  const resultado = new Date(fecha);
+  resultado.setUTCFullYear(nuevoYear, nuevoMonth - 1, nuevoDay);
+  return resultado;
+};
+
+// Vencimiento que corresponde a un pago aprobado: la fecha y hora del
+// próximo cobro real de MercadoPago (next_payment_date), no un mes sumado al
+// vencimiento anterior, así una notificación repetida o una corrección
+// manual no corren el ciclo. Si MercadoPago todavía no avanzó el próximo
+// cobro (queda a menos de 7 días), se le suma un mes a ese mismo cobro.
 export const vencimientoTrasPago = (nextPaymentDate) => {
-  const hoy = fechaHoy();
-  if (nextPaymentDate) {
-    const proximoCobro = fechaEnArgentina(nextPaymentDate);
-    if (proximoCobro > sumarDias(hoy, 7)) return sumarDias(proximoCobro, 1);
+  const ahora = new Date();
+  let proximoCobro = nextPaymentDate ? new Date(nextPaymentDate) : null;
+  const enUnaSemana = new Date(ahora.getTime() + 7 * 24 * 60 * 60 * 1000);
+  if (!proximoCobro || proximoCobro <= enUnaSemana) {
+    proximoCobro = sumarUnMes(proximoCobro || ahora);
   }
-  return sumarMeses(hoy, 1);
+  return {
+    fechaVencimiento: fechaEnArgentina(proximoCobro),
+    vencimientoExacto: proximoCobro.toISOString()
+  };
 };

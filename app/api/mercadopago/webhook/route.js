@@ -4,55 +4,12 @@
 // la notificación a ciegas: siempre volvemos a pedirle el recurso a la API
 // de MercadoPago con nuestro Access Token antes de actualizar algo, así una
 // notificación falsa no puede inventar un pago que no exista de verdad.
-//
-// La cuenta de MercadoPago es la misma que cobra otros sistemas y pagos
-// sueltos, así que solo se tienen en cuenta los pagos y suscripciones que
-// son nuestros: la suscripción vigente (mercadoPago.preapprovalId) o una
-// nueva creada desde el último plan que generamos (mercadoPago.planId).
+// Qué pagos y suscripciones son nuestros: ver app/lib/cobroSuscripcion.js.
 import { NextResponse } from 'next/server';
 import { WebhookSignatureValidator } from 'mercadopago';
 import { adminDb, hasAdminConfig } from '../../../lib/firebaseAdmin';
-import { obtenerPago, obtenerPreapproval, hasMercadoPagoConfig } from '../../../lib/mercadopago';
-import { vencimientoTrasPago } from '../../../lib/suscripcion';
-
-const esDeLaSuscripcion = (preapproval, mercadoPago) =>
-  preapproval.id === mercadoPago?.preapprovalId ||
-  Boolean(mercadoPago?.planId && preapproval.preapproval_plan_id === mercadoPago.planId);
-
-const procesarPago = async (id) => {
-  const pago = await obtenerPago(id);
-  // card_validation es el cobro mínimo (y después devuelto) con el que
-  // MercadoPago valida una tarjeta al cargarla o cambiarla: no es una
-  // mensualidad y no debe extender el vencimiento.
-  if (pago.status !== 'approved' || pago.operation_type === 'card_validation') return;
-
-  // Los pagos de una suscripción traen su id acá (también el primero, que
-  // MercadoPago marca como regular_payment y no como recurring_payment).
-  const subscriptionId =
-    pago.point_of_interaction?.transaction_data?.subscription_id || pago.metadata?.preapproval_id;
-  if (!subscriptionId) return;
-
-  const configRef = adminDb.doc('config/suscripcion');
-  const config = (await configRef.get()).data() || {};
-  // MercadoPago reintenta la notificación si no respondemos a tiempo.
-  if (String(config.ultimoPago?.id) === String(pago.id)) return;
-
-  const preapproval = await obtenerPreapproval(subscriptionId);
-  if (!esDeLaSuscripcion(preapproval, config.mercadoPago)) return;
-
-  await configRef.set({
-    fechaVencimiento: vencimientoTrasPago(preapproval.next_payment_date),
-    appHabilitada: true,
-    ultimoPago: {
-      id: pago.id,
-      monto: pago.transaction_amount,
-      fecha: new Date().toISOString()
-    },
-    // Si el pago llegó antes que la notificación de la suscripción nueva,
-    // la vinculamos acá.
-    mercadoPago: { preapprovalId: preapproval.id, estado: preapproval.status }
-  }, { merge: true });
-};
+import { obtenerPreapproval, hasMercadoPagoConfig } from '../../../lib/mercadopago';
+import { esDeLaSuscripcion, procesarPago } from '../../../lib/cobroSuscripcion';
 
 const procesarPreapproval = async (id) => {
   const preapproval = await obtenerPreapproval(id);
