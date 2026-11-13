@@ -108,7 +108,10 @@ export default function AdminHeader({ user, perfil, suscripcionVencida }) {
   useEffect(() => {
     if (!user || !suscripcionVencida) return;
     if (esSuperAdmin(user.email)) return;
-    if (pathname === '/admin/suscripcion') return;
+    if (pathname === '/admin/suscripcion') {
+      setMostrarModalPago(false);
+      return;
+    }
 
     setErrorPago('');
     setMostrarModalPago(true);
