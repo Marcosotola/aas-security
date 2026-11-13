@@ -1,7 +1,7 @@
 // app/lib/mercadopago.js
 // Uso exclusivo en server (API routes): usa el Access Token privado de
 // MercadoPago. Nunca importar desde un componente 'use client'.
-import { MercadoPagoConfig, PreApproval, PreApprovalPlan, Payment } from 'mercadopago';
+import { MercadoPagoConfig, PreApproval, PreApprovalPlan, Payment, Preference } from 'mercadopago';
 
 export const hasMercadoPagoConfig = Boolean(process.env.MERCADOPAGO_ACCESS_TOKEN);
 
@@ -34,14 +34,44 @@ export const crearPlan = async ({ monto, backUrl, reason }) => {
   });
 };
 
+// Prefijo del external_reference de los pagos únicos del mes (ver
+// crearPagoUnico). La cuenta de MercadoPago cobra también otros sistemas, así
+// que es lo que nos dice que un pago suelto es de esta suscripción.
+export const REF_PAGO_UNICO = 'aas-security:suscripcion-mes';
+
+// Pago único (Checkout Pro) de un mes de suscripción. Es la salida cuando el
+// débito automático falló pero la suscripción sigue autorizada en
+// MercadoPago: ahí no se puede crear otra (cobraría dos veces) y el Admin
+// quedaba sin forma de pagar. Checkout Pro acepta cualquier tarjeta y dinero
+// en cuenta, que el débito automático a veces rechaza.
+export const crearPagoUnico = async ({ monto, backUrl, notificationUrl }) => {
+  const preference = new Preference(client);
+  return preference.create({
+    body: {
+      items: [{
+        id: 'suscripcion-mes',
+        title: 'Suscripción mensual - Panel AAS Security',
+        quantity: 1,
+        unit_price: monto,
+        currency_id: 'ARS'
+      }],
+      external_reference: `${REF_PAGO_UNICO}:${Date.now()}`,
+      back_urls: { success: backUrl, pending: backUrl, failure: backUrl },
+      auto_return: 'approved',
+      notification_url: notificationUrl
+    }
+  });
+};
+
 export const obtenerPreapproval = async (id) => {
   const preapproval = new PreApproval(client);
   return preapproval.get({ id });
 };
 
-// Cancela una preapproval existente en MercadoPago. Solo se usa con las que
-// quedaron 'pending' (links del modelo anterior que nadie llegó a
-// autorizar): una 'authorized' nunca se cancela desde el panel.
+// Cancela una preapproval existente en MercadoPago. Se usa con las que
+// quedaron 'pending' (links que nadie llegó a autorizar) y con la
+// 'authorized' cuyo débito falló, recién después de que el Admin pagó el mes
+// con un pago único (ver procesarPagoUnico en app/lib/cobroSuscripcion.js).
 export const cancelarPreapproval = async (id) => {
   const preapproval = new PreApproval(client);
   return preapproval.update({ id, body: { status: 'cancelled' } });
