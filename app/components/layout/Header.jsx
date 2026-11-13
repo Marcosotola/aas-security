@@ -6,6 +6,9 @@ import Link from 'next/link';
 import { Menu, X, Home, Briefcase, Users, MessageSquare, ChevronDown, User } from 'lucide-react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
+import { obtenerUsuarioPorId } from '../../lib/firestore';
+import { esInterno } from '../../lib/permisos';
+import { esSuperAdmin } from '../../lib/superAdmin';
 
 
 const Header = () => {
@@ -13,11 +16,32 @@ const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [destinoCuenta, setDestinoCuenta] = useState('/cuenta');
   const dropdownRef = useRef(null);
 
-  // Sesión del cliente (portal /cuenta), independiente del login del panel admin
+  // Sesión iniciada: "Mi Cuenta" lleva al portal (/cuenta) a un Cliente y al
+  // panel (/admin/dashboard) al personal y al SuperAdmin. Con la suscripción
+  // vencida, middleware.js bloquea /cuenta pero no /admin: si el staff fuera
+  // a /cuenta quedaría atrapado en la pantalla de mantenimiento sin poder
+  // llegar al panel (el Admin a pagar, el SuperAdmin a gestionar).
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => setCurrentUser(user));
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setCurrentUser(user);
+      if (!user) {
+        setDestinoCuenta('/cuenta');
+        return;
+      }
+      if (esSuperAdmin(user.email)) {
+        setDestinoCuenta('/admin/dashboard');
+        return;
+      }
+      try {
+        const perfil = await obtenerUsuarioPorId(user.uid);
+        setDestinoCuenta(esInterno(perfil) ? '/admin/dashboard' : '/cuenta');
+      } catch {
+        setDestinoCuenta('/cuenta');
+      }
+    });
     return () => unsubscribe();
   }, []);
 
@@ -137,7 +161,7 @@ const Header = () => {
             </Link>
 
             <Link
-              href={currentUser ? '/cuenta' : '/login'}
+              href={currentUser ? destinoCuenta : '/login'}
               className={`group relative px-3 py-2 rounded-md transition-all duration-200 ${scrolled ? 'text-gray-700 hover:text-primary' : 'text-white hover:text-white'}`}
               title={currentUser ? 'Mi Cuenta' : 'Ingresar / Registrarme'}
             >
@@ -247,7 +271,7 @@ const Header = () => {
             </Link>
 
             <Link
-              href={currentUser ? '/cuenta' : '/login'}
+              href={currentUser ? destinoCuenta : '/login'}
               className="flex items-center px-4 py-3 text-gray-700 transition-colors rounded-md hover:bg-primary hover:text-white"
               onClick={() => setIsMenuOpen(false)}
             >
