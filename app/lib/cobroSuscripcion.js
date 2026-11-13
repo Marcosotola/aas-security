@@ -9,8 +9,14 @@
 // son nuestros: la suscripción vigente (mercadoPago.preapprovalId) o una
 // nueva creada desde el último plan que generamos (mercadoPago.planId).
 import { adminDb } from './firebaseAdmin';
-import { buscarCobrosPreapproval, obtenerPago, obtenerPreapproval } from './mercadopago';
-import { estaVencida, vencimientoTrasPago } from './suscripcion';
+import {
+  REF_PAGO_UNICO,
+  buscarCobrosPreapproval,
+  cancelarPreapproval,
+  obtenerPago,
+  obtenerPreapproval
+} from './mercadopago';
+import { estaVencida, fechaEnArgentina, limiteDelDiaDeCobro, sumarUnMes, vencimientoTrasPago } from './suscripcion';
 
 // Cada cuánto, como mucho, se le vuelve a preguntar a MercadoPago antes de bloquear.
 const VERIFICACION_THROTTLE_MS = 5 * 60 * 1000;
@@ -28,6 +34,11 @@ export const procesarPago = async (id) => {
   // MercadoPago valida una tarjeta al cargarla o cambiarla: no es una
   // mensualidad y no debe extender el vencimiento.
   if (pago.status !== 'approved' || pago.operation_type === 'card_validation') return;
+
+  if (String(pago.external_reference || '').startsWith(`${REF_PAGO_UNICO}:`)) {
+    await procesarPagoUnico(pago);
+    return;
+  }
 
   // Los pagos de una suscripción traen su id acá (también el primero, que
   // MercadoPago marca como regular_payment y no como recurring_payment).
@@ -55,6 +66,55 @@ export const procesarPago = async (id) => {
     // la vinculamos acá.
     mercadoPago: { preapprovalId: preapproval.id, estado: preapproval.status }
   }, { merge: true });
+};
+
+// Pago único del mes (ver crearPagoUnico en app/lib/mercadopago.js): corre el
+// vencimiento un mes desde el que estaba impago, así el ciclo no se desplaza
+// por pagar unos días tarde (si pasó más de un mes, un mes desde hoy). Lo
+// llaman tanto el webhook como la vuelta de MercadoPago al panel, por eso va
+// en una transacción: el mismo pago nunca suma dos meses.
+const procesarPagoUnico = async (pago) => {
+  const configRef = adminDb.doc('config/suscripcion');
+  const registrado = await adminDb.runTransaction(async (tx) => {
+    const config = (await tx.get(configRef)).data() || {};
+    if (String(config.ultimoPago?.id) === String(pago.id)) return null;
+
+    const vencimientoAnterior = config.vencimientoExacto
+      ? new Date(config.vencimientoExacto)
+      : config.fechaVencimiento ? new Date(`${config.fechaVencimiento}T21:00:00-03:00`) : new Date();
+    let proximo = sumarUnMes(vencimientoAnterior);
+    if (proximo <= new Date()) proximo = sumarUnMes(new Date());
+    const limite = limiteDelDiaDeCobro(proximo);
+
+    tx.set(configRef, {
+      fechaVencimiento: fechaEnArgentina(limite),
+      vencimientoExacto: limite.toISOString(),
+      appHabilitada: true,
+      ultimoPago: {
+        id: pago.id,
+        monto: pago.transaction_amount,
+        fecha: new Date().toISOString(),
+        tipo: 'unico'
+      }
+    }, { merge: true });
+    return config;
+  });
+  if (!registrado) return;
+
+  // El débito automático que falló se cancela: si MercadoPago reintentara el
+  // cobro, el mes quedaría pagado dos veces. El mes que viene el Admin
+  // autoriza un débito nuevo desde el panel.
+  const preapprovalId = registrado.mercadoPago?.preapprovalId;
+  if (!preapprovalId) return;
+  try {
+    const preapproval = await obtenerPreapproval(preapprovalId);
+    if (['authorized', 'paused'].includes(preapproval.status)) {
+      await cancelarPreapproval(preapprovalId);
+    }
+    await configRef.set({ mercadoPago: { estado: 'cancelled' } }, { merge: true });
+  } catch (error) {
+    console.error('No se pudo cancelar el débito automático tras el pago único:', error);
+  }
 };
 
 // Se llama solo cuando el sitio estaría bloqueado por vencimiento. Devuelve

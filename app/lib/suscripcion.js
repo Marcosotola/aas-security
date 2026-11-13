@@ -60,7 +60,7 @@ export const sumarDias = (fechaStr, n) => {
 
 // Suma un mes a un instante conservando la hora (mismo recorte de fin de mes
 // que sumarMeses).
-const sumarUnMes = (fecha) => {
+export const sumarUnMes = (fecha) => {
   const [year, month, day] = fecha.toISOString().slice(0, 10).split('-').map(Number);
   const [nuevoYear, nuevoMonth, nuevoDay] = sumarMeses(
     `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`, 1

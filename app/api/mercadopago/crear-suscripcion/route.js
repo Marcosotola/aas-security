@@ -8,10 +8,12 @@ import { NextResponse } from 'next/server';
 import { adminAuth, adminDb, hasAdminConfig } from '../../../lib/firebaseAdmin';
 import {
   cancelarPreapproval,
+  crearPagoUnico,
   crearPlan,
   hasMercadoPagoConfig,
   obtenerPreapproval
 } from '../../../lib/mercadopago';
+import { estaVencida } from '../../../lib/suscripcion';
 
 export async function POST(request) {
   if (!hasAdminConfig || !hasMercadoPagoConfig) {
@@ -53,6 +55,16 @@ export async function POST(request) {
     const config = configSnap.exists ? configSnap.data() : {};
     const mercadoPago = config.mercadoPago || {};
 
+    const monto = config.monto;
+    if (!monto || monto <= 0) {
+      return NextResponse.json(
+        { error: 'Todavía no se configuró un monto de suscripción.' },
+        { status: 400 }
+      );
+    }
+
+    const backUrl = new URL('/admin/suscripcion', request.url).toString();
+
     // Consultamos el estado real de la suscripción guardada en vez de
     // confiar en Firestore: MercadoPago puede cancelarla sola (p. ej. tras
     // varios cobros fallidos) sin que el webhook llegue a avisarnos.
@@ -64,14 +76,23 @@ export async function POST(request) {
         console.error('Error al consultar la suscripción vigente de MercadoPago:', error);
       }
 
-      // Sigue activa: crear otra haría que MercadoPago cobre dos veces. Si
-      // el sitio está bloqueado es porque falló el cobro (o el SuperAdmin lo
-      // deshabilitó), y eso se resuelve en MercadoPago, no con otro link.
+      // Sigue activa pero el sitio está vencido: falló el débito del mes.
+      // Crear otra suscripción haría que MercadoPago cobre dos veces, así que
+      // se paga el mes con un pago único. Al acreditarse, la suscripción que
+      // falló se cancela para que un reintento de MercadoPago no lo cobre de
+      // nuevo (ver procesarPagoUnico en app/lib/cobroSuscripcion.js); el mes
+      // que viene se autoriza un débito nuevo desde este mismo botón.
       if (preapproval && ['authorized', 'paused'].includes(preapproval.status)) {
-        return NextResponse.json({
-          error: 'Ya tenés una suscripción activa en MercadoPago. Si el cobro falló, actualizá el medio de pago desde tu cuenta de MercadoPago (Suscripciones) y el sitio se habilita solo cuando se acredite el pago.',
-          suscripcionActiva: true
-        }, { status: 409 });
+        // Al día pero deshabilitada a mano por el SuperAdmin: no hay nada que pagar.
+        if (!estaVencida(config)) {
+          return NextResponse.json({
+            error: 'La suscripción está al día. El sitio lo deshabilitó el proveedor de la app: consultalo con él.',
+            suscripcionActiva: true
+          }, { status: 409 });
+        }
+        const notificationUrl = new URL('/api/mercadopago/webhook?source_news=webhooks', request.url).toString();
+        const preferencia = await crearPagoUnico({ monto, backUrl, notificationUrl });
+        return NextResponse.json({ initPoint: preferencia.init_point, pagoUnico: true });
       }
 
       // Link del modelo anterior que nadie llegó a autorizar: lo cancelamos
@@ -85,20 +106,11 @@ export async function POST(request) {
       }
     }
 
-    const monto = config.monto;
-    if (!monto || monto <= 0) {
-      return NextResponse.json(
-        { error: 'Todavía no se configuró un monto de suscripción.' },
-        { status: 400 }
-      );
-    }
-
     // El plan se reusa mientras no cambie el monto: cada uno tiene el suyo.
     if (mercadoPago.planId && mercadoPago.planMonto === monto && mercadoPago.initPoint) {
       return NextResponse.json({ initPoint: mercadoPago.initPoint });
     }
 
-    const backUrl = new URL('/admin/suscripcion', request.url).toString();
     // El plan anterior no se cancela: un plan sin suscriptores no cobra nada,
     // y si alguien ya se suscribió desde ese link no queremos afectarlo.
     const plan = await crearPlan({ monto, backUrl });

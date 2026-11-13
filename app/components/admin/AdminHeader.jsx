@@ -186,8 +186,8 @@ export default function AdminHeader({ user, perfil, suscripcionVencida }) {
             <h2 className="text-lg font-semibold">Suscripción vencida</h2>
           </div>
           <p className="text-sm text-gray-600">
-            El sitio público está bloqueado. Te llevamos a MercadoPago para autorizar el débito mensual con la
-            cuenta y la tarjeta que quieras.
+            El sitio público está bloqueado. Te llevamos a MercadoPago para pagar con la cuenta y la tarjeta que
+            quieras (si el débito automático falló, pagás este mes ahí mismo).
           </p>
           {errorPago && <p className="mt-2 text-sm text-danger">{errorPago}</p>}
 

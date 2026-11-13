@@ -45,6 +45,38 @@ export default function Suscripcion() {
       .finally(() => setLoadingData(false));
   }, [usuario]);
 
+  // Vuelta de un pago único de MercadoPago: se confirma en el momento para no
+  // esperar al webhook. MercadoPago agrega payment_id y status a la URL.
+  const [confirmandoPago, setConfirmandoPago] = useState(false);
+  useEffect(() => {
+    if (!user) return;
+    const params = new URLSearchParams(window.location.search);
+    const paymentId = params.get('payment_id');
+    const status = params.get('collection_status') || params.get('status');
+    if (!paymentId || paymentId === 'null') return;
+    window.history.replaceState(null, '', window.location.pathname);
+    if (status !== 'approved') {
+      setErrorPago(status === 'pending' || status === 'in_process'
+        ? 'MercadoPago está procesando el pago. El sitio se habilita solo cuando se acredite.'
+        : 'MercadoPago no aprobó el pago. Probá de nuevo con otro medio de pago.');
+      return;
+    }
+
+    setConfirmandoPago(true);
+    user.getIdToken()
+      .then((token) => fetch('/api/mercadopago/confirmar-pago', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentId })
+      }))
+      // Recarga completa: el aviso de vencida del panel sale de /api/estado-app.
+      .then(() => window.location.reload())
+      .catch((error) => {
+        console.error('Error al confirmar el pago:', error);
+        setConfirmandoPago(false);
+      });
+  }, [user]);
+
   const vencida = estaVencida(config);
   const appHabilitada = config?.appHabilitada !== false;
   const bloqueada = config ? estaBloqueada(config) : false;
@@ -131,12 +163,12 @@ export default function Suscripcion() {
     }
   };
 
-  if (loading) {
+  if (loading || confirmandoPago) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="w-12 h-12 mx-auto border-b-2 rounded-full animate-spin border-primary"></div>
-          <p className="mt-4">Cargando...</p>
+          <p className="mt-4">{confirmandoPago ? 'Confirmando el pago...' : 'Cargando...'}</p>
         </div>
       </div>
     );
@@ -188,7 +220,8 @@ export default function Suscripcion() {
                 <CreditCard size={18} /> Regularizar el pago
               </h3>
               <p className="text-sm text-gray-600">
-                Te llevamos a MercadoPago para autorizar el débito mensual con la cuenta y la tarjeta que quieras.
+                Te llevamos a MercadoPago para pagar con la cuenta y la tarjeta que quieras. Si ya tenías el débito
+                automático y el cobro falló, pagás este mes ahí mismo (también con dinero en cuenta).
               </p>
               {errorPago && <p className="text-sm text-danger">{errorPago}</p>}
 
