@@ -4,6 +4,7 @@ import { formatearFecha } from '../../lib/fecha';
 import { esHtmlEnriquecido } from '../../lib/richText';
 import { renderHtmlEnriquecidoParaPdf } from './htmlToPdf';
 import { OrdenTrabajoPagina } from './OrdenTrabajoPDF';
+import { CUIT_AAS } from '../../lib/datosEmpresa';
 
 // Certificado de instalaciones contra incendio, con el mismo formato que
 // usa ARIFA (encabezado con cuadro de rubro/fecha/página, tabla de datos,
@@ -14,7 +15,7 @@ import { OrdenTrabajoPagina } from './OrdenTrabajoPDF';
 
 export const DECLARACION_JURADA = 'La información consignada precedentemente reviste el carácter de Declaración Jurada; su omisión o falsedad procederá al decaimiento de su validez, sin perjuicio de las sanciones que pudiera corresponder. El profesional interviniente declara que cumple con las competencias exigidas por ley para completar el presente trabajo.';
 
-export const EMPRESA_CERTIFICANTE = 'AAS SECURITY — SEGURIDAD CONTRA INCENDIOS  |  CUIT 20-24471842-7\naas-security.vercel.app';
+export const EMPRESA_CERTIFICANTE = `AAS SECURITY — SEGURIDAD CONTRA INCENDIOS  |  CUIT ${CUIT_AAS}\naas-security.vercel.app`;
 
 const AZUL = '#1A5276';
 const AZUL_CLARO = '#2E86C1';

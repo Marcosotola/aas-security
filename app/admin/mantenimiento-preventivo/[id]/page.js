@@ -11,6 +11,7 @@ import { useStaffAuth } from '../../../lib/useStaffAuth';
 import DescargarMantenimientoPreventivoPDF from '../../../components/pdf/DescargarMantenimientoPreventivoPDF';
 import { formatearFecha } from '../../../lib/fecha';
 import { esHtmlEnriquecido } from '../../../lib/richText';
+import { CUIT_AAS } from '../../../lib/datosEmpresa';
 
 const ESTADO_LABEL = { OK: 'OK', NOK: 'N OK', NA: 'N/A' };
 const ESTADO_CLASE = { OK: 'bg-success text-white', NOK: 'bg-danger text-white', NA: 'bg-gray-400 text-white' };
@@ -360,7 +361,7 @@ export default function VerMantenimientoPreventivo({ params }) {
 
           {/* Pie de página */}
           <div className="px-8 py-4 text-xs text-center text-gray-600 border-t border-blue-800">
-            <div>AAS Security - CUIT: 20-24471842-7</div>
+            <div>AAS Security - CUIT: {CUIT_AAS}</div>
             <div>Ceferino Namuncura 5400, 5000 - Córdoba - Tel: (351) 311 2962 - aas-security.vercel.app</div>
           </div>
         </div>

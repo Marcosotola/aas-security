@@ -2,6 +2,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { formatearFecha } from '../../lib/fecha';
+import { CUIT_AAS } from '../../lib/datosEmpresa';
 
 // Estilos compactos para el PDF
 const styles = StyleSheet.create({
@@ -162,7 +163,7 @@ const ReciboPDF = ({ recibo }) => {
             </View>
           </View>
           <View style={styles.headerInfo}>
-            <Text>CUIT: 20-24471842-7</Text>
+            <Text>CUIT: {CUIT_AAS}</Text>
             <Text>Tel: (351) 311 2962</Text>
             <Text>alexalanspitel.security@gmail.com</Text>
           </View>

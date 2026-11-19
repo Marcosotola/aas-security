@@ -4,6 +4,7 @@ import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/render
 import { formatearFecha } from '../../lib/fecha';
 import { esHtmlEnriquecido } from '../../lib/richText';
 import { renderHtmlEnriquecidoParaPdf } from './htmlToPdf';
+import { CUIT_AAS } from '../../lib/datosEmpresa';
 
 // Estilos para el PDF
 const styles = StyleSheet.create({
@@ -167,7 +168,7 @@ const DocumentoPDF = ({ documento }) => {
             </View>
           </View>
           <View style={styles.headerInfo}>
-            <Text>CUIT: 20-24471842-7</Text>
+            <Text>CUIT: {CUIT_AAS}</Text>
             <Text>Tel: (351) 311 2962</Text>
             <Text>alexalanspitel.security@gmail.com</Text>
           </View>

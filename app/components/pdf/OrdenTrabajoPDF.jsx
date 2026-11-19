@@ -3,6 +3,7 @@ import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/render
 import { formatearFecha } from '../../lib/fecha';
 import { esHtmlEnriquecido } from '../../lib/richText';
 import { renderHtmlEnriquecidoParaPdf } from './htmlToPdf';
+import { CUIT_AAS } from '../../lib/datosEmpresa';
 
 const ESTADO_LABEL = { OK: 'OK', NOK: 'N OK', NA: 'N/A' };
 const ESTADO_COLOR = { OK: '#27AE60', NOK: '#C0392B', NA: '#888888' };
@@ -544,7 +545,7 @@ export const OrdenTrabajoPagina = ({ orden, titulo = 'ORDEN DE TRABAJO' }) => {
 
         {/* Pie de página */}
         <View style={styles.footer} fixed>
-          <Text>AAS Security - CUIT: 20-24471842-7</Text>
+          <Text>AAS Security - CUIT: {CUIT_AAS}</Text>
           <Text>Ceferino Namuncura 5400, 5000 - Córdoba - Tel: (351) 311 2962 - aas-security.vercel.app</Text>
           <Text style={{ marginTop: 5 }} render={({ pageNumber, totalPages }) => (
             `Hoja ${pageNumber} de ${totalPages}`
