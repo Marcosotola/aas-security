@@ -436,6 +436,10 @@ export const OrdenTrabajoPagina = ({ orden, titulo = 'ORDEN DE TRABAJO' }) => {
                         <Text style={styles.planillaGrupo}>{planilla.grupo}</Text>
                         <Text style={styles.planillaNombre}>{planilla.titulo}</Text>
                       </View>
+                      {/* Sin filas cargadas no se muestra la tabla vacía, solo el aviso. */}
+                      {(planilla.unidades || []).length === 0 ? (
+                        <Text style={[styles.tablaNota, { paddingHorizontal: 5, paddingVertical: 4 }]}>Sin datos cargados en esta planilla.</Text>
+                      ) : (
                       <View style={styles.tablaHeaderRow}>
                         <View style={[styles.tablaHeaderCellId, { width: 18 }]}><Text>Nº</Text></View>
                         {(planilla.camposTexto || []).map((campo) => (
@@ -447,10 +451,8 @@ export const OrdenTrabajoPagina = ({ orden, titulo = 'ORDEN DE TRABAJO' }) => {
                           </View>
                         ))}
                       </View>
+                      )}
                     </View>
-                    {(planilla.unidades || []).length === 0 && (
-                      <Text style={styles.tablaNota}>Sin filas cargadas.</Text>
-                    )}
                     {(planilla.unidades || []).map((unidad, k) => (
                       <View key={k} style={styles.tablaRow} wrap={false}>
                         <Text style={[styles.tablaCellId, { width: 18 }]}>{unidad.numero}</Text>
