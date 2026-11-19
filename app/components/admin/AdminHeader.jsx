@@ -50,12 +50,12 @@ const DOCUMENTOS_SUBMENU = [
   { id: 'informes', label: 'Informes', icono: File, href: '/admin/informes', modulo: 'informe' },
   { id: 'facturas', label: 'Facturas', icono: Banknote, href: '/admin/facturas', modulo: 'factura' },
   { id: 'certificados', label: 'Certificados', icono: Award, href: '/admin/certificados', modulo: 'certificado' },
+  { id: 'certificaciones', label: 'Certificaciones', icono: ShieldCheck, href: '/admin/certificaciones', modulo: 'certificacion' },
 ];
 
 const MODULOS_NAV = [
   { id: 'ordenes-trabajo', label: 'Órdenes de Trabajo', icono: ClipboardList, href: '/admin/ordenes-trabajo', modulo: 'orden' },
   { id: 'mantenimiento-preventivo', label: 'Mantenimiento Preventivo', icono: Wrench, href: '/admin/mantenimiento-preventivo', modulo: 'mantenimiento' },
-  { id: 'certificaciones', label: 'Certificaciones', icono: ShieldCheck, href: '/admin/certificaciones', modulo: 'certificacion' },
   { id: 'planillas', label: 'Planillas', icono: ListChecks, href: '/admin/planillas', modulo: 'plantillas' },
   { id: 'finanzas', label: 'Finanzas', icono: Wallet, href: '/admin/finanzas', modulo: 'finanzas' },
   { id: 'lista-precios', label: 'Lista de precios', icono: Tag, href: '/admin/lista-precios', modulo: 'listaPrecios' },

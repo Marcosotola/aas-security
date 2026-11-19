@@ -53,7 +53,6 @@ import ListaDocumentosAdmin from '../../components/admin/ListaDocumentosAdmin';
 const MODULO_DE_TARJETA = {
   'ordenes-trabajo': 'orden',
   'mantenimiento-preventivo': 'mantenimiento',
-  certificaciones: 'certificacion',
   documentos: 'documentos',
   planillas: 'plantillas',
   finanzas: 'finanzas',
@@ -270,27 +269,13 @@ export default function Dashboard() {
       activo: true
     },
     {
-      id: 'certificaciones',
-      titulo: 'Certificaciones',
-      icono: ShieldCheck,
-      color: 'bg-red-800',
-      colorClaro: 'bg-red-100',
-      colorTexto: 'text-red-800',
-      descripcion: 'Certificados con firma y sello del profesional',
-      rutas: {
-        nuevo: '/admin/certificaciones/nueva',
-        historial: '/admin/certificaciones'
-      },
-      activo: true
-    },
-    {
       id: 'documentos',
       titulo: 'Documentos',
       icono: Files,
       color: 'bg-[#154360]', // Deep Navy/Teal
       colorClaro: 'bg-blue-100',
       colorTexto: 'text-[#154360]',
-      descripcion: 'Presupuestos, remitos, recibos, estados e informes',
+      descripcion: 'Presupuestos, remitos, recibos, estados, informes y certificaciones',
       rutas: {
         historial: '/admin/documentos'
       },
@@ -301,7 +286,8 @@ export default function Dashboard() {
         { label: 'Nuevo Estado de Cuenta', icono: DollarSign, href: '/admin/estados/nuevo', modulo: 'estado' },
         { label: 'Nuevo Remito', icono: FileCheck, href: '/admin/remitos/nuevo', modulo: 'remito' },
         { label: 'Nuevo Recibo', icono: Receipt, href: '/admin/recibos/nuevo', modulo: 'recibo' },
-        { label: 'Nuevo Informe', icono: File, href: '/admin/informes/nuevo', modulo: 'informe' }
+        { label: 'Nuevo Informe', icono: File, href: '/admin/informes/nuevo', modulo: 'informe' },
+        { label: 'Nueva Certificación', icono: ShieldCheck, href: '/admin/certificaciones/nueva', modulo: 'certificacion' }
       ]
     },
     {
@@ -413,7 +399,7 @@ export default function Dashboard() {
   // Cada tarjeta se muestra solo si la persona puede ver su módulo, y su
   // "Nuevo" solo si puede crear (documentos) o gestionar (el resto).
   // "Documentos" agrupa varios tipos: aparece si ve al menos uno.
-  const TIPOS_HUB = ['presupuesto', 'estado', 'remito', 'recibo', 'informe', 'factura', 'certificado'];
+  const TIPOS_HUB = ['presupuesto', 'estado', 'remito', 'recibo', 'informe', 'factura', 'certificado', 'certificacion'];
   const puedeCrearEn = (modulo) => puede(modulo, MODULOS[modulo].documento ? 'crear' : 'gestionar');
   const modulosVisibles = modulos
     .filter((m) => {

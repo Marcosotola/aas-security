@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Home, FileText, DollarSign, FileCheck, Receipt, File, Banknote, Award } from 'lucide-react';
+import { Home, FileText, DollarSign, FileCheck, Receipt, File, Banknote, Award, ShieldCheck } from 'lucide-react';
 import { collection, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useStaffAuth } from '../../lib/useStaffAuth';
@@ -26,7 +26,8 @@ export default function DocumentosHub() {
     recibos: 0,
     documentos: 0,
     facturas: 0,
-    certificados: 0
+    certificados: 0,
+    certificaciones: 0
   });
   const loading = loadingAuth || loadingData;
 
@@ -38,16 +39,17 @@ export default function DocumentosHub() {
         // Si la persona no puede leer toda la colección (nivel "propios" o
         // sin acceso), Firestore rechaza el conteo: se muestra sin total.
         const contar = async (ref) => getCountFromServer(ref).then((r) => r.data().count).catch(() => null);
-        const [presupuestos, estados, remitos, recibos, documentos, facturas, certificados] = await Promise.all([
+        const [presupuestos, estados, remitos, recibos, documentos, facturas, certificados, certificaciones] = await Promise.all([
           contar(collection(db, 'presupuestos')),
           contar(collection(db, 'estados')),
           contar(collection(db, 'remitos')),
           contar(collection(db, 'recibos')),
           contar(collection(db, 'documentos')),
           contar(collection(db, 'facturas')),
-          contar(collection(db, 'certificados'))
+          contar(collection(db, 'certificados')),
+          contar(collection(db, 'certificaciones'))
         ]);
-        setTotales({ presupuestos, estados, remitos, recibos, documentos, facturas, certificados });
+        setTotales({ presupuestos, estados, remitos, recibos, documentos, facturas, certificados, certificaciones });
       } catch (error) {
         console.error('Error al cargar totales de documentos:', error);
       } finally {
@@ -172,13 +174,29 @@ export default function DocumentosHub() {
         historial: '/admin/certificados'
       },
       activo: true
+    },
+    {
+      id: 'certificaciones',
+      titulo: 'Certificaciones',
+      icono: ShieldCheck,
+      color: 'bg-red-800',
+      colorClaro: 'bg-red-100',
+      colorTexto: 'text-red-800',
+      descripcion: 'Certificados con firma y sello del profesional',
+      total: totales.certificaciones,
+      rutas: {
+        nuevo: '/admin/certificaciones/nueva',
+        historial: '/admin/certificaciones'
+      },
+      activo: true
     }
   ];
 
   // Solo los tipos que puede ver, y "Nuevo" solo si puede crear.
   const MODULO_DE_TARJETA = {
     presupuestos: 'presupuesto', estados: 'estado', remitos: 'remito', recibos: 'recibo',
-    informes: 'informe', facturas: 'factura', certificados: 'certificado'
+    informes: 'informe', facturas: 'factura', certificados: 'certificado',
+    certificaciones: 'certificacion'
   };
   const modulosVisibles = modulos
     .filter((m) => puede(MODULO_DE_TARJETA[m.id], 'ver'))
@@ -199,7 +217,7 @@ export default function DocumentosHub() {
           Documentos
         </h2>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 md:gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 md:gap-4">
           {modulosVisibles.map((modulo) => (
             <ModuloCard key={modulo.id} modulo={modulo} />
           ))}
