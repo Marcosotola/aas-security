@@ -7,7 +7,8 @@ import { OrdenTrabajoPagina } from './OrdenTrabajoPDF';
 
 // Certificado de instalaciones contra incendio, con el mismo formato que
 // usa ARIFA (encabezado con cuadro de rubro/fecha/página, tabla de datos,
-// memoria descriptiva, registro fotográfico, declaración jurada y firmas),
+// memoria descriptiva, registro fotográfico, declaración jurada y firmas;
+// la del profesional queda en blanco para firmar y sellar a mano),
 // pero con la marca de AAS. Al final se anexan las OT / mantenimientos
 // vinculados y la credencial del profesional.
 
@@ -298,10 +299,8 @@ const CertificacionPDF = ({ certificacion: cert }) => {
           <Text style={styles.texto}>{DECLARACION_JURADA}</Text>
           <View style={styles.firmas}>
             <View style={styles.firmaCaja}>
-              <Text style={styles.firmaEtiqueta}>Firma Profesional Interviniente</Text>
-              {cert.certificador?.firmaSello ? (
-                <Image src={cert.certificador.firmaSello} style={styles.firmaImagen} />
-              ) : <View style={{ flex: 1 }} />}
+              {/* Vacío a propósito: el profesional firma y sella a mano el impreso. */}
+              <Text style={styles.firmaEtiqueta}>Firma</Text>
             </View>
             <View style={styles.firmaCaja}>
               <Text style={styles.firmaEtiqueta}>Firma Propietario/Responsable del Inmueble</Text>

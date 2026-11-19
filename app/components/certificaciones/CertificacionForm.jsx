@@ -210,7 +210,6 @@ export default function CertificacionForm({ id = null, inicial = null, user, onG
       nombre: certificador.nombre || '',
       titulo: certificador.titulo || '',
       matricula: certificador.matricula || '',
-      firmaSello: certificador.firmaSello?.url || null,
       credencial: datos.incluirCredencial ? certificador.credencial?.url || null : null
     } : null,
     firmaResponsable: datos.firmaResponsable,
@@ -251,9 +250,6 @@ export default function CertificacionForm({ id = null, inicial = null, user, onG
     const error = validar();
     if (error) {
       alert(error);
-      return;
-    }
-    if (!certificador.firmaSello?.url && !confirm('El certificador no tiene cargada la imagen de firma y sello, así que el certificado va a salir sin firma. ¿Guardar igual?')) {
       return;
     }
 
@@ -430,24 +426,17 @@ export default function CertificacionForm({ id = null, inicial = null, user, onG
                     </option>
                   ))}
                 </select>
-                {certificador && (
+                {certificador?.credencial?.url && (
                   <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-gray-500">
-                    {certificador.firmaSello?.url ? (
-                      <img src={certificador.firmaSello.url} alt="Firma y sello" className="object-contain h-12 p-1 bg-white border border-gray-200 rounded" />
-                    ) : (
-                      <span className="text-amber-600">Sin imagen de firma y sello cargada.</span>
-                    )}
-                    {certificador.credencial?.url && (
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={datos.incluirCredencial}
-                          onChange={(e) => set({ incluirCredencial: e.target.checked })}
-                          className="w-4 h-4 accent-[var(--primary)]"
-                        />
-                        Adjuntar su credencial al final del PDF
-                      </label>
-                    )}
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={datos.incluirCredencial}
+                        onChange={(e) => set({ incluirCredencial: e.target.checked })}
+                        className="w-4 h-4 accent-[var(--primary)]"
+                      />
+                      Adjuntar su credencial al final del PDF
+                    </label>
                   </div>
                 )}
               </>
@@ -633,7 +622,7 @@ export default function CertificacionForm({ id = null, inicial = null, user, onG
           onGuardar={(firma) => set({ firmaResponsable: firma })}
           onAclaracionChange={(aclaracion) => set({ aclaracionResponsable: aclaracion })}
         />
-        <p className="mt-2 text-xs text-gray-500">La firma del profesional sale sola en el PDF con la imagen de firma y sello del certificador.</p>
+        <p className="mt-2 text-xs text-gray-500">El espacio de firma y sello del profesional sale en blanco en el PDF: se firma y sella a mano sobre el impreso.</p>
       </div>
 
       <div className="flex flex-wrap justify-end gap-2">
