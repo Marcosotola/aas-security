@@ -2,6 +2,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
 import { formatearFecha } from '../../lib/fecha';
+import { CUIT_AAS } from '../../lib/datosEmpresa';
 
 // Estilos para el PDF
 const styles = StyleSheet.create({
@@ -399,7 +400,7 @@ const PresupuestoPDF = ({ presupuesto }) => {
 
         {/* Pie de página con numeración */}
         <View style={styles.footer} fixed>
-          <Text>AAS Security - CUIT: 20-24471842-7</Text>
+          <Text>AAS Security - CUIT: {CUIT_AAS}</Text>
           <Text>Ceferino Namuncura 5400, 5000 - Córdoba - Tel: (351) 311 2962 - aas-security.vercel.app</Text>
           <Text style={{ marginTop: 5 }} render={({ pageNumber, totalPages }) => (
             `Hoja ${pageNumber} de ${totalPages}`

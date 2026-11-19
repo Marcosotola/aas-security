@@ -11,6 +11,7 @@ import { use } from 'react';
 import DescargarPDF from '../../../components/pdf/DescargarPDF';
 import PresupuestoPDF from '../../../components/pdf/PresupuestoPDF';
 import { formatearFecha } from '../../../lib/fecha';
+import { CUIT_AAS } from '../../../lib/datosEmpresa';
 
 export default function VerPresupuesto({ params }) {
   // Usar React.use para manejar params como una promesa
@@ -358,7 +359,7 @@ export default function VerPresupuesto({ params }) {
 
           {/* Pie de página */}
           <div className="px-8 py-4 text-xs text-center text-gray-600 border-t border-blue-800">
-            <div>AAS Security - CUIT: 20-24471842-7</div>
+            <div>AAS Security - CUIT: {CUIT_AAS}</div>
             <div>Ceferino Namuncura 5400, 5000 - Córdoba - Tel: (351) 311 2962 - aas-security.vercel.app</div>
           </div>
         </div>

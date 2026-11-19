@@ -11,6 +11,7 @@ import { use } from 'react';
 import DescargarPDF from '../../../components/pdf/DescargarPDF';
 import EstadoPDF from '../../../components/pdf/EstadoPDF';
 import { formatearFecha } from '../../../lib/fecha';
+import { CUIT_AAS } from '../../../lib/datosEmpresa';
 
 // Función para formatear montos con separador de miles (punto) y decimal (coma)
 const formatMoney = (amount) => {
@@ -247,7 +248,7 @@ export default function VerEstado({ params }) {
 
           {/* Pie de página */}
           <div className="px-8 py-6 text-sm text-center text-gray-600 border-t-2 border-blue-800">
-            <p className="font-medium">AAS Security - CUIT: 20-24471842-7</p>
+            <p className="font-medium">AAS Security - CUIT: {CUIT_AAS}</p>
             <p>Ceferino Namuncura 5400, 5000 - Córdoba - Tel: (351) 311 2962 - aas-security.vercel.app</p>
           </div>
         </div>
