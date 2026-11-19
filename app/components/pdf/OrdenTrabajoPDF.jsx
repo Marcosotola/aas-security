@@ -45,19 +45,32 @@ const styles = StyleSheet.create({
     color: '#1A5276',
     textDecoration: 'underline'
   },
+  // El título va en su propia línea y la fecha / número abajo: con números
+  // largos ("MP-2026-4146 ( VISITA 1-4 )") en una sola fila se pisaban.
+  headerTitulo: {
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 6,
+  },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     borderBottomWidth: 1,
     borderBottomColor: '#333',
     paddingBottom: 5,
-    marginTop: 10,
     marginBottom: 10,
   },
   headerRowText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
+  },
+  headerRowNumero: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    flexShrink: 1,
+    textAlign: 'right',
+    marginLeft: 20,
   },
   section: {
     marginBottom: 15,
@@ -336,10 +349,12 @@ export const OrdenTrabajoPagina = ({ orden, titulo = 'ORDEN DE TRABAJO' }) => {
         </View>
 
         {/* Fecha, título y número */}
+        <View style={styles.headerTitulo}>
+          <Text style={styles.title}>{titulo}</Text>
+        </View>
         <View style={styles.headerRow}>
           <Text style={styles.headerRowText}>Fecha: {formatearFecha(orden.fecha)}</Text>
-          <Text style={styles.title}>{titulo}</Text>
-          <Text style={styles.headerRowText}>N.º {orden.numero || ''}</Text>
+          <Text style={styles.headerRowNumero}>N.º {orden.numero || ''}</Text>
         </View>
 
         {/* Cliente y sede */}
@@ -433,6 +448,9 @@ export const OrdenTrabajoPagina = ({ orden, titulo = 'ORDEN DE TRABAJO' }) => {
                         ))}
                       </View>
                     </View>
+                    {(planilla.unidades || []).length === 0 && (
+                      <Text style={styles.tablaNota}>Sin filas cargadas.</Text>
+                    )}
                     {(planilla.unidades || []).map((unidad, k) => (
                       <View key={k} style={styles.tablaRow} wrap={false}>
                         <Text style={[styles.tablaCellId, { width: 18 }]}>{unidad.numero}</Text>
@@ -500,9 +518,20 @@ export const OrdenTrabajoPagina = ({ orden, titulo = 'ORDEN DE TRABAJO' }) => {
         {/* Fotos (última sección) */}
         {orden.fotos?.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Fotos</Text>
+            {/* El título va pegado a la primera fila de fotos para que nunca
+                quede solo al pie de una hoja con las fotos en la siguiente. */}
+            <View wrap={false}>
+              <Text style={styles.sectionTitle}>Fotos</Text>
+              <View style={styles.fotosGrid}>
+                {orden.fotos.slice(0, 2).map((foto, index) => (
+                  <View key={foto.path || index} style={styles.fotoItem}>
+                    <Image src={foto.url} style={styles.foto} />
+                  </View>
+                ))}
+              </View>
+            </View>
             <View style={styles.fotosGrid}>
-              {orden.fotos.map((foto, index) => (
+              {orden.fotos.slice(2).map((foto, index) => (
                 <View key={foto.path || index} style={styles.fotoItem} wrap={false}>
                   <Image src={foto.url} style={styles.foto} />
                 </View>

@@ -236,7 +236,9 @@ export default function CertificacionForm({ id = null, inicial = null, user, onG
       });
       const url = URL.createObjectURL(blob);
       window.open(url, '_blank');
-      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      // No se libera el blob: la pestaña del visor lo necesita para que su
+      // botón Descargar/Imprimir funcione (liberado, Chrome falla con
+      // "Comprueba la conexión"). Se libera al recargar o cerrar el panel.
     } catch (error) {
       console.error('Error al generar la vista previa:', error);
       alert('No se pudo generar la vista previa.');

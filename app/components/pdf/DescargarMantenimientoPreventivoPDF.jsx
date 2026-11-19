@@ -20,7 +20,9 @@ export default function DescargarMantenimientoPreventivoPDF({ mantenimiento, cla
       const url = URL.createObjectURL(blob);
       if (modo === 'ver') {
         window.open(url, '_blank');
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        // No se libera el blob: la pestaña del visor lo necesita para que su
+        // botón Descargar/Imprimir funcione (liberado, Chrome falla con
+        // "Comprueba la conexión"). Se libera al recargar o cerrar el panel.
       } else {
         const a = document.createElement('a');
         a.href = url;
@@ -28,7 +30,8 @@ export default function DescargarMantenimientoPreventivoPDF({ mantenimiento, cla
         document.body.appendChild(a);
         a.click();
         a.remove();
-        URL.revokeObjectURL(url);
+        // Con un pequeño margen: liberarlo en el acto a veces corta la descarga.
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
       }
     } catch (error) {
       console.error('Error al generar el PDF del mantenimiento preventivo:', error);

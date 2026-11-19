@@ -45,9 +45,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 4
   },
-  logo: { width: 38, height: 52 },
-  logoTexto: { fontSize: 10, fontFamily: 'Helvetica-Bold', marginTop: 3 },
-  logoSub: { fontSize: 6, fontFamily: 'Helvetica-Oblique', color: '#666', marginTop: 1 },
+  // Marca en texto, igual que el resto de los PDF de AAS (no hay logo en imagen).
+  logoAas: { fontSize: 26, fontFamily: 'Helvetica-Bold', color: AZUL, lineHeight: 1 },
+  logoSecurity: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: AZUL_CLARO, marginTop: 1 },
+  logoSub: { fontSize: 6, fontFamily: 'Helvetica-Oblique', color: '#666', marginTop: 6, textAlign: 'center' },
   headerCentro: {
     flex: 1,
     alignItems: 'center',
@@ -146,15 +147,12 @@ const sinGuiones = (palabra) => [palabra];
 
 const responsableDe = (c) => c ? [c.titulo, c.nombre].filter(Boolean).join(' ') + (c.matricula ? ` - MP ${c.matricula}` : '') : '-';
 
-function Encabezado({ cert, logo }) {
+function Encabezado({ cert }) {
   return (
     <View style={styles.header} fixed>
       <View style={styles.headerLogo}>
-        {logo && <Image src={logo} style={styles.logo} />}
-        <Text style={styles.logoTexto}>
-          <Text style={{ color: AZUL }}>AAS</Text>
-          <Text style={{ color: AZUL_CLARO }}> Security</Text>
-        </Text>
+        <Text style={styles.logoAas}>AAS</Text>
+        <Text style={styles.logoSecurity}>Security</Text>
         <Text style={styles.logoSub}>Seguridad contra incendios</Text>
       </View>
       <View style={styles.headerCentro}>
@@ -204,14 +202,14 @@ function Fila({ etiqueta, children, estilo }) {
   );
 }
 
-const CertificacionPDF = ({ certificacion: cert, logo }) => {
+const CertificacionPDF = ({ certificacion: cert }) => {
   const cliente = cert.cliente || {};
   const clienteTexto = [cliente.nombre || cliente.empresa, cliente.sedeNombre ? `SEDE: ${cliente.sedeNombre}` : null].filter(Boolean).join(' - ');
 
   return (
     <Document title={`Certificado N° ${cert.numero || ''}`}>
       <Page size="A4" style={styles.page}>
-        <Encabezado cert={cert} logo={logo} />
+        <Encabezado cert={cert} />
 
         {/* Datos */}
         <View style={styles.tabla}>
@@ -273,9 +271,19 @@ const CertificacionPDF = ({ certificacion: cert, logo }) => {
         {/* Registro fotográfico */}
         {cert.fotos?.length > 0 ? (
           <View style={styles.seccion}>
-            <Text style={styles.barraTitulo} minPresenceAhead={180}>REGISTRO FOTOGRÁFICO</Text>
+            {/* Título pegado a la primera fila: nunca queda solo al pie. */}
+            <View wrap={false}>
+              <Text style={styles.barraTitulo}>REGISTRO FOTOGRÁFICO</Text>
+              <View style={styles.fotosGrid}>
+                {cert.fotos.slice(0, 2).map((foto, i) => (
+                  <View key={foto.path || i} style={styles.fotoItem}>
+                    <Image src={foto.url} style={styles.foto} />
+                  </View>
+                ))}
+              </View>
+            </View>
             <View style={styles.fotosGrid}>
-              {cert.fotos.map((foto, i) => (
+              {cert.fotos.slice(2).map((foto, i) => (
                 <View key={foto.path || i} style={styles.fotoItem} wrap={false}>
                   <Image src={foto.url} style={styles.foto} />
                 </View>
@@ -320,7 +328,7 @@ const CertificacionPDF = ({ certificacion: cert, logo }) => {
       {/* Credencial del profesional */}
       {cert.certificador?.credencial ? (
         <Page size="A4" style={styles.page}>
-          <Encabezado cert={cert} logo={logo} />
+          <Encabezado cert={cert} />
           <Text style={styles.credencialTitulo}>CREDENCIAL DEL PROFESIONAL</Text>
           <Image src={cert.certificador.credencial} style={styles.credencial} />
           <Pie cert={cert} />

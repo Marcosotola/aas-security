@@ -28,7 +28,8 @@ export default function DescargarPDF({ document: documentoPdf, fileName, classNa
       window.document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(url);
+      // Con un pequeño margen: liberarlo en el acto a veces corta la descarga.
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
     } catch (error) {
       console.error('Error al generar el PDF:', error);
       alert('No se pudo generar el PDF. Inténtelo de nuevo.');

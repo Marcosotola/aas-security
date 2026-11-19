@@ -8,19 +8,6 @@ import { fotosABase64, urlABase64, urlABase64Original } from '../../lib/imagenes
 // Mismo criterio que DescargarOrdenTrabajoPDF: las imágenes de Storage se
 // pasan a base64 recién al tocar el botón, antes de armar el PDF (fotos de la
 // certificación, de las OT anexadas, firma/sello y credencial).
-const leerLogo = async () => {
-  try {
-    const blob = await (await fetch('/logo/logo-pdf.png')).blob();
-    return await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    return null;
-  }
-};
 
 const opcional = (promesa) => promesa.catch((error) => {
   console.error('No se pudo cargar una imagen del certificado:', error);
@@ -38,8 +25,7 @@ const fotosParaPdf = async (fotos) => {
 
 export async function generarBlobCertificacion(certificacion) {
   const certificador = certificacion.certificador || null;
-  const [logo, fotos, vinculados, firmaSello, credencial] = await Promise.all([
-    leerLogo(),
+  const [fotos, vinculados, firmaSello, credencial] = await Promise.all([
     fotosParaPdf(certificacion.fotos),
     Promise.all((certificacion.vinculados || []).map(async (v) => ({
       ...v,
@@ -55,7 +41,7 @@ export async function generarBlobCertificacion(certificacion) {
     vinculados,
     certificador: certificador ? { ...certificador, firmaSello, credencial } : null
   };
-  return pdf(<CertificacionPDF certificacion={datos} logo={logo} />).toBlob();
+  return pdf(<CertificacionPDF certificacion={datos} />).toBlob();
 }
 
 export const nombreArchivoCertificacion = (c) => `Certificado-${c.numero || 'borrador'}${c.sistemaCertificado ? ` - ${c.sistemaCertificado}` : ''}`
@@ -72,7 +58,9 @@ export default function DescargarCertificacionPDF({ certificacion, className, ch
       const url = URL.createObjectURL(blob);
       if (modo === 'ver') {
         window.open(url, '_blank');
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        // No se libera el blob: la pestaña del visor lo necesita para que su
+        // botón Descargar/Imprimir funcione (liberado, Chrome falla con
+        // "Comprueba la conexión"). Se libera al recargar o cerrar el panel.
       } else {
         const a = document.createElement('a');
         a.href = url;
@@ -80,7 +68,8 @@ export default function DescargarCertificacionPDF({ certificacion, className, ch
         document.body.appendChild(a);
         a.click();
         a.remove();
-        URL.revokeObjectURL(url);
+        // Con un pequeño margen: liberarlo en el acto a veces corta la descarga.
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
       }
     } catch (error) {
       console.error('Error al generar el PDF de la certificación:', error);
