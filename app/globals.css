@@ -255,17 +255,33 @@ select {
   opacity: 1 !important;
 }
 
-/* Placeholder con color más suave pero legible */
+/* Placeholder con color más suave pero legible. En Chrome/Safari/Edge el
+   -webkit-text-fill-color negro de arriba también pinta el placeholder (por
+   eso se veía igual que un dato cargado): hay que pisarlo acá también. */
 input::placeholder,
 textarea::placeholder {
   color: #9ca3af !important;
+  -webkit-text-fill-color: #9ca3af !important;
   opacity: 1 !important;
+}
+
+/* Desplegable sin elegir ("Seleccionar..."): gris como un placeholder. Las
+   opciones de la lista abierta siguen en negro. */
+select:has(option[value=""]:checked) {
+  color: #9ca3af !important;
+  -webkit-text-fill-color: #9ca3af !important;
+}
+
+select option {
+  color: #000000;
+  -webkit-text-fill-color: #000000;
 }
 
 /* Para navegadores WebKit (Chrome, Safari, Edge) */
 input::-webkit-input-placeholder,
 textarea::-webkit-input-placeholder {
   color: #9ca3af !important;
+  -webkit-text-fill-color: #9ca3af !important;
   opacity: 1 !important;
 }
 
@@ -273,6 +289,7 @@ textarea::-webkit-input-placeholder {
 input::-moz-placeholder,
 textarea::-moz-placeholder {
   color: #9ca3af !important;
+  -webkit-text-fill-color: #9ca3af !important;
   opacity: 1 !important;
 }
 
