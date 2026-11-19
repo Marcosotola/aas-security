@@ -20,7 +20,8 @@ import {
   Wrench,
   Search,
   X,
-  Building2
+  Building2,
+  ShieldCheck
 } from 'lucide-react';
 import { collection, query, where, getCountFromServer } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -36,7 +37,8 @@ import {
   obtenerFacturas,
   obtenerCertificados,
   obtenerDocumentos,
-  obtenerEmpresas
+  obtenerEmpresas,
+  obtenerCertificaciones
 } from '../../lib/firestore';
 import { estaBloqueada } from '../../lib/suscripcion';
 import { normalizarDocumentosAdmin } from '../../lib/documentosAdmin';
@@ -51,6 +53,7 @@ import ListaDocumentosAdmin from '../../components/admin/ListaDocumentosAdmin';
 const MODULO_DE_TARJETA = {
   'ordenes-trabajo': 'orden',
   'mantenimiento-preventivo': 'mantenimiento',
+  certificaciones: 'certificacion',
   documentos: 'documentos',
   planillas: 'plantillas',
   finanzas: 'finanzas',
@@ -137,7 +140,7 @@ export default function Dashboard() {
 
     (async () => {
       try {
-        const [presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo, mantenimientosPreventivos, informes, empresasData] = await Promise.all([
+        const [presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo, mantenimientosPreventivos, informes, empresasData, certificaciones] = await Promise.all([
           obtenerPresupuestos(),
           obtenerRemitos(),
           obtenerRecibos(),
@@ -147,9 +150,10 @@ export default function Dashboard() {
           obtenerOrdenesTrabajo(),
           obtenerMantenimientosPreventivos(),
           obtenerDocumentos(),
-          obtenerEmpresas()
+          obtenerEmpresas(),
+          obtenerCertificaciones()
         ]);
-        setTodosDocumentos(normalizarDocumentosAdmin({ presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo, mantenimientosPreventivos, documentos: informes }));
+        setTodosDocumentos(normalizarDocumentosAdmin({ presupuestos, remitos, recibos, facturas, certificados, estados, ordenesTrabajo, mantenimientosPreventivos, documentos: informes, certificaciones }));
         setEmpresas(empresasData);
       } catch (error) {
         console.error('Error al cargar los documentos para el buscador:', error);
@@ -262,6 +266,20 @@ export default function Dashboard() {
       rutas: {
         nuevo: '/admin/mantenimiento-preventivo/nueva',
         historial: '/admin/mantenimiento-preventivo'
+      },
+      activo: true
+    },
+    {
+      id: 'certificaciones',
+      titulo: 'Certificaciones',
+      icono: ShieldCheck,
+      color: 'bg-red-800',
+      colorClaro: 'bg-red-100',
+      colorTexto: 'text-red-800',
+      descripcion: 'Certificados con firma y sello del profesional',
+      rutas: {
+        nuevo: '/admin/certificaciones/nueva',
+        historial: '/admin/certificaciones'
       },
       activo: true
     },

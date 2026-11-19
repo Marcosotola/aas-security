@@ -2,7 +2,7 @@
 // Normaliza los 7 tipos de documento del cliente (que llegan con formas
 // distintas desde Firestore, ver useClienteAuth.js) a una forma común para
 // poder listarlos juntos en un solo hub buscable (app/cuenta/documentos).
-import { FileText, FileCheck, Receipt, Banknote, Award, DollarSign, ClipboardList, File, Wrench } from 'lucide-react';
+import { FileText, FileCheck, Receipt, Banknote, Award, DollarSign, ClipboardList, File, Wrench, ShieldCheck } from 'lucide-react';
 
 // Registro único de tipos de documento. La clave es la que usan los accesos
 // por empresa/sede (usuarios.accesos) y la función puedeVer de
@@ -17,7 +17,8 @@ export const TIPOS_DOC = {
   estado: { label: 'Estado de cuenta', icono: DollarSign, coleccion: 'estados' },
   orden: { label: 'Orden de trabajo', icono: ClipboardList, coleccion: 'ordenesTrabajo' },
   mantenimiento: { label: 'Mantenimiento Preventivo', icono: Wrench, coleccion: 'mantenimientosPreventivos' },
-  informe: { label: 'Informe', icono: File, coleccion: 'documentos' }
+  informe: { label: 'Informe', icono: File, coleccion: 'documentos' },
+  certificacion: { label: 'Certificación', icono: ShieldCheck, coleccion: 'certificaciones' }
 };
 
 // La sede queda anidada en `cliente.sedeNombre` para los documentos armados
@@ -25,7 +26,7 @@ export const TIPOS_DOC = {
 // informe) y como `sedeNombre` directo para los basados en archivo subido
 // (recibo/factura/certificado) — misma dualidad que ya existe en la ficha de
 // admin (app/admin/usuarios/[id]/page.js).
-export const SEDE_ANIDADA = new Set(['presupuesto', 'remito', 'estado', 'orden', 'mantenimiento', 'informe']);
+export const SEDE_ANIDADA = new Set(['presupuesto', 'remito', 'estado', 'orden', 'mantenimiento', 'informe', 'certificacion']);
 
 // Sede de un documento cuando el cliente ve más de una empresa: se antepone
 // la empresa para que no se confundan sedes del mismo nombre.
@@ -78,7 +79,7 @@ const normalizarUno = (tipo, doc) => {
     // Texto sobre el que busca filtrarDocumentos(): además del número suma
     // sede, concepto (recibos) y descripción (certificados), para que "buscar
     // cualquier cosa" no dependa de saber el número exacto de memoria.
-    texto: [numero, sede, doc.concepto, doc.descripcion].filter(Boolean).join(' ').toLowerCase(),
+    texto: [numero, sede, doc.concepto, doc.descripcion, doc.sistemaCertificado].filter(Boolean).join(' ').toLowerCase(),
     raw: doc
   };
 };
@@ -96,7 +97,8 @@ export function normalizarDocumentos(documentos) {
     ...documentos.estados.map((d) => normalizarUno('estado', d)),
     ...documentos.ordenesTrabajo.map((d) => normalizarUno('orden', d)),
     ...documentos.mantenimientosPreventivos.map((d) => normalizarUno('mantenimiento', d)),
-    ...documentos.informes.map((d) => normalizarUno('informe', d))
+    ...documentos.informes.map((d) => normalizarUno('informe', d)),
+    ...documentos.certificaciones.map((d) => normalizarUno('certificacion', d))
   ];
   return todos.sort((a, b) => b.fechaOrden - a.fechaOrden);
 }

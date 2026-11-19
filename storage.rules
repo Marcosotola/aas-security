@@ -81,6 +81,19 @@ service firebase.storage {
       allow write: if esAdmin() || personalEmite('certificado');
     }
 
+    // Fotos de certificaciones: mismo criterio que ordenes-trabajo (el PDF
+    // las trae por su link de descarga, no hace falta leerlas con reglas).
+    match /certificaciones/{certificacionId}/{fileName} {
+      allow read: if esAdmin() || nivelDe('certificacion') != 'ninguno';
+      allow write: if esAdmin() || personalEmite('certificacion');
+    }
+
+    // Firma/sello y credencial del profesional certificador.
+    match /certificadores/{certificadorId}/{fileName} {
+      allow read: if esAdmin() || nivelDe('certificacion') != 'ninguno';
+      allow write: if esAdmin() || nivelDe('certificacion') == 'todos';
+    }
+
     // Todo lo demás, denegado por defecto.
     match /{allPaths=**} {
       allow read, write: if false;

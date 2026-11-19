@@ -13,7 +13,8 @@ import {
   where,
   serverTimestamp,
   getCountFromServer,
-  writeBatch
+  writeBatch,
+  runTransaction
 } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { db, storage } from './firebase';
@@ -845,6 +846,118 @@ export const eliminarCertificado = async (id) => {
     console.error('Error al eliminar el certificado:', error);
     throw error;
   }
+};
+
+// ========== FUNCIONES PARA CERTIFICACIONES (certificados redactados con firma del profesional) ==========
+// A diferencia de "certificados" (archivos subidos), acá el certificado se
+// redacta en la app y el PDF se genera: datos, memoria descriptiva, fotos,
+// firma y sello del profesional certificador, y como anexo las OT /
+// mantenimientos vinculados (copiados al documento al guardar, para que el
+// cliente que lo descarga no necesite acceso a esas OT).
+
+const certificacionesCollection = db ? collection(db, 'certificaciones') : null;
+
+export const generarIdCertificacion = () => doc(certificacionesCollection).id;
+
+// Numeración correlativa: contadores/certificacion guarda el último número
+// usado. Se puede elegir otro a mano (ej. continuar la numeración que se
+// traía de antes); el contador nunca retrocede.
+export const obtenerProximoNumeroCertificacion = async () => {
+  const snap = await getDoc(doc(db, 'contadores', 'certificacion'));
+  return (snap.exists() ? snap.data().ultimo || 0 : 0) + 1;
+};
+
+// `numeroElegido` null = el siguiente libre. Devuelve el número asignado.
+export const crearCertificacion = async (id, datos, numeroElegido = null) => {
+  if (!db) throw new Error('Firebase no está configurado');
+  return runTransaction(db, async (tx) => {
+    const contadorRef = doc(db, 'contadores', 'certificacion');
+    const contador = await tx.get(contadorRef);
+    const ultimo = contador.exists() ? contador.data().ultimo || 0 : 0;
+    const numero = numeroElegido || ultimo + 1;
+    tx.set(contadorRef, { ultimo: Math.max(ultimo, numero) });
+    tx.set(doc(db, 'certificaciones', id), {
+      ...datos,
+      numero: String(numero).padStart(4, '0'),
+      numeroSecuencia: numero,
+      fechaCreacion: serverTimestamp()
+    });
+    return numero;
+  });
+};
+
+export const obtenerCertificaciones = async (creador = null) => {
+  if (!db) throw new Error('Firebase no está configurado');
+  const q = creador
+    ? query(certificacionesCollection, where('usuarioCreador', '==', creador))
+    : query(certificacionesCollection, orderBy('fechaCreacion', 'desc'));
+  const querySnapshot = await getDocs(q);
+  return ordenarSiFiltrado(creador, querySnapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
+};
+
+export const obtenerCertificacionPorId = async (id) => {
+  const docSnap = await getDoc(doc(db, 'certificaciones', id));
+  if (!docSnap.exists()) throw new Error('Certificación no encontrada');
+  return { id: docSnap.id, ...docSnap.data() };
+};
+
+export const actualizarCertificacion = async (id, datos, numeroElegido = null) => {
+  const cambios = { ...datos, fechaActualizacion: serverTimestamp() };
+  if (numeroElegido) {
+    cambios.numero = String(numeroElegido).padStart(4, '0');
+    cambios.numeroSecuencia = numeroElegido;
+  }
+  await updateDoc(doc(db, 'certificaciones', id), cambios);
+  return { id };
+};
+
+// Solo se borran del Storage las fotos propias de la certificación: las que
+// se tomaron de una OT vinculada siguen siendo de esa OT.
+export const fotosPropiasCertificacion = (fotos = []) => fotos.filter((f) => f.path?.startsWith('certificaciones/'));
+
+export const eliminarCertificacion = async (id) => {
+  const certificacion = await obtenerCertificacionPorId(id).catch(() => null);
+  await eliminarFotosStorage(fotosPropiasCertificacion(certificacion?.fotos));
+  await deleteDoc(doc(db, 'certificaciones', id));
+  return { id };
+};
+
+// Profesionales que firman las certificaciones (nombre, título, matrícula,
+// imagen de firma y sello, credencial del colegio).
+export const obtenerCertificadores = async () => {
+  const snap = await getDocs(query(collection(db, 'certificadores'), orderBy('nombre', 'asc')));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+};
+
+export const generarIdCertificador = () => doc(collection(db, 'certificadores')).id;
+
+export const guardarCertificador = async (id, datos) => {
+  await setDoc(doc(db, 'certificadores', id), { ...datos, fechaActualizacion: serverTimestamp() }, { merge: true });
+  return { id };
+};
+
+export const eliminarCertificador = async (certificador) => {
+  await eliminarFotosStorage([certificador.firmaSello, certificador.credencial].filter(Boolean));
+  await deleteDoc(doc(db, 'certificadores', certificador.id));
+};
+
+// Textos estándar para insertar en la memoria descriptiva.
+export const obtenerTextosCertificacion = async () => {
+  const snap = await getDocs(query(collection(db, 'textosCertificacion'), orderBy('titulo', 'asc')));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+};
+
+export const crearTextoCertificacion = async (datos) => {
+  const ref = await addDoc(collection(db, 'textosCertificacion'), { ...datos, fechaCreacion: serverTimestamp() });
+  return { id: ref.id };
+};
+
+export const actualizarTextoCertificacion = async (id, datos) => {
+  await updateDoc(doc(db, 'textosCertificacion', id), datos);
+};
+
+export const eliminarTextoCertificacion = async (id) => {
+  await deleteDoc(doc(db, 'textosCertificacion', id));
 };
 
 // ========== FUNCIONES PARA MOVIMIENTOS (finanzas: ingresos y gastos manuales) ==========

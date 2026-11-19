@@ -15,7 +15,8 @@ import {
   eliminarEstado,
   eliminarOrdenTrabajo,
   eliminarMantenimientoPreventivo,
-  eliminarDocumento
+  eliminarDocumento,
+  eliminarCertificacion
 } from '../../lib/firestore';
 import { TIPOS_DOC } from '../../lib/documentosCliente';
 import ViewToggle from './ViewToggle';
@@ -28,6 +29,7 @@ import EstadoPDF from '../pdf/EstadoPDF';
 import DocumentoPDF from '../pdf/DocumentoPDF';
 import DescargarOrdenTrabajoPDF from '../pdf/DescargarOrdenTrabajoPDF';
 import DescargarMantenimientoPreventivoPDF from '../pdf/DescargarMantenimientoPreventivoPDF';
+import DescargarCertificacionPDF from '../pdf/DescargarCertificacionPDF';
 import { EstadoFacturaBadge } from '../ui/EstadoFactura';
 
 const formatFecha = (doc) => {
@@ -282,7 +284,8 @@ const ELIMINAR = {
   estado: eliminarEstado,
   orden: eliminarOrdenTrabajo,
   mantenimiento: eliminarMantenimientoPreventivo,
-  informe: eliminarDocumento
+  informe: eliminarDocumento,
+  certificacion: eliminarCertificacion
 };
 
 const TITULOS = {
@@ -294,7 +297,8 @@ const TITULOS = {
   estado: 'Estados de Cuenta',
   orden: 'Órdenes de Trabajo',
   mantenimiento: 'Mantenimiento Preventivo',
-  informe: 'Informes'
+  informe: 'Informes',
+  certificacion: 'Certificaciones'
 };
 
 const VACIOS =Object.fromEntries(Object.keys(TIPOS_DOC).map((t) => [t, []]));
@@ -481,6 +485,18 @@ export default function DocumentosEmpresa({ empresa, sedeInicial = 'todas' }) {
             {...comunes('informe')}
             rutaBase="/admin/informes" PDFDoc={DocumentoPDF} propName="documento"
             extraCol={{ header: 'Contenido', render: (d) => d.contenido || '-' }}
+          />
+        )}
+        {tiposVisibles.has('certificacion') && (
+          <SeccionPDF
+            {...comunes('certificacion')}
+            rutaBase="/admin/certificaciones"
+            extraCol={{ header: 'Sistema certificado', render: (d) => d.sistemaCertificado || '-' }}
+            renderDescarga={(item) => (
+              <DescargarCertificacionPDF certificacion={item} className={accionIconoClase('primary')}>
+                <Download size={ACCION_ICONO_TAMANO} />
+              </DescargarCertificacionPDF>
+            )}
           />
         )}
       </div>

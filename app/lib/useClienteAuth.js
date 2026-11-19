@@ -20,7 +20,8 @@ const CLAVES = {
   estados: 'estado',
   ordenesTrabajo: 'orden',
   mantenimientosPreventivos: 'mantenimiento',
-  informes: 'informe'
+  informes: 'informe',
+  certificaciones: 'certificacion'
 };
 
 const DOCUMENTOS_VACIOS = Object.fromEntries(Object.keys(CLAVES).map((clave) => [clave, []]));

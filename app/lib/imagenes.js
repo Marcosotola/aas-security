@@ -100,6 +100,15 @@ export const urlABase64 = async (url) => {
   return aBase64Comprimido(blob);
 };
 
+// Igual que urlABase64 pero sin pasar por JPEG: para la firma y sello del
+// certificador, que suelen ser PNG con fondo transparente (en JPEG el
+// fondo transparente sale negro).
+export const urlABase64Original = async (url) => {
+  const response = await fetch(`/api/planillas/imagen?url=${encodeURIComponent(url)}`);
+  if (!response.ok) throw new Error('No se pudo obtener la imagen');
+  return leerComoBase64(await response.blob());
+};
+
 // fotos: [{ url, path }] -> [{ url: <base64>, path }]
 export const fotosABase64 = async (fotos) => {
   if (!fotos?.length) return [];

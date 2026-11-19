@@ -7,6 +7,7 @@ import DescargarPDF from '../pdf/DescargarPDF';
 import { accionIconoClase, ACCION_ICONO_TAMANO } from './accionIcono';
 import DescargarOrdenTrabajoPDF from '../pdf/DescargarOrdenTrabajoPDF';
 import DescargarMantenimientoPreventivoPDF from '../pdf/DescargarMantenimientoPreventivoPDF';
+import DescargarCertificacionPDF from '../pdf/DescargarCertificacionPDF';
 import PresupuestoPDF from '../pdf/PresupuestoPDF';
 import RemitoPDF from '../pdf/RemitoPDF';
 import ReciboPDF from '../pdf/ReciboPDF';
@@ -26,7 +27,8 @@ const RUTA_BASE = {
   estado: '/admin/estados',
   orden: '/admin/ordenes-trabajo',
   mantenimiento: '/admin/mantenimiento-preventivo',
-  informe: '/admin/informes'
+  informe: '/admin/informes',
+  certificacion: '/admin/certificaciones'
 };
 
 const PDF_COMPONENTS = {
@@ -74,6 +76,10 @@ export function AccionesDocumentoAdmin({ doc }) {
         <DescargarMantenimientoPreventivoPDF mantenimiento={doc.raw} className={accionIconoClase('primary')}>
           <Download size={ACCION_ICONO_TAMANO} />
         </DescargarMantenimientoPreventivoPDF>
+      ) : doc.tipo === 'certificacion' ? (
+        <DescargarCertificacionPDF certificacion={doc.raw} className={accionIconoClase('primary')}>
+          <Download size={ACCION_ICONO_TAMANO} />
+        </DescargarCertificacionPDF>
       ) : doc.tipo === 'factura' || doc.tipo === 'certificado' ? (
         (doc.archivos || []).length > 0 ? (
           <a

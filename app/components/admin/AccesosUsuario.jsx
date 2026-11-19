@@ -17,7 +17,8 @@ const ETIQUETA_CORTA = {
   estado: 'Estado cta.',
   orden: 'OT',
   mantenimiento: 'Mant. prev.',
-  informe: 'Informe'
+  informe: 'Informe',
+  certificacion: 'Certific.'
 };
 
 const TIPOS = Object.keys(TIPOS_DOC);

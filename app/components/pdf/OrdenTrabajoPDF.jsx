@@ -312,9 +312,11 @@ const styles = StyleSheet.create({
   },
 });
 
-const OrdenTrabajoPDF = ({ orden }) => {
+// La página sola (sin <Document>) se exporta aparte para poder anexar OT y
+// mantenimientos dentro de otro PDF (ver CertificacionPDF.jsx). Mantenimiento
+// Preventivo tiene el mismo formato, solo cambia el título.
+export const OrdenTrabajoPagina = ({ orden, titulo = 'ORDEN DE TRABAJO' }) => {
   return (
-    <Document>
       <Page size="A4" style={styles.page}>
         {/* Encabezado */}
         <View style={styles.header} fixed>
@@ -336,7 +338,7 @@ const OrdenTrabajoPDF = ({ orden }) => {
         {/* Fecha, título y número */}
         <View style={styles.headerRow}>
           <Text style={styles.headerRowText}>Fecha: {formatearFecha(orden.fecha)}</Text>
-          <Text style={styles.title}>ORDEN DE TRABAJO</Text>
+          <Text style={styles.title}>{titulo}</Text>
           <Text style={styles.headerRowText}>N.º {orden.numero || ''}</Text>
         </View>
 
@@ -518,8 +520,13 @@ const OrdenTrabajoPDF = ({ orden }) => {
           )} />
         </View>
       </Page>
-    </Document>
   );
 };
+
+const OrdenTrabajoPDF = ({ orden }) => (
+  <Document>
+    <OrdenTrabajoPagina orden={orden} />
+  </Document>
+);
 
 export default OrdenTrabajoPDF;

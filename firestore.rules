@@ -209,6 +209,33 @@ service cloud.firestore {
       allow delete: if esAdmin() || personalBorra('certificado');
     }
 
+    // Certificaciones redactadas en la app (PDF generado con firma y sello
+    // del profesional): mismo criterio que el resto de los documentos.
+    match /certificaciones/{id} {
+      allow read: if esAdmin() || personalLee('certificacion', resource.data) || puedeVer('certificacion', resource.data);
+      allow create: if esAdmin() || personalCrea('certificacion');
+      allow update: if esAdmin() || personalEdita('certificacion');
+      allow delete: if esAdmin() || personalBorra('certificacion');
+    }
+
+    // Último número de certificación usado: lo lee y avanza quien las emite.
+    match /contadores/certificacion {
+      allow read, write: if esAdmin() || personalEmite('certificacion');
+    }
+
+    // Profesionales certificadores (firma y sello) y textos estándar de la
+    // memoria descriptiva: los lee todo el personal con acceso a
+    // certificaciones; los cambia el Admin o quien tiene nivel "todos".
+    match /certificadores/{id} {
+      allow read: if esAdmin() || nivelDe('certificacion') != 'ninguno';
+      allow write: if esAdmin() || nivelDe('certificacion') == 'todos';
+    }
+
+    match /textosCertificacion/{id} {
+      allow read: if esAdmin() || nivelDe('certificacion') != 'ninguno';
+      allow write: if esAdmin() || nivelDe('certificacion') == 'todos';
+    }
+
     // Plantillas de inspección (checklists reutilizables para adjuntar a una
     // OT o un Mantenimiento): las lee quien las gestiona o quien completa
     // esos documentos; solo el Admin (o Personal con nivel "todos") las

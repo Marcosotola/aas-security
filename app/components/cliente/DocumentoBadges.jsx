@@ -6,6 +6,7 @@ import { accionIconoClase, ACCION_ICONO_TAMANO } from '../admin/accionIcono';
 import VerDescargarPDF from '../pdf/VerDescargarPDF';
 import DescargarOrdenTrabajoPDF from '../pdf/DescargarOrdenTrabajoPDF';
 import DescargarMantenimientoPreventivoPDF from '../pdf/DescargarMantenimientoPreventivoPDF';
+import DescargarCertificacionPDF from '../pdf/DescargarCertificacionPDF';
 import PresupuestoPDF from '../pdf/PresupuestoPDF';
 import RemitoPDF from '../pdf/RemitoPDF';
 import ReciboPDF from '../pdf/ReciboPDF';
@@ -71,6 +72,19 @@ export function AccionesDocumento({ doc }) {
         <DescargarMantenimientoPreventivoPDF mantenimiento={doc.raw} modo="descargar" className={accionIconoClase('primary')}>
           <Download size={ACCION_ICONO_TAMANO} />
         </DescargarMantenimientoPreventivoPDF>
+      </span>
+    );
+  }
+
+  if (doc.tipo === 'certificacion') {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <DescargarCertificacionPDF certificacion={doc.raw} modo="ver" className={accionIconoClase('gray')}>
+          <Eye size={ACCION_ICONO_TAMANO} />
+        </DescargarCertificacionPDF>
+        <DescargarCertificacionPDF certificacion={doc.raw} modo="descargar" className={accionIconoClase('primary')}>
+          <Download size={ACCION_ICONO_TAMANO} />
+        </DescargarCertificacionPDF>
       </span>
     );
   }

@@ -37,7 +37,7 @@ const normalizarUno = (tipo, doc) => {
     // Mismo criterio que documentosCliente.js: además del número suma sede,
     // cliente/empresa y concepto/descripción/contenido, para que la búsqueda
     // no dependa de saber el número exacto de memoria.
-    texto: [numero, sede, clienteNombre, clienteEmpresa, doc.concepto, doc.descripcion, doc.contenido].filter(Boolean).join(' ').toLowerCase(),
+    texto: [numero, sede, clienteNombre, clienteEmpresa, doc.concepto, doc.descripcion, doc.contenido, doc.sistemaCertificado].filter(Boolean).join(' ').toLowerCase(),
     raw: doc
   };
 };
@@ -57,7 +57,8 @@ export function normalizarDocumentosAdmin(colecciones) {
     ...colecciones.estados.map((d) => normalizarUno('estado', d)),
     ...colecciones.ordenesTrabajo.map((d) => normalizarUno('orden', d)),
     ...colecciones.mantenimientosPreventivos.map((d) => normalizarUno('mantenimiento', d)),
-    ...colecciones.documentos.map((d) => normalizarUno('informe', d))
+    ...colecciones.documentos.map((d) => normalizarUno('informe', d)),
+    ...(colecciones.certificaciones || []).map((d) => normalizarUno('certificacion', d))
   ];
   return todos.sort((a, b) => b.fechaOrden - a.fechaOrden);
 }

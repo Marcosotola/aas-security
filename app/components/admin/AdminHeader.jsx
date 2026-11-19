@@ -27,7 +27,8 @@ import {
   Award,
   Search,
   Wrench,
-  Building2
+  Building2,
+  ShieldCheck
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
@@ -54,6 +55,7 @@ const DOCUMENTOS_SUBMENU = [
 const MODULOS_NAV = [
   { id: 'ordenes-trabajo', label: 'Órdenes de Trabajo', icono: ClipboardList, href: '/admin/ordenes-trabajo', modulo: 'orden' },
   { id: 'mantenimiento-preventivo', label: 'Mantenimiento Preventivo', icono: Wrench, href: '/admin/mantenimiento-preventivo', modulo: 'mantenimiento' },
+  { id: 'certificaciones', label: 'Certificaciones', icono: ShieldCheck, href: '/admin/certificaciones', modulo: 'certificacion' },
   { id: 'planillas', label: 'Planillas', icono: ListChecks, href: '/admin/planillas', modulo: 'plantillas' },
   { id: 'finanzas', label: 'Finanzas', icono: Wallet, href: '/admin/finanzas', modulo: 'finanzas' },
   { id: 'lista-precios', label: 'Lista de precios', icono: Tag, href: '/admin/lista-precios', modulo: 'listaPrecios' },
