@@ -162,7 +162,8 @@ export default function VerCertificacion({ params }) {
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div>
                 <p className="mb-2 text-xs text-gray-500">Profesional interviniente</p>
-                {c?.firmaSello ? <img src={c.firmaSello} alt="Firma y sello" className="object-contain h-28" /> : <p className="text-sm text-amber-600">Sin firma y sello.</p>}
+                <p className="text-sm text-gray-600">Firma y sello a mano sobre el certificado impreso.</p>
+                {c && <p className="mt-1 text-sm">{[c.titulo, c.nombre].filter(Boolean).join(' ')}{c.matricula ? ` - MP ${c.matricula}` : ''}</p>}
               </div>
               <div>
                 <p className="mb-2 text-xs text-gray-500">Propietario / responsable del inmueble</p>

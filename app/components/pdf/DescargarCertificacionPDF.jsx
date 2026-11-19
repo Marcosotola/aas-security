@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { pdf } from '@react-pdf/renderer';
 import CertificacionPDF from './CertificacionPDF';
-import { fotosABase64, urlABase64, urlABase64Original } from '../../lib/imagenes';
+import { fotosABase64, urlABase64 } from '../../lib/imagenes';
 
 // Mismo criterio que DescargarOrdenTrabajoPDF: las imágenes de Storage se
 // pasan a base64 recién al tocar el botón, antes de armar el PDF (fotos de la
-// certificación, de las OT anexadas, firma/sello y credencial).
+// certificación, de las OT anexadas y credencial).
 
 const opcional = (promesa) => promesa.catch((error) => {
   console.error('No se pudo cargar una imagen del certificado:', error);
@@ -25,13 +25,12 @@ const fotosParaPdf = async (fotos) => {
 
 export async function generarBlobCertificacion(certificacion) {
   const certificador = certificacion.certificador || null;
-  const [fotos, vinculados, firmaSello, credencial] = await Promise.all([
+  const [fotos, vinculados, credencial] = await Promise.all([
     fotosParaPdf(certificacion.fotos),
     Promise.all((certificacion.vinculados || []).map(async (v) => ({
       ...v,
       datos: { ...v.datos, fotos: await fotosParaPdf(v.datos?.fotos) }
     }))),
-    certificador?.firmaSello ? opcional(urlABase64Original(certificador.firmaSello)) : null,
     certificador?.credencial ? opcional(urlABase64(certificador.credencial)) : null
   ]);
 
@@ -39,7 +38,7 @@ export async function generarBlobCertificacion(certificacion) {
     ...certificacion,
     fotos,
     vinculados,
-    certificador: certificador ? { ...certificador, firmaSello, credencial } : null
+    certificador: certificador ? { ...certificador, credencial } : null
   };
   return pdf(<CertificacionPDF certificacion={datos} />).toBlob();
 }

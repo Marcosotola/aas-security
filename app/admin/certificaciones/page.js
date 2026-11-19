@@ -250,8 +250,8 @@ function TextosEstandar({ editable }) {
   );
 }
 
-// Subida de una imagen del certificador. La firma/sello se sube tal cual
-// (suele ser PNG con fondo transparente); la credencial se achica.
+// Subida de la credencial del certificador (se achica antes de subir). La
+// firma y sello no se cargan: van a mano sobre el certificado impreso.
 function ImagenCertificador({ titulo, ayuda, imagen, onElegir, editable }) {
   const inputRef = useRef(null);
   return (
@@ -291,8 +291,8 @@ const CERTIFICADOR_VACIO = { nombre: '', titulo: '', matricula: '' };
 
 function Certificadores({ editable }) {
   const [lista, setLista] = useState(null);
-  const [form, setForm] = useState(null); // { id?, nombre, titulo, matricula, firmaSello?, credencial? }
-  const [archivos, setArchivos] = useState({ firmaSello: null, credencial: null });
+  const [form, setForm] = useState(null); // { id?, nombre, titulo, matricula, credencial? }
+  const [archivos, setArchivos] = useState({ credencial: null });
   const [guardando, setGuardando] = useState(false);
 
   const cargar = () => obtenerCertificadores().then(setLista).catch((e) => {
@@ -303,7 +303,7 @@ function Certificadores({ editable }) {
 
   const abrir = (c) => {
     setForm(c ? { ...c } : { ...CERTIFICADOR_VACIO });
-    setArchivos({ firmaSello: null, credencial: null });
+    setArchivos({ credencial: null });
   };
 
   const previa = (clave) => (archivos[clave] ? URL.createObjectURL(archivos[clave]) : form?.[clave]?.url || null);
@@ -317,7 +317,7 @@ function Certificadores({ editable }) {
     try {
       const id = form.id || generarIdCertificador();
       const subir = async (clave, file) => {
-        const archivo = clave === 'credencial' ? await comprimirParaSubir(file, 2400, 0.85) : file;
+        const archivo = await comprimirParaSubir(file, 2400, 0.85);
         const path = `certificadores/${id}/${clave}-${Date.now()}-${archivo.name}`;
         const storageRef = ref(storage, path);
         await uploadBytes(storageRef, archivo);
@@ -325,7 +325,7 @@ function Certificadores({ editable }) {
       };
       const datos = { nombre: form.nombre.trim(), titulo: form.titulo.trim(), matricula: form.matricula.trim() };
       const reemplazadas = [];
-      for (const clave of ['firmaSello', 'credencial']) {
+      for (const clave of ['credencial']) {
         if (archivos[clave]) {
           datos[clave] = await subir(clave, archivos[clave]);
           if (form[clave]) reemplazadas.push(form[clave]);
@@ -344,7 +344,7 @@ function Certificadores({ editable }) {
   };
 
   const borrar = async (c) => {
-    if (!confirm(`¿Borrar a ${c.nombre}? Las certificaciones ya emitidas mantienen su firma.`)) return;
+    if (!confirm(`¿Borrar a ${c.nombre}? Las certificaciones ya emitidas mantienen sus datos.`)) return;
     await eliminarCertificador(c);
     await cargar();
   };
@@ -373,14 +373,10 @@ function Certificadores({ editable }) {
           En el certificado sale como: <span className="font-medium">{[form.titulo, form.nombre].filter(Boolean).join(' ').toUpperCase() || '...'}{form.matricula ? ` - MP ${form.matricula}` : ''}</span>
         </p>
 
+        <p className="mt-4 text-xs text-gray-500">
+          La firma y el sello no se cargan: en el PDF queda el espacio en blanco con su nombre y matrícula, y se firma y sella a mano sobre el impreso.
+        </p>
         <div className="grid grid-cols-1 gap-6 mt-6 md:grid-cols-2">
-          <ImagenCertificador
-            titulo="Firma y sello"
-            ayuda="Una sola imagen con la firma y el sello juntos, como se ve en papel. Mejor PNG con fondo transparente o blanco, bien recortada."
-            imagen={previa('firmaSello')}
-            onElegir={(file) => setArchivos((a) => ({ ...a, firmaSello: file }))}
-            editable
-          />
           <ImagenCertificador
             titulo="Credencial del colegio (opcional)"
             ayuda="Captura o foto de la credencial con la matrícula vigente. Se puede adjuntar como última hoja del certificado."
@@ -405,7 +401,7 @@ function Certificadores({ editable }) {
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-        <p className="text-sm text-gray-500">Profesional que firma las certificaciones. Su firma y sello salen en el PDF automáticamente.</p>
+        <p className="text-sm text-gray-500">Profesional que firma las certificaciones. En el PDF queda el espacio en blanco para que firme y selle a mano el impreso.</p>
         {editable && (
           <button onClick={() => abrir(null)} className="flex items-center px-3 py-2 text-sm text-white rounded-md bg-primary hover:bg-primary-light">
             <Plus size={16} className="mr-1" /> Nuevo certificador
@@ -418,11 +414,6 @@ function Certificadores({ editable }) {
         <ul className="space-y-3">
           {lista.map((c) => (
             <li key={c.id} className="flex flex-wrap items-center gap-4 p-4 border border-gray-200 rounded-md">
-              {c.firmaSello?.url ? (
-                <img src={c.firmaSello.url} alt="Firma y sello" className="object-contain w-32 h-16 p-1 bg-white border border-gray-200 rounded" />
-              ) : (
-                <div className="flex items-center justify-center w-32 h-16 text-xs text-center rounded text-amber-700 bg-amber-50">Falta firma y sello</div>
-              )}
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-gray-800">{[c.titulo, c.nombre].filter(Boolean).join(' ')}</p>
                 {c.matricula && <p className="text-sm text-gray-500">MP {c.matricula}</p>}
@@ -485,7 +476,7 @@ function Certificaciones() {
 
         <h2 className="mb-1 text-2xl font-bold font-montserrat text-primary">Certificaciones</h2>
         <p className="mb-6 text-sm text-gray-500">
-          Certificados de instalaciones contra incendio redactados en la app, con la firma y sello del profesional certificador.
+          Certificados de instalaciones contra incendio redactados en la app, listos para imprimir y que el profesional firme y selle a mano.
         </p>
 
         <div className="flex flex-wrap gap-2 mb-6">
