@@ -300,9 +300,7 @@ const CertificacionPDF = ({ certificacion: cert }) => {
           <View style={styles.firmas}>
             <View style={styles.firmaCaja}>
               {/* Vacío a propósito: el profesional firma y sella a mano el impreso. */}
-              <Text style={styles.firmaEtiqueta}>Firma y Sello Profesional Interviniente</Text>
-              <View style={{ flex: 1 }} />
-              {cert.certificador ? <Text style={styles.firmaAclaracion} hyphenationCallback={sinGuiones}>{responsableDe(cert.certificador)}</Text> : null}
+              <Text style={styles.firmaEtiqueta}>Firma</Text>
             </View>
             <View style={styles.firmaCaja}>
               <Text style={styles.firmaEtiqueta}>Firma Propietario/Responsable del Inmueble</Text>

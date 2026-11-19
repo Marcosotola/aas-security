@@ -374,7 +374,7 @@ function Certificadores({ editable }) {
         </p>
 
         <p className="mt-4 text-xs text-gray-500">
-          La firma y el sello no se cargan: en el PDF queda el espacio en blanco con su nombre y matrícula, y se firma y sella a mano sobre el impreso.
+          La firma y el sello no se cargan: en el PDF queda el espacio en blanco, y se firma y sella a mano sobre el impreso.
         </p>
         <div className="grid grid-cols-1 gap-6 mt-6 md:grid-cols-2">
           <ImagenCertificador
